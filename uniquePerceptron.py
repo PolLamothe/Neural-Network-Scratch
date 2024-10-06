@@ -31,7 +31,7 @@ def stateChecker():
 thread = threading.Thread(target=stateChecker)
 thread.start()
 
-perceptron = Perceptron(3,False)
+perceptron = Perceptron(3,tanh,0.5)
 
 #training
 count = 0

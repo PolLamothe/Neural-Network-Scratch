@@ -15,7 +15,7 @@ Here is the list of the file in this project and what are they used for :
 
 - uniquePerceptron.py (This file contain a program to train and test the AI using only 1 neurones for a linear problem)
 
-- layerTest.py (This file contain a program to train and test the AI using more than 1 layer of neurones for a more complex (XOR like) problem)
+- layerTest.py (This file contain a program to train and test the AI using more than 1 layer of neurones for a more complex (XOR) problem)
 
 - numberDetection.py *Not avaible now* (This file will contain the code to train and test the AI in number detection)
 
