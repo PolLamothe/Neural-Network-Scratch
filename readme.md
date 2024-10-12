@@ -17,7 +17,9 @@ Here is the list of the file in this project and what are they used for :
 
 - layerTest.py (This file contain a program to train and test the IA using more than 1 layer of neurones for a more complex (XOR) problem)
 
-- numberDetection.py (This file contain the code to train and test the IA in number detection)
+- numberDetection.py (This file contain the code to train and test the IA in number detection. **use -c command to show help**)
+
+- numberDetectionTools.py (This file contain function used in **numberDetection.py** and **UI.py**)
 
 - UI.py (Use this file to see the number wich are given to the IA)
 

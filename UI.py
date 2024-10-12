@@ -1,18 +1,20 @@
 import tkinter as tk
 import random
-import numberDetection
+import numberDetectionTools
 
 GRID_SIZE = 28
 PIXEL_SIZE = 20 
 
-currentIndex = random.randint(0,len(numberDetection.x_test)-1)
-grid_data = numberDetection.x_test[currentIndex]
+currentIndex = random.randint(0,len(numberDetectionTools.x_test)-1)
+grid_data = numberDetectionTools.x_test[currentIndex]
+
+network = numberDetectionTools.getTrainedNetwork()
 
 def changeData():
     global grid_data
     global currentIndex
-    currentIndex = random.randint(0,len(numberDetection.x_test)-1)
-    grid_data = numberDetection.x_test[currentIndex]
+    currentIndex = random.randint(0,len(numberDetectionTools.x_test)-1)
+    grid_data = numberDetectionTools.x_test[currentIndex]
     generateGrid()
     text.config(state=tk.NORMAL)
     text.delete("1.0",tk.END)
@@ -35,9 +37,9 @@ def generateGrid():
             canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="gray")
 
 def generateText():
-    networkResult = numberDetection.network.forward(grid_data.reshape(1, 28*28))
+    networkResult = network.forward(grid_data.reshape(1, 28*28))
     for i in range(len(networkResult)):
-        if(i == numberDetection.y_test[currentIndex]):
+        if(i == numberDetectionTools.y_test[currentIndex]):
             text.insert(tk.END,str(round(networkResult[i],2))+", ","vert")
         else:
             text.insert(tk.END,str(round(networkResult[i],2))+", ","rouge")
