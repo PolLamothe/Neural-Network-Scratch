@@ -12,7 +12,7 @@ x_train = x_train.astype('float32')
 x_train /= 255
 
 def getNetwork():
-    return Networks([28*28,50,10],sigmoid,0.05)
+    return Networks([28*28,60,10],sigmoid,0.05)
 
 def getTrainedNetwork():
     with open("numberDetection.pkl", "rb") as file:

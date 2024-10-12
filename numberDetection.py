@@ -39,15 +39,6 @@ def stateChecker():
         else:
             print("right answer : "+str(numberDetectionTools.y_train[index])+"\nresult : "+str(liste))
 
-def getAccuracy(right,response):
-    expected = []
-    for i in range(10):
-        if(i == right):
-            expected.append(1)
-        else:
-            expected.append(0)
-    return np.mean(np.power(expected-response, 2))
-
 def checkAnswer(right, response):
     for i in range(10):
         if(i ==right):
@@ -72,7 +63,8 @@ if(not useTrainedModel):
         right = numberDetectionTools.y_train[currentIndex]
         lastLayerResult = network.forward(np.append(numberDetectionTools.x_train[currentIndex],[]))
         if(checkAnswer(right,lastLayerResult)):
-            rightCount[right] += 1
+            if(rightCount[right] <= 50):
+                rightCount[right] += 1
             state = True
             for i in range(10):
                 if(rightCount[i] < 10):
@@ -89,11 +81,12 @@ if(not useTrainedModel):
             else:
                 err.append(1-lastLayerResult[i])
         network.backward(err)
-        print("number of iterations : "+str(count)+" accuracy : "+str(getAccuracy(right,lastLayerResult)), end='\r')
+        print("number of iterations : "+str(count), end='\r')
         sys.stdout.flush()
     print("\ntraining over")
     trainingState = False
     if(args.save):
+        print("saving your model")
         file_name = 'numberDetection.pkl'
         with open(file_name, 'wb') as file:
             pickle.dump(network, file)
