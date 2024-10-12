@@ -2,6 +2,8 @@
 
 ## Presentation
 
+![demo](./demo.png)
+
 This project aim to help me understanding how IA works. That's why I choosed to use only numpy and math.
 
 The final goal is to create an IA capable of detecting the number draw in a 28 x 28 square (data provided by [MNIST](https://en.wikipedia.org/wiki/MNIST_database)).

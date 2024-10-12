@@ -45,7 +45,7 @@ def generateText():
             text.insert(tk.END,str(round(networkResult[i],2))+", ","rouge")
 
 window = tk.Tk()
-window.title("Grille 28x28 - Noir et Blanc")
+window.title("Number Detection")
 
 canvas = tk.Canvas(window, width=GRID_SIZE * PIXEL_SIZE, height=GRID_SIZE * PIXEL_SIZE)
 canvas.pack()
