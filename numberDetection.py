@@ -85,7 +85,6 @@ if(not useTrainedModel):
                 err.append(0-lastLayerResult[i])
             else:
                 err.append(1-lastLayerResult[i])
-        #print(currentIndex,lastLayerResult)
         network.backward(err)
         print("number of iterations : "+str(count)+" accuracy : "+str(getAccuracy(right,lastLayerResult)), end='\r')
         sys.stdout.flush()

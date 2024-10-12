@@ -11,13 +11,15 @@ The final goal is to create an IA capable of detecting the number draw in a 28 x
 
 Here is the list of the file in this project and what are they used for :
 
-- classe.py (This file contain all of the class and function used for the AI specifically)
+- classe.py (This file contain all of the class and function used for the IA specifically)
 
-- uniquePerceptron.py (This file contain a program to train and test the AI using only 1 neurones for a linear problem)
+- uniquePerceptron.py (This file contain a program to train and test the IA using only 1 neurones for a linear problem)
 
-- layerTest.py (This file contain a program to train and test the AI using more than 1 layer of neurones for a more complex (XOR) problem)
+- layerTest.py (This file contain a program to train and test the IA using more than 1 layer of neurones for a more complex (XOR) problem)
 
-- numberDetection.py (This file  contain the code to train and test the AI in number detection)
+- numberDetection.py (This file contain the code to train and test the IA in number detection)
+
+- UI.py (Use this file to see the number wich are given to the IA)
 
 ---
 ## Sources :
