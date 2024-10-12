@@ -1,6 +1,7 @@
 import tkinter as tk
 import random
 import numberDetectionTools
+import numpy as np
 
 GRID_SIZE = 28
 PIXEL_SIZE = 20 
@@ -43,20 +44,16 @@ def generateText():
             text.insert(tk.END,str(round(networkResult[i],2))+", ","vert")
         else:
             text.insert(tk.END,str(round(networkResult[i],2))+", ","rouge")
+    text.insert(tk.END,"The model predict a "+str(networkResult.tolist().index(max(networkResult))))
 
 window = tk.Tk()
 window.title("Number Detection")
 
 canvas = tk.Canvas(window, width=GRID_SIZE * PIXEL_SIZE, height=GRID_SIZE * PIXEL_SIZE)
 canvas.pack()
-for row in range(GRID_SIZE):
-    for col in range(GRID_SIZE):
-        x1 = col * PIXEL_SIZE
-        y1 = row * PIXEL_SIZE
-        x2 = x1 + PIXEL_SIZE
-        y2 = y1 + PIXEL_SIZE
-        color = get_color(grid_data[row][col])
-        canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="gray")
+rectangles = [[None for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
+updatedRectangles = []
+generateGrid()
 
 text = tk.Text(window,height=5)
 text.tag_configure("rouge", foreground="red")
@@ -68,5 +65,4 @@ text.config(state=tk.DISABLED)
 
 regenerateButton = tk.Button(window,text="Regenerate",command=changeData)
 regenerateButton.pack()
-
 window.mainloop()
