@@ -13,13 +13,13 @@ def sigmoid(x):
             return 1
         
 def dsigmoid(x):
-    return x*(1-x)
+    return sigmoid(x)*(1-sigmoid(x))
         
 def tanh(x):
-    return np.tanh(x)
+    return (math.exp(x)-math.exp(-x))/(math.exp(x)+math.exp(-x))
 
 def tanh_prime(x):
-    return 1-np.tanh(x)**2
+    return 1-(tanh(x)**2)
 
 
 class Perceptron():#Single nerone
@@ -30,7 +30,7 @@ class Perceptron():#Single nerone
         elif(activation == sigmoid):self.activationPrime = dsigmoid
         else:raise ValueError()
         self.learningRate = learningRate
-        self.bias = random.random() - 0.5
+        self.bias = random.random()
 
     def forward(self,this_input : np.array.__class__) -> float:
         self.input : np.array.__class__ = this_input
@@ -40,7 +40,7 @@ class Perceptron():#Single nerone
         return result
     
     def backward(self,error : float):
-        error *= tanh_prime(self.output)
+        error *= self.activationPrime(self.output)
         a = error*np.array(self.input)
         self.W += a*self.learningRate#adjusting the weight
         self.bias += self.learningRate*error

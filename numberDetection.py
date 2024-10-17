@@ -40,12 +40,14 @@ def stateChecker():
             print("right answer : "+str(numberDetectionTools.y_train[index])+"\nresult : "+str(liste))
 
 def checkAnswer(right, response):
+    greater = None
     for i in range(10):
-        if(i ==right):
-            if(response[i] < 0.8):return False
+        if(greater == None):greater = (i,response[i])
         else:
-            if(response[i] > 0.2):return False
-    return True
+            if(response[i] == greater[1]):return False
+            elif(response[i] > greater[1]):greater = (i,response[i])
+    if(greater[0] == right):return True
+    else:return False
 
 thread = threading.Thread(target=stateChecker)
 thread.start()
@@ -73,7 +75,7 @@ if(not useTrainedModel):
             if(state):
                 break
         else:
-            if(rightCount[right] > 0):rightCount[right] -= 1
+            if(rightCount[right] > 0):rightCount[right] -= 4
         err = []
         for i in range(10):
             if(i != right):
