@@ -3,73 +3,56 @@ import random
 
 class Game():
     def __init__(self,size : int) -> None:
-        self.grid = np.zeros((size,size))
-        self.grid[round(size/2)-1][round(size/2)-1] = -1
-        self.headPosition = [round(size/2)-1,round(size/2)-1]
+        self.size = size
         self.directionX = 1
         self.directionY = 0
+        self.snake = [[round(size/2)-1,round(size/2)-1]]
+        self.fruit = []
         self.newFruit()
-        self.length = 1
 
     def moveHead(self):
-        headIndex = self.headPosition
-        if(self.directionX == 1):
-            self.grid[headIndex[1]][headIndex[0]+1] = -1
-            self.headPosition[0] += 1
-        elif(self.directionX == -1):
-            self.grid[headIndex[1]][headIndex[0]-1] = -1
-            self.headPosition[0] -= 1
-        elif(self.directionY == 1):
-            self.grid[headIndex[1]+1][headIndex[0]] = -1
-            self.headPosition[1] += 1
-        elif(self.directionY == -1):
-            self.grid[headIndex[1]-1][headIndex[0]] = -1
-            self.headPosition[1] -= 1
-
-    def findNextCase(self,position : tuple[int,int],history : list[list[int,int]]) -> tuple[int,int]:
-        if(self.grid[position[1]][position[0]+1] == -1 and [position[0]+1,position[1]] not in history):return [position[0]+1,position[1]]
-        if(self.grid[position[1]][position[0]-1] == -1 and [position[0]-1,position[1]] not in history):return [position[0]-1,position[1]]
-        if(self.grid[position[1]+1][position[0]] == -1 and [position[0],position[1]+1] not in history):return [position[0],position[1]+1]
-        if(self.grid[position[1]-1][position[0]] == -1 and [position[0],position[1]-1] not in history):return [position[0],position[1]-1]
-        return None
+        for i in range(-1,2,2):
+            if(self.directionX == i):
+                self.snake.append(self.snake[len(self.snake)-1].copy())
+                self.snake[len(self.snake)-1][0] += i
+        for i in range(-1,2,2):
+            if(self.directionY == i):
+                    self.snake.append(self.snake[len(self.snake)-1].copy())
+                    self.snake[len(self.snake)-1][1] += i
+        if(self.fruit in self.snake):
+            self.fruit = None
     
     def removeTail(self):
-        history = []
-        currentIndex = self.findNextCase(self.headPosition,history)
-        history.append(currentIndex)
-        while(currentIndex != None):
-            currentIndex = self.findNextCase(currentIndex,history)
-            if(currentIndex != None):history.append(currentIndex)
-        print(history)
-        self.grid[history[0][1],history[0][0]] = 0
+        self.snake.pop(0)
 
     def newFruit(self):
-        new = (random.randint(0,len(self.grid)-1),random.randint(0,len(self.grid)-1))
-        while(self.grid[new[0]][new[1]] != 0):
-            new = (random.randint(0,len(self.grid)-1),random.randint(0,len(self.grid)-1))
-        self.grid[new[0]][new[1]] = 1
+        new = [random.randint(0,self.size-1),random.randint(0,self.size-1)]
+        while(new in self.snake):
+            new = [random.randint(0,self.size-1),random.randint(0,self.size-1)]
+        self.fruit = new
 
     def isFruitHere(self) -> bool:
-        for line in self.grid:
-            for column in line:
-                if(column == 1):return True
-        return False
+        return self.fruit != None
 
     def update(self):
         self.moveHead()
-        if(self.headPosition[0] >= len(self.grid) or self.headPosition[1] >= len(self.grid)):return
-        if(self.headPosition[0] < 0 or self.headPosition[1] < 0):return
+        if(self.snake[len(self.snake)-1][0] >= self.size or self.snake[len(self.snake)-1][1] >= self.size):return
+        if(self.snake[len(self.snake)-1][0] < 0 or self.snake[len(self.snake)-1][1] < 0):return
         if(self.isFruitHere()):
             self.removeTail()
         else:
             self.newFruit()
-            self.length += 1
+
+    def getGrid(self) -> list[list[int]]:
+        grid = np.zeros((self.size,self.size))
+        for case in self.snake:
+            if(case[1] > 0 and case[0] > 0 and case[1] < self.size and case[0] < self.size):
+                grid[case[1]][case[0]] = -1
+        grid[self.fruit[1]][self.fruit[0]] = 1
+        return grid
 
     def checkState(self) -> bool:
-        count = 0
-        for line in self.grid:
-            for column in line:
-                if(column == -1):count+=1
-        if(self.length == len(self.grid)**2):return True
-        if(count == self.length):return None
-        return False
+        if(self.snake[len(self.snake)-1][0] < 0 or self.snake[len(self.snake)-1][1] < 0):return False
+        if(self.snake[len(self.snake)-1][0] >= self.size or self.snake[len(self.snake)-1][1] >= self.size):return False
+        if(len(self.snake) == self.size**2):return True
+        return None

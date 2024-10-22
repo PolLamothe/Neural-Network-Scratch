@@ -1,7 +1,8 @@
 import argparse
-from classe import *
 import random
 import sys
+sys.path.append("../")
+from classe import *
 import threading
 import pickle
 import numberDetectionTools
