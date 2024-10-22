@@ -39,12 +39,13 @@ class Perceptron():#Single nerone
         self.output : float = result
         return result
     
-    def backward(self,error : float):
+    def backward(self,error : float,input : float = None):
+        if(input == None):input = self.input
         error *= self.activationPrime(self.output)
-        a = error*np.array(self.input)
+        a = error*np.array(input)
         self.W += a*self.learningRate#adjusting the weight
         self.bias += self.learningRate*error
-        return error*self.W*self.input
+        return error*self.W*input
 
 class Layer():
     #input_size : the number of neurones of the previous layer
