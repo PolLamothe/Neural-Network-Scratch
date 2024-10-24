@@ -39,7 +39,7 @@ thread = threading.Thread(target=stateChecker)
 thread.start()
 
 learningRate = 0.1
-activation = tanh
+activation = sigmoid
 layers = [3,10,1]
 
 firstLayer = Layer(layers[0],layers[1],activation,learningRate)

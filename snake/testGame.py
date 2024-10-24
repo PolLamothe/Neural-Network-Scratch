@@ -1,13 +1,10 @@
 import snakeGame
+import threading
 
-game = snakeGame.Game(7)
+game = snakeGame.Game(5)
 
-state = None
-
-while(state == None):
-    print(game.getGrid(),game.snake,game.fruit)
-    result = input("Ou voulez bouger ?\n1 : Haut\n2 : Bas\n3 : Gauche\n4 : Droite\n")
-
+def runGame(result):
+    ui.input_field.delete(0,)
     if(result == "1"):
         game.directionY = -1
         game.directionX = 0
@@ -24,4 +21,8 @@ while(state == None):
         raise KeyboardInterrupt("")
     
     game.update()
-    state = game.checkState()
+    ui.grid = game.getGrid()
+    if(game.checkState() != None):exit(0)
+
+ui = snakeGame.UI(5,game.getGrid(),True,runGame)
+ui.start()
