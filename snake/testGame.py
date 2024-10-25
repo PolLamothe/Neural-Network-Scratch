@@ -24,5 +24,5 @@ def runGame(result):
     ui.grid = game.getGrid()
     if(game.checkState() != None):exit(0)
 
-ui = snakeGame.UI(5,game.getGrid(),True,runGame)
+ui = snakeGame.UI(5,game.getGrid(),True,inputHandler=runGame)
 ui.start()

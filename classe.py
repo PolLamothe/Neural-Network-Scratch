@@ -100,8 +100,8 @@ class Networks():
     def backward(self,output_error,input : list[float]=None):
         first = True
         previousResult = None
-        if(input is not list):
-            previousInput = [input]
+        if(input is list):
+            previousInput = input
             for i in range(len(self.layers)):
                 previousInput.append(self.layers[i].forward(previousInput[i]))
         else:
