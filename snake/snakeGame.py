@@ -74,26 +74,43 @@ class UI:
     replayGame : function
         This function will be called when the game need to replay the game
     '''
-    def __init__(self,size : int,grid : list[list[int]],userInput : bool,inputHandler : callable = None,updateGrid : callable = None,replayGame : callable = None) -> None:
+    def __init__(self,size : int,userInput : bool = False,inputHandler : callable = None,updateGrid : callable = None,replayGame : callable = None) -> None:
         self.size = size
-        self.grid = grid
         self.cellSize = (20/self.size)*20
         self.userInput = userInput
         self.inputHandler = inputHandler
         self.updateGrid = updateGrid
         self.replayGame = replayGame
 
-    def handleInput(self,event=None):
+    def handleInput(self):
         self.inputHandler(self.input_field.get())
         self.input_field.delete(0, tk.END)
 
-    def handleReplay(self,event=None):
+    def handleReplay(self):
         self.replayGame()
         self.gameOverText.pack_forget()
         self.replayButton.pack_forget()
         self.update_game()
 
-    def start(self):
+    def handeIterationChoice(self,iteration : int):
+        self.root.destroy()
+        self.choiceHandler(iteration)
+
+    def startChoosingMenu(self,iterationsAvaible : list[int],choiceHandler : callable):
+        self.root = tk.Tk()
+        self.choiceHandler = choiceHandler
+        self.root.title("Snake Game")
+        label = tk.Label(self.root,text="Select the versions of the IA wich you want to see play")
+        label.pack()
+        buttons = []
+        for iteration in iterationsAvaible:
+            buttons.append(tk.Button(self.root,text=str(iteration)+" iterations",command=lambda : self.handeIterationChoice(iteration)))
+        for button in buttons:
+            button.pack()
+        self.root.mainloop()
+
+    def startGame(self, grid : list[list[int]]):
+        self.grid = grid
         self.root = tk.Tk()
         self.root.title("Snake Game")
         self.canvas = tk.Canvas(self.root, width=self.size * self.cellSize, height=self.size * self.cellSize)
