@@ -11,29 +11,29 @@ gridIndex = 0
 
 iterationAvaible = []
 
-for i in range(len(jsonData)):
-    iterationAvaible.append(jsonData[i]["iteration"])
+for i in range(len(jsonData["data"])):
+    iterationAvaible.append(jsonData["data"][i]["iteration"])
 
 def updateData():
     global gridIndex
     gridIndex += 1
     try:
-        ui.grid = jsonData[gameIndex]["data"][gridIndex]
+        ui.grid = jsonData["data"][gameIndex]["data"][gridIndex]
     except IndexError:
         return "GameOver"
     
 def replayData():
     global gridIndex
     gridIndex = 0
-    ui.grid = jsonData[gameIndex]["data"][gridIndex]
+    ui.grid = jsonData["data"][gameIndex]["data"][gridIndex]
 
 def iterationChoosed(iteration : int):
     global ui
     global gameIndex
-    for i in range(len(jsonData)):
-        if(jsonData[i]["iteration"] == iteration):
+    for i in range(len(jsonData["data"])):
+        if(jsonData["data"][i]["iteration"] == iteration):
             gameIndex = i
-    ui.startGame(jsonData[gameIndex]["data"][gridIndex])
+    ui.startGame(jsonData["data"][gameIndex]["data"][gridIndex])
 
-ui = snakeGame.UI(5,updateGrid=updateData,replayGame=replayData)
+ui = snakeGame.UI(jsonData["gameSize"],updateGrid=updateData,replayGame=replayData)
 ui.startChoosingMenu(iterationAvaible,iterationChoosed)

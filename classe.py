@@ -86,7 +86,7 @@ class Networks():
         for i in range(1,len(neuroneNumber)):
             self.layers.append(Layer(neuroneNumber[i-1],neuroneNumber[i],activation,learningRate))
     
-    def forward(self,this_input):
+    def forward(self,this_input) -> list[float]:
         first = True
         previousResult = None
         for layer in self.layers:
