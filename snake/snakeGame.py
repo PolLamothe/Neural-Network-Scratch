@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import tkinter as tk
+from time import sleep
 
 class Game():
     def __init__(self,size : int) -> None:
@@ -81,8 +82,9 @@ class UI:
         self.inputHandler = inputHandler
         self.updateGrid = updateGrid
         self.replayGame = replayGame
+        self.freezeState = False
 
-    def handleInput(self):
+    def handleInput(self,event):
         self.inputHandler(self.input_field.get())
         self.input_field.delete(0, tk.END)
 
@@ -109,6 +111,13 @@ class UI:
             button.pack()
         self.root.mainloop()
 
+    def changeFreeze(self):
+        if(self.freezeState == False):self.pauseButton.config(text="Unfreeze")
+        else:self.pauseButton.config(text="Freeze")
+        self.freezeState = not self.freezeState
+        if(self.freezeState == False):
+            self.update_game()
+
     def startGame(self, grid : list[list[int]]):
         self.grid = grid
         self.root = tk.Tk()
@@ -119,10 +128,14 @@ class UI:
             self.input_field = tk.Entry(self.root)
             self.input_field.pack()
             self.input_field.bind("<Return>",self.handleInput)
+        else:
+            self.pauseButton = tk.Button(self.root,text="Freeze",command=self.changeFreeze)
+            self.pauseButton.pack()
         self.update_game()
         self.root.mainloop()
 
     def update_game(self):
+        if(self.freezeState):return
         if(self.userInput == False):
             if(self.updateGrid() == "GameOver"):
                 self.gameOverText = tk.Label(self.root,text="Game Over")
