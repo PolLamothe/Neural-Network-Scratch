@@ -1,7 +1,6 @@
 import numpy as np
 import random
 import tkinter as tk
-from time import sleep
 
 class Game():
     def __init__(self,size : int) -> None:
@@ -30,16 +29,19 @@ class Game():
         self.snake.pop(0)
 
     def newFruit(self):
-        new = [random.randint(0,self.size-1),random.randint(0,self.size-1)]
-        while(new in self.snake):
-            new = [random.randint(0,self.size-1),random.randint(0,self.size-1)]
-        self.fruit = new
+        avaible = []
+        for i in range(self.size):
+            for x in range(self.size):
+                if([i,x] not in self.snake):
+                    avaible.append([i,x])
+        self.fruit = random.choice(avaible)
 
     def isFruitHere(self) -> bool:
         return self.fruit != None
 
     def update(self):
         self.moveHead()
+        if(self.checkState() == True):return
         if(self.snake[len(self.snake)-1][0] >= self.size or self.snake[len(self.snake)-1][1] >= self.size):return
         if(self.snake[len(self.snake)-1][0] < 0 or self.snake[len(self.snake)-1][1] < 0):return
         if(self.isFruitHere()):
@@ -56,10 +58,11 @@ class Game():
         return grid
 
     def checkState(self) -> bool:
-        if(len(self.snake) == self.size**2):return True
         if(self.snake[len(self.snake)-1][0] < 0 or self.snake[len(self.snake)-1][1] < 0):return False
         if(self.snake[len(self.snake)-1][0] >= self.size or self.snake[len(self.snake)-1][1] >= self.size):return False
-        if(self.snake.count(self.snake[len(self.snake)-1]) > 1):return False
+        tuples = [tuple(position) for position in self.snake]
+        if(len(tuples) != len(set(tuples))):return False
+        if(len(self.snake) == self.size**2):return True
         return None
 
 class UI:
