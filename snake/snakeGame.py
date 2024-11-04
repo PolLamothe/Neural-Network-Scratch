@@ -60,10 +60,13 @@ class Game():
         return grid
 
     def checkState(self) -> bool:
+        def checkDoublons(array : list[list[int]]) -> bool:
+            for position in array:
+                if(array.count(position) > 1):return False
+            return True
         if(self.snake[len(self.snake)-1][0] < 0 or self.snake[len(self.snake)-1][1] < 0):return False
         if(self.snake[len(self.snake)-1][0] >= self.size or self.snake[len(self.snake)-1][1] >= self.size):return False
-        tuples = [tuple(position) for position in self.snake]
-        if(len(tuples) != len(set(tuples))):return False
+        if(not checkDoublons(self.snake)):return False
         if(len(self.snake) == self.size**2):return True
         return None
 

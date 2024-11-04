@@ -3,6 +3,7 @@ import snakeGame
 import threading
 import numpy as np
 import random
+import os
 
 import sys
 sys.path.append("../")
@@ -43,10 +44,10 @@ class snakeTrainTools():
             Networkinput = self.__generateInput()
             result = self.network.forward(Networkinput)
 
-            self.previousResult.append(result)
             self.previousData.append(Networkinput)
             
             answerIndex = random.choice(snakeTrainTools.getAllMaxIndex(result))
+            self.previousResult.append([answerIndex,result[answerIndex]])
 
             if(answerIndex == 0):
                 self.game.directionY = -1
@@ -71,11 +72,10 @@ class snakeTrainTools():
                     errors[answerIndex] = 1-result[answerIndex]
                     self.network.backward(errors)
                 else:
-                    '''for i in range(len(self.previousData)-1):
+                    for i in range(len(self.previousData)-1):
                         errors = [0]*4
-                        maxIndex = np.argmax(self.previousResult[i])
-                        errors[maxIndex] = (1)/len(self.previousData)
-                        self.network.backward(errors,self.previousData[i])'''
+                        errors[self.previousResult[i][0]] = (1-self.previousResult[i][1])/len(self.previousData)
+                        self.network.backward(errors,self.previousData[i])
                     errors = [0]*4
                     errors[answerIndex] = 1-result[answerIndex]
                     self.network.backward(errors)
@@ -83,17 +83,16 @@ class snakeTrainTools():
                 self.previousResult = []
 
             state = self.game.checkState()
-            if(state == False or len(self.previousData) > self.gameSize**2):#If we lost
+            if(state == False or len(self.previousData) > self.gameSize**2):#If we have lost
                 if(not self.seeAllMap):
                     errors = [0]*4
                     errors[answerIndex] = -result[answerIndex]
                     self.network.backward(errors)
                 else:
-                    '''for i in range(len(self.previousData)-1):
+                    for i in range(len(self.previousData)-1):
                         errors = [0]*4
-                        maxIndex = np.argmax(self.previousResult[i])
-                        errors[maxIndex] = (-1)/len(self.previousData)
-                        self.network.backward(errors,self.previousData[i])'''
+                        errors[self.previousResult[i][0]] = (-self.previousResult[i][1])/len(self.previousData)
+                        self.network.backward(errors,self.previousData[i])
                     errors = [0]*4
                     errors[answerIndex] = -result[answerIndex]
                     self.network.backward(errors)
@@ -103,23 +102,10 @@ class snakeTrainTools():
                     self.__addToFile()
                 self.__reset()
             elif(state == True):
-                print(self.game.snake)
                 self.__addToFile()
-                print("won")
                 break
-            elif(self.seeAllMap):
-                if(self.previousHead != None):
-                    currentDistance = abs(self.game.snake[-1][0]-self.game.fruit[0])+abs(self.game.snake[-1][1]-self.game.fruit[1])
-                    previousDistance = abs(self.previousHead[0]-self.game.fruit[0])+abs(self.previousHead[1]-self.game.fruit[1])
-                    if(currentDistance < previousDistance):
-                        errors = [0]*4
-                        errors[answerIndex] = 0.5
-                        self.network.backward(errors)
-                    elif(currentDistance > previousDistance):
-                        errors = [0]*4
-                        errors[answerIndex] = -0.5
-                        self.network.backward(errors)
-                self.previousHead = self.game.snake[-1]
+        print("\nwon")
+        os._exit(0)
 
     def checkPosition(self,position : list[int]):
         return position[0] >= 0 and position[0] < self.gameSize and position[1] >= 0 and position[1] < self.gameSize 
