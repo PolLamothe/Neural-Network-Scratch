@@ -54,7 +54,9 @@ class Game():
         for case in self.snake:
             if(case[1] >= 0 and case[0] >= 0 and case[1] < self.size and case[0] < self.size):
                 grid[case[1]][case[0]] = -1
-        grid[self.fruit[1]][self.fruit[0]] = 1
+        try:
+            grid[self.fruit[1]][self.fruit[0]] = 1
+        except:pass
         return grid
 
     def checkState(self) -> bool:

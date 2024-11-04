@@ -38,7 +38,6 @@ class snakeTrainTools():
         thread.start()
 
         while(True):
-            self.previousGrid.append(self.game.getGrid())
             print("number of iteration :"+str(self.iteration)+" max length : "+str(maxlength),end="\r")
 
             Networkinput = self.__generateInput()
@@ -64,10 +63,12 @@ class snakeTrainTools():
             
             fruitSave = self.game.fruit.copy()
             self.game.update()
+            self.previousGrid.append(self.game.getGrid())
+
             if(self.game.fruit != fruitSave):#if the snake ate a fruit
                 if(not self.seeAllMap):
                     errors = [0]*4
-                    errors[answerIndex] = result[answerIndex]
+                    errors[answerIndex] = 1-result[answerIndex]
                     self.network.backward(errors)
                 else:
                     '''for i in range(len(self.previousData)-1):
@@ -76,7 +77,7 @@ class snakeTrainTools():
                         errors[maxIndex] = (1)/len(self.previousData)
                         self.network.backward(errors,self.previousData[i])'''
                     errors = [0]*4
-                    errors[answerIndex] = result[answerIndex]
+                    errors[answerIndex] = 1-result[answerIndex]
                     self.network.backward(errors)
                 self.previousData = []
                 self.previousResult = []
@@ -102,6 +103,7 @@ class snakeTrainTools():
                     self.__addToFile()
                 self.__reset()
             elif(state == True):
+                print(self.game.snake)
                 self.__addToFile()
                 print("won")
                 break
