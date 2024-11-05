@@ -21,15 +21,18 @@ class snakeTrainTools():
         self.gameSize = gameSize
         self.seeAllMap = seeAllMap
         self.previousHead = None
+        self.fileName = "./data/game_"+str(gameSize)
+        if(seeAllMap):self.fileName+="_FullMap"
+        else:self.fileName+="_NearHead"
+        self.fileName+=".json"
 
         if(seeAllMap == False):
             self.network = classe.Networks([8*2]+hiddenLayers+[4],classe.sigmoid,0.1)
         else:
-            #self.network = classe.Networks([(((gameSize*2)-1)**2-1)*2]+hiddenLayers+[4],classe.sigmoid,0.01)
-            self.network = classe.Networks([((gameSize+((gameSize+1)%2))**2-1)*2]+hiddenLayers+[4],classe.sigmoid,0.1)
+            self.network = classe.Networks([(((gameSize*2)-1)**2-1)*2]+hiddenLayers+[4],classe.sigmoid,0.1)
 
     def train(self):
-        with open('./data/game.json', 'w') as json_file:
+        with open(self.fileName, 'w') as json_file:
             json.dump({"gameSize":self.gameSize,"data" : []},json_file)
 
         self.game = snakeGame.Game(self.gameSize)
@@ -73,6 +76,7 @@ class snakeTrainTools():
                     self.network.backward(errors)
                 else:
                     for i in range(len(self.previousData)-1):
+                        continue
                         errors = [0]*4
                         errors[self.previousResult[i][0]] = (1-self.previousResult[i][1])/len(self.previousData)
                         self.network.backward(errors,self.previousData[i])
@@ -81,18 +85,19 @@ class snakeTrainTools():
                     self.network.backward(errors)
                 self.previousData = []
                 self.previousResult = []
+                self.previousHead = None
 
             state = self.game.checkState()
-            if(state == False or len(self.previousData) > self.gameSize**2):#If we have lost
+            if(state == False or len(self.previousData) > self.gameSize**2*2):#If we have lost
                 if(not self.seeAllMap):
                     errors = [0]*4
                     errors[answerIndex] = -result[answerIndex]
                     self.network.backward(errors)
                 else:
-                    for i in range(len(self.previousData)-1):
+                    '''for i in range(len(self.previousData)-1):
                         errors = [0]*4
                         errors[self.previousResult[i][0]] = (-self.previousResult[i][1])/len(self.previousData)
-                        self.network.backward(errors,self.previousData[i])
+                        self.network.backward(errors,self.previousData[i])'''
                     errors = [0]*4
                     errors[answerIndex] = -result[answerIndex]
                     self.network.backward(errors)
@@ -104,6 +109,21 @@ class snakeTrainTools():
             elif(state == True):
                 self.__addToFile()
                 break
+            elif(self.seeAllMap):
+                continue
+                if(self.previousHead != None):
+                    currentDistance = abs(self.game.snake[-1][0]-self.game.fruit[0])+abs(self.game.snake[-1][1]-self.game.fruit[1])
+                    previousDistance = abs(self.previousHead[0]-self.game.fruit[0])+abs(self.previousHead[1]-self.game.fruit[1])
+                    if(currentDistance < previousDistance):
+                        errors = [0]*4
+                        errors[answerIndex] = 0.2
+                        self.network.backward(errors)
+                    elif(currentDistance > previousDistance):
+                        continue
+                        errors = [0]*4
+                        errors[answerIndex] = -0.1
+                        self.network.backward(errors)
+            self.previousHead = self.game.snake[-1]
         print("\nwon")
         os._exit(0)
 
@@ -133,9 +153,9 @@ class snakeTrainTools():
                     return obj.tolist()
                 return json.JSONEncoder.default(self, obj)
         
-        with open('./data/game.json', 'r') as fichier:
+        with open(self.fileName, 'r') as fichier:
                 jsonData = json.load(fichier)
-        with open('./data/game.json', 'w') as json_file:
+        with open(self.fileName, 'w') as json_file:
             jsonData["data"].append({"iteration":self.iteration,"data":self.previousGrid})
             json.dump(jsonData,json_file,cls=NumpyArrayEncoder,indent=4)
 
@@ -153,7 +173,7 @@ class snakeTrainTools():
         snakeHead = self.game.snake[len(self.game.snake)-1]
         radius = 1
         if(self.seeAllMap):
-            radius = int(self.gameSize/2)
+            radius = self.gameSize-1
         for j in range(2):
             #If j == 0 we are searching for food
             #If j == 1 we are searching for danger
@@ -178,4 +198,4 @@ class snakeTrainTools():
     def __checkIA(self):
         while(True):
             input("")
-            print(self.network.forward(self.__generateInput()))
+            print("\n"+str([round(i,2) for i in self.network.forward(self.__generateInput())])+"\n")

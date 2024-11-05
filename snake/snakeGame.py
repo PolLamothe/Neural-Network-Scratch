@@ -5,6 +5,8 @@ import tkinter as tk
 class Game():
     def __init__(self,size : int) -> None:
         self.size = size
+        if(size < 5):
+            raise Exception("Map size must be at least 5")
         self.directionX = 1
         self.directionY = 0
         self.snake = []
@@ -71,27 +73,6 @@ class Game():
         return None
 
 class UI:
-    '''
-    Parameters
-    ----------
-    userInput : bool
-        This parameter is used to know if the window will be playing a pre-registered game or if the player will play directly
-    inputHandler : function
-        This function will be called when an input is entered into the window
-    updateGrid : function
-        This function will be called when the game need to update the grid
-    replayGame : function
-        This function will be called when the game need to replay the game
-    '''
-    def __init__(self,size : int,userInput : bool = False,inputHandler : callable = None,updateGrid : callable = None,replayGame : callable = None) -> None:
-        self.size = size
-        self.cellSize = (20/self.size)*20
-        self.userInput = userInput
-        self.inputHandler = inputHandler
-        self.updateGrid = updateGrid
-        self.replayGame = replayGame
-        self.freezeState = False
-
     def handleInput(self,event):
         self.inputHandler(self.input_field.get())
         self.input_field.delete(0, tk.END)
@@ -106,17 +87,77 @@ class UI:
         self.root.destroy()
         self.choiceHandler(iteration)
 
-    def startChoosingMenu(self,iterationsAvaible : list[int],choiceHandler : callable):
+    def startChoosingMenu(self,iterationsAvaible : list[int],choiceHandler : callable,size : int,userInput : bool = False,inputHandler : callable = None,updateGrid : callable = None,replayGame : callable = None,):
+        '''
+        Parameters
+        ----------
+        userInput : bool
+            This parameter is used to know if the window will be playing a pre-registered game or if the player will play directly
+        inputHandler : function
+            This function will be called when an input is entered into the window
+        updateGrid : function
+            This function will be called when the game need to update the grid
+        replayGame : function
+            This function will be called when the game need to replay the game
+        '''
+        self.size = size
+        self.cellSize = (20/self.size)*20
+        self.userInput = userInput
+        self.inputHandler = inputHandler
+        self.updateGrid = updateGrid
+        self.replayGame = replayGame
+        self.freezeState = False
         self.root = tk.Tk()
         self.choiceHandler = choiceHandler
         self.root.title("Snake Game")
         label = tk.Label(self.root,text="Select the versions of the IA wich you want to see play")
         label.pack()
+
+        canvas = tk.Canvas(self.root, width=400, height=300)
+        scrollbar = tk.Scrollbar(self.root, orient="vertical", command=canvas.yview)
+        canvas.config(yscrollcommand=scrollbar.set)
+        
+        frame = tk.Frame(canvas)
+        
         buttons = []
         for iteration in iterationsAvaible:
-            buttons.append(tk.Button(self.root,text=str(iteration)+" iterations",command=lambda : self.handeIterationChoice(iteration)))
+            buttons.append(tk.Button(frame,text=str(iteration)+" iterations",command=lambda : self.handeIterationChoice(iteration)))
         for button in buttons:
             button.pack()
+        
+        canvas.create_window((0, 0), window=frame, anchor="nw")
+        frame.update_idletasks()
+        canvas.config(scrollregion=canvas.bbox("all"))
+
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        self.root.mainloop()
+
+    def startChoosingDataMenu(self,allData : list[str],selectionHandler : callable):
+        self.root = tk.Tk()
+        self.root.title("Snake Game")
+
+        label = tk.Label(self.root,text="Select the IA wich you want to see play")
+        label.pack()
+
+        canvas = tk.Canvas(self.root, width=400, height=300)
+        scrollbar = tk.Scrollbar(self.root, orient="vertical", command=canvas.yview)
+        canvas.config(yscrollcommand=scrollbar.set)
+
+        frame = tk.Frame(canvas)
+
+        for dataName in allData:
+            tempButton = tk.Button(frame,text=dataName,command=lambda:selectionHandler(dataName))
+            tempButton.pack()
+
+        canvas.create_window((0, 0), window=frame, anchor="nw")
+        frame.update_idletasks()
+        canvas.config(scrollregion=canvas.bbox("all"))
+
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
         self.root.mainloop()
 
     def changeFreeze(self):
