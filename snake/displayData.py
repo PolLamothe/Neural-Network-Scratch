@@ -40,9 +40,9 @@ def selectionHandler(name : str):
         for i in range(len(jsonData["data"])):
             if(jsonData["data"][i]["iteration"] == iteration):
                 gameIndex = i
-        ui.startGame(jsonData["data"][gameIndex]["data"][gridIndex])
+        ui.startGame(jsonData["data"][gameIndex]["data"][gridIndex],updateGrid=updateData,replayGame=replayData)
     
-    ui.startChoosingMenu(iterationAvaible,iterationChoosed,jsonData["gameSize"],False,updateGrid=updateData,replayGame=replayData)
+    ui.startChoosingMenu(iterationAvaible,iterationChoosed)
 
 ui = snakeGame.UI()
 ui.startChoosingDataMenu(allData,selectionHandler)

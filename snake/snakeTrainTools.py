@@ -44,7 +44,7 @@ class snakeTrainTools():
         while(True):
             print("number of iteration :"+str(self.iteration)+" max length : "+str(maxlength),end="\r")
 
-            Networkinput = self.__generateInput()
+            Networkinput = snakeTrainTools.generateInput(self.game.getGrid(),self.seeAllMap,self.game.snake)
             result = self.network.forward(Networkinput)
 
             self.previousData.append(Networkinput)
@@ -125,7 +125,6 @@ class snakeTrainTools():
                         self.network.backward(errors)
             self.previousHead = self.game.snake[-1]
         print("\nwon")
-        os._exit(0)
 
     def checkPosition(self,position : list[int]):
         return position[0] >= 0 and position[0] < self.gameSize and position[1] >= 0 and position[1] < self.gameSize 
@@ -167,20 +166,20 @@ class snakeTrainTools():
         self.previousGrid = []
         self.previousHead = None
 
-    def __generateInput(self):
+    def generateInput(grid : list[list[int]],seeAllMap : bool,snake : list[list[int]]):
         networkInput = []
-        grid = self.game.getGrid()
-        snakeHead = self.game.snake[len(self.game.snake)-1]
+        snakeHead = snake[-1]
         radius = 1
-        if(self.seeAllMap):
-            radius = self.gameSize-1
+        gameSize = len(grid)
+        if(seeAllMap):
+            radius = gameSize-1
         for j in range(2):
             #If j == 0 we are searching for food
             #If j == 1 we are searching for danger
             for i in range(-radius,radius+1):
                 for x in range(-radius,radius+1):
                     if(i != 0 or x != 0):
-                        if((snakeHead[1]+i >= 0 and snakeHead[0]+x >= 0 and snakeHead[1]+i < self.game.size and snakeHead[0]+x < self.game.size)):#if the case is in the grid
+                        if((snakeHead[1]+i >= 0 and snakeHead[0]+x >= 0 and snakeHead[1]+i < gameSize and snakeHead[0]+x < gameSize)):#if the case is in the grid
                             if(j == 0):
                                 if(grid[snakeHead[1]+i][snakeHead[0]+x] == 1):
                                     networkInput.append(1)
@@ -198,4 +197,4 @@ class snakeTrainTools():
     def __checkIA(self):
         while(True):
             input("")
-            print("\n"+str([round(i,2) for i in self.network.forward(self.__generateInput())])+"\n")
+            print("\n"+str([round(i,2) for i in self.network.forward(snakeTrainTools.generateInput(self.game.getGrid(),self.seeAllMap,self.game.snake))])+"\n")

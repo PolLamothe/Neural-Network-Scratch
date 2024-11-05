@@ -87,7 +87,7 @@ class UI:
         self.root.destroy()
         self.choiceHandler(iteration)
 
-    def startChoosingMenu(self,iterationsAvaible : list[int],choiceHandler : callable,size : int,userInput : bool = False,inputHandler : callable = None,updateGrid : callable = None,replayGame : callable = None,):
+    def startChoosingMenu(self,iterationsAvaible : list[int],choiceHandler : callable):
         '''
         Parameters
         ----------
@@ -100,13 +100,6 @@ class UI:
         replayGame : function
             This function will be called when the game need to replay the game
         '''
-        self.size = size
-        self.cellSize = (20/self.size)*20
-        self.userInput = userInput
-        self.inputHandler = inputHandler
-        self.updateGrid = updateGrid
-        self.replayGame = replayGame
-        self.freezeState = False
         self.root = tk.Tk()
         self.choiceHandler = choiceHandler
         self.root.title("Snake Game")
@@ -160,6 +153,32 @@ class UI:
 
         self.root.mainloop()
 
+    def startChoosingModel(self,allModel : list[str],selectionHandler : callable):
+        self.root = tk.Tk()
+        self.root.title("Snake Game")
+
+        label = tk.Label(self.root,text="Select the IA wich you want to see play")
+        label.pack()
+
+        canvas = tk.Canvas(self.root, width=400, height=300)
+        scrollbar = tk.Scrollbar(self.root, orient="vertical", command=canvas.yview)
+        canvas.config(yscrollcommand=scrollbar.set)
+
+        frame = tk.Frame(canvas)
+
+        for modelName in allModel:
+            tempButton = tk.Button(frame,text=modelName,command=lambda:selectionHandler(modelName))
+            tempButton.pack()
+
+        canvas.create_window((0, 0), window=frame, anchor="nw")
+        frame.update_idletasks()
+        canvas.config(scrollregion=canvas.bbox("all"))
+
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self.root.mainloop()
+
     def changeFreeze(self):
         if(self.freezeState == False):self.pauseButton.config(text="Unfreeze")
         else:self.pauseButton.config(text="Freeze")
@@ -167,8 +186,16 @@ class UI:
         if(self.freezeState == False):
             self.update_game()
 
-    def startGame(self, grid : list[list[int]]):
+    def startGame(self, grid : list[list[int]],userInput=False,inputHandler : callable = None,updateGrid : callable = None,replayGame : callable = None):
+        self.userInput = userInput
+        self.inputHandler = inputHandler
+        self.updateGrid = updateGrid
+        self.replayGame = replayGame
+        self.freezeState = False
+        self.size = len(grid)
+        self.cellSize = (20/self.size)*20
         self.grid = grid
+
         self.root = tk.Tk()
         self.root.title("Snake Game")
         self.canvas = tk.Canvas(self.root, width=self.size * self.cellSize, height=self.size * self.cellSize)
