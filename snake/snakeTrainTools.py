@@ -16,8 +16,8 @@ class snakeTrainTools():
         self.previousData = []#store every input of the network since the last backward propagation
         self.previousResult = []#store every output of the network since the last backward propagation
         self.previousGrid = []#store every step of the current game
+        self.previousLength = []
         self.iteration = 0
-        self.gameLength = 0
         self.gameSize = gameSize
         self.seeAllMap = seeAllMap
         self.previousHead = None
@@ -42,7 +42,10 @@ class snakeTrainTools():
         thread.start()
 
         while(True):
-            print("number of iteration :"+str(self.iteration)+" max length : "+str(maxlength),end="\r")
+            if(self.iteration < 100):
+                print("number of iteration :"+str(self.iteration)+" max length : "+str(maxlength),end="\r")
+            else:
+                print("number of iteration :"+str(self.iteration)+" max length : "+str(maxlength)+" average length : "+str(sum(self.previousLength)/len(self.previousLength)),end="\r")
 
             Networkinput = snakeTrainTools.generateInput(self.game.getGrid(),self.seeAllMap,self.game.snake)
             result = self.network.forward(Networkinput)
@@ -67,50 +70,35 @@ class snakeTrainTools():
             
             fruitSave = self.game.fruit.copy()
             self.game.update()
-            self.previousGrid.append(self.game.getGrid())
+            self.previousGrid.append({"head":self.game.snake[-1],"data":self.game.getGrid()})
 
             if(self.game.fruit != fruitSave):#if the snake ate a fruit
-                if(not self.seeAllMap):
-                    errors = [0]*4
-                    errors[answerIndex] = 1-result[answerIndex]
-                    self.network.backward(errors)
-                else:
-                    for i in range(len(self.previousData)-1):
-                        continue
-                        errors = [0]*4
-                        errors[self.previousResult[i][0]] = (1-self.previousResult[i][1])/len(self.previousData)
-                        self.network.backward(errors,self.previousData[i])
-                    errors = [0]*4
-                    errors[answerIndex] = 1-result[answerIndex]
-                    self.network.backward(errors)
+                errors = [0]*4
+                errors[answerIndex] = 1-result[answerIndex]
+                self.network.backward(errors)
                 self.previousData = []
                 self.previousResult = []
                 self.previousHead = None
 
             state = self.game.checkState()
             if(state == False or len(self.previousData) > self.gameSize**2*2):#If we have lost
-                if(not self.seeAllMap):
-                    errors = [0]*4
-                    errors[answerIndex] = -result[answerIndex]
-                    self.network.backward(errors)
-                else:
-                    '''for i in range(len(self.previousData)-1):
-                        errors = [0]*4
-                        errors[self.previousResult[i][0]] = (-self.previousResult[i][1])/len(self.previousData)
-                        self.network.backward(errors,self.previousData[i])'''
-                    errors = [0]*4
-                    errors[answerIndex] = -result[answerIndex]
-                    self.network.backward(errors)
+                errors = [0]*4
+                errors[answerIndex] = -result[answerIndex]
+                self.network.backward(errors)
 
                 if(len(self.game.snake) > maxlength):
                     maxlength = len(list(filter(self.checkPosition,self.game.snake)))
                     self.__addToFile()
                 self.__reset()
             elif(state == True):
-                self.__addToFile()
-                break
+                if(len(self.game.snake) > maxlength):
+                    maxlength = len(list(filter(self.checkPosition,self.game.snake)))
+                    self.__addToFile()
+                errors = [0]*4
+                errors[answerIndex] = 1-result[answerIndex]
+                self.network.backward(errors)
+                self.__reset()
             elif(self.seeAllMap):
-                continue
                 if(self.previousHead != None):
                     currentDistance = abs(self.game.snake[-1][0]-self.game.fruit[0])+abs(self.game.snake[-1][1]-self.game.fruit[1])
                     previousDistance = abs(self.previousHead[0]-self.game.fruit[0])+abs(self.previousHead[1]-self.game.fruit[1])
@@ -119,10 +107,13 @@ class snakeTrainTools():
                         errors[answerIndex] = 0.2
                         self.network.backward(errors)
                     elif(currentDistance > previousDistance):
-                        continue
                         errors = [0]*4
-                        errors[answerIndex] = -0.1
+                        errors[answerIndex] = -0.2
                         self.network.backward(errors)
+            '''if(state == None):
+                errors = [0]*4
+                errors[answerIndex] = 0.1
+                self.network.backward(errors)'''
             self.previousHead = self.game.snake[-1]
         print("\nwon")
 
@@ -160,6 +151,9 @@ class snakeTrainTools():
 
     def __reset(self):
         self.iteration += 1
+        self.previousLength.append(len(self.game.snake))
+        if(self.iteration > 100):
+            self.previousLength.pop(0)
         self.game = snakeGame.Game(self.gameSize)
         self.previousData = []
         self.previousResult = []

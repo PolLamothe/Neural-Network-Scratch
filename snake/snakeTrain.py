@@ -15,7 +15,7 @@ if(args.help):
     exit(0)
 
 gameSize = 5
-seeAllMap = True
+seeAllMap = False
 
 snakeTrain = snakeTrainTools.snakeTrainTools(gameSize,seeAllMap)
 snakeTrain.train()

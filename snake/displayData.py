@@ -25,14 +25,15 @@ def selectionHandler(name : str):
         global gridIndex
         gridIndex += 1
         try:
-            ui.grid = jsonData["data"][gameIndex]["data"][gridIndex]
+            ui.grid = jsonData["data"][gameIndex]["data"][gridIndex]["data"]
+            ui.head = jsonData["data"][gameIndex]["data"][gridIndex]["head"]
         except IndexError:
             return "GameOver"
         
     def replayData():
         global gridIndex
         gridIndex = 0
-        ui.grid = jsonData["data"][gameIndex]["data"][gridIndex]
+        ui.grid = jsonData["data"][gameIndex]["data"][gridIndex]["data"]
 
     def iterationChoosed(iteration : int):
         global ui
@@ -40,7 +41,7 @@ def selectionHandler(name : str):
         for i in range(len(jsonData["data"])):
             if(jsonData["data"][i]["iteration"] == iteration):
                 gameIndex = i
-        ui.startGame(jsonData["data"][gameIndex]["data"][gridIndex],updateGrid=updateData,replayGame=replayData)
+        ui.startGame(jsonData["data"][gameIndex]["data"][gridIndex]["data"],jsonData["data"][gameIndex]["data"][gridIndex]["head"],updateGrid=updateData,replayGame=replayData)
     
     ui.startChoosingMenu(iterationAvaible,iterationChoosed)
 
