@@ -186,7 +186,7 @@ class UI:
         if(self.freezeState == False):
             self.update_game()
 
-    def startGame(self, grid : list[list[int]],userInput=False,inputHandler : callable = None,updateGrid : callable = None,replayGame : callable = None):
+    def startGame(self, grid : list[list[int]],head : list[int],userInput=False,inputHandler : callable = None,updateGrid : callable = None,replayGame : callable = None):
         self.userInput = userInput
         self.inputHandler = inputHandler
         self.updateGrid = updateGrid
@@ -195,6 +195,7 @@ class UI:
         self.size = len(grid)
         self.cellSize = (20/self.size)*20
         self.grid = grid
+        self.head = head
 
         self.root = tk.Tk()
         self.root.title("Snake Game")
@@ -227,6 +228,8 @@ class UI:
         for i in range(len(self.grid)):
             for j in range(len(self.grid[i])):
                 if self.grid[i][j] == -1:
-                    self.canvas.create_rectangle(j * self.cellSize, i * self.cellSize, (j + 1) * self.cellSize, (i + 1) * self.cellSize, fill="green")
+                    if([j,i] == self.head):
+                        self.canvas.create_rectangle(j * self.cellSize, i * self.cellSize, (j + 1) * self.cellSize, (i + 1) * self.cellSize, fill="green",outline="red")
+                    else:self.canvas.create_rectangle(j * self.cellSize, i * self.cellSize, (j + 1) * self.cellSize, (i + 1) * self.cellSize, fill="green")
                 elif self.grid[i][j] == 1:
                     self.canvas.create_oval(j * self.cellSize, i * self.cellSize, (j + 1) * self.cellSize, (i + 1) * self.cellSize, fill="red")

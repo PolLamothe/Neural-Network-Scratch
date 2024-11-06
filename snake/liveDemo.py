@@ -44,6 +44,7 @@ def handleModelChoice(name : str):
         if(game.checkState() == False):
             return "GameOver"
         ui.grid = game.getGrid()
+        ui.head = game.snake[-1]
     
     def replayGame():
         global game
