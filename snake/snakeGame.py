@@ -87,62 +87,25 @@ class UI:
         self.root.destroy()
         self.choiceHandler(iteration)
 
-    def startChoosingMenu(self,iterationsAvaible : list[int],choiceHandler : callable):
-        '''
-        Parameters
-        ----------
-        userInput : bool
-            This parameter is used to know if the window will be playing a pre-registered game or if the player will play directly
-        inputHandler : function
-            This function will be called when an input is entered into the window
-        updateGrid : function
-            This function will be called when the game need to update the grid
-        replayGame : function
-            This function will be called when the game need to replay the game
-        '''
+    def startChoosingDataMenu(self,allData : list[str],selectionHandler : callable):
         self.root = tk.Tk()
-        self.choiceHandler = choiceHandler
         self.root.title("Snake Game")
+
         label = tk.Label(self.root,text="Select the versions of the IA wich you want to see play")
         label.pack()
 
         canvas = tk.Canvas(self.root, width=400, height=300)
         scrollbar = tk.Scrollbar(self.root, orient="vertical", command=canvas.yview)
         canvas.config(yscrollcommand=scrollbar.set)
-        
+
         frame = tk.Frame(canvas)
-        
+
         buttons = []
-        for iteration in iterationsAvaible:
-            buttons.append(tk.Button(frame,text=str(iteration)+" iterations",command=lambda : self.handeIterationChoice(iteration)))
+        for dataName in allData:
+            buttons.append(tk.Button(frame,text=dataName,command=lambda m=dataName:selectionHandler(m)))
+            
         for button in buttons:
             button.pack()
-        
-        canvas.create_window((0, 0), window=frame, anchor="nw")
-        frame.update_idletasks()
-        canvas.config(scrollregion=canvas.bbox("all"))
-
-        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        
-        self.root.mainloop()
-
-    def startChoosingDataMenu(self,allData : list[str],selectionHandler : callable):
-        self.root = tk.Tk()
-        self.root.title("Snake Game")
-
-        label = tk.Label(self.root,text="Select the IA wich you want to see play")
-        label.pack()
-
-        canvas = tk.Canvas(self.root, width=400, height=300)
-        scrollbar = tk.Scrollbar(self.root, orient="vertical", command=canvas.yview)
-        canvas.config(yscrollcommand=scrollbar.set)
-
-        frame = tk.Frame(canvas)
-
-        for dataName in allData:
-            tempButton = tk.Button(frame,text=dataName,command=lambda:selectionHandler(dataName))
-            tempButton.pack()
 
         canvas.create_window((0, 0), window=frame, anchor="nw")
         frame.update_idletasks()
@@ -166,9 +129,12 @@ class UI:
 
         frame = tk.Frame(canvas)
 
+        buttons = []
         for modelName in allModel:
-            tempButton = tk.Button(frame,text=modelName,command=lambda:selectionHandler(modelName))
-            tempButton.pack()
+            buttons.append(tk.Button(frame,text=modelName,command=lambda m=modelName: selectionHandler(m)))
+            
+        for button in buttons:
+            button.pack()
 
         canvas.create_window((0, 0), window=frame, anchor="nw")
         frame.update_idletasks()
@@ -187,6 +153,18 @@ class UI:
             self.update_game()
 
     def startGame(self, grid : list[list[int]],head : list[int],userInput=False,inputHandler : callable = None,updateGrid : callable = None,replayGame : callable = None):
+        '''
+        Parameters
+        ----------
+        userInput : bool
+            This parameter is used to know if the window will be playing a pre-registered game or if the player will play directly
+        inputHandler : function
+            This function will be called when an input is entered into the window
+        updateGrid : function
+            This function will be called when the game need to update the grid
+        replayGame : function
+            This function will be called when the game need to replay the game
+        '''
         self.userInput = userInput
         self.inputHandler = inputHandler
         self.updateGrid = updateGrid

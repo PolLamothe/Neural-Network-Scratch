@@ -14,6 +14,7 @@ gridIndex = 0
 iterationAvaible = []
 
 def selectionHandler(name : str):
+    print(name)
 
     with open("./data/"+name, 'r') as fichier:
         jsonData = json.load(fichier)
@@ -43,7 +44,7 @@ def selectionHandler(name : str):
                 gameIndex = i
         ui.startGame(jsonData["data"][gameIndex]["data"][gridIndex]["data"],jsonData["data"][gameIndex]["data"][gridIndex]["head"],updateGrid=updateData,replayGame=replayData)
     
-    ui.startChoosingMenu(iterationAvaible,iterationChoosed)
+    ui.startChoosingDataMenu(iterationAvaible,iterationChoosed)
 
 ui = snakeGame.UI()
-ui.startChoosingDataMenu(allData,selectionHandler)
+ui.startChoosingModel(allData,selectionHandler)
