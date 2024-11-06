@@ -39,12 +39,13 @@ class Perceptron():#Single nerone
         self.output : float = result
         return result
     
-    def backward(self,error : float):
+    def backward(self,error : float,input : list[float] = None):
+        if(input is not list):input = self.input
         error *= self.activationPrime(self.output)
-        a = error*np.array(self.input)
+        a = error*np.array(input)
         self.W += a*self.learningRate#adjusting the weight
         self.bias += self.learningRate*error
-        return error*self.W*self.input
+        return error*self.W*input
 
 class Layer():
     #input_size : the number of neurones of the previous layer
@@ -63,12 +64,12 @@ class Layer():
         return np.array(result)
     
     #error : an array containing the error for each of the neurones of this layer
-    def backward(self,output_error : np.array.__class__):
+    def backward(self,output_error : np.array.__class__,input : list[float] = None):
         nerones_error = []
         nerones_weight = []
         nerones_output = []
         for i in range(len(self.nerone)):#pour chaque neurone
-            nerones_error.append(self.nerone[i].backward(output_error[i]))
+            nerones_error.append(self.nerone[i].backward(output_error[i],input))
             nerones_weight.append(self.nerone[i].W)
             nerones_output.append(self.nerone[i].output)
         input_error = []
@@ -81,11 +82,11 @@ class Layer():
     
 class Networks():
     def __init__(self,neuroneNumber : list[int],activation,learningRate : float=1) -> None:
-        self.layers = []
+        self.layers : list[Layer] = []
         for i in range(1,len(neuroneNumber)):
             self.layers.append(Layer(neuroneNumber[i-1],neuroneNumber[i],activation,learningRate))
     
-    def forward(self,this_input):
+    def forward(self,this_input) -> list[float]:
         first = True
         previousResult = None
         for layer in self.layers:
@@ -96,12 +97,18 @@ class Networks():
                 previousResult = layer.forward(previousResult)
         return previousResult
 
-    def backward(self,output_error):
+    def backward(self,output_error,input : list[float]=None):
         first = True
         previousResult = None
+        if(input is list):
+            previousInput = input
+            for i in range(len(self.layers)):
+                previousInput.append(self.layers[i].forward(previousInput[i]))
+        else:
+            previousInput = [None]*(len(self.layers))
         for i in range(len(self.layers)-1,-1,-1):
             if(first):
-                previousResult = np.array(self.layers[i].backward(output_error))
+                previousResult = np.array(self.layers[i].backward(output_error,previousInput[i]))
                 first = False
             else:
-                previousResult = np.array(self.layers[i].backward(previousResult))
+                previousResult = np.array(self.layers[i].backward(previousResult,previousInput[i]))

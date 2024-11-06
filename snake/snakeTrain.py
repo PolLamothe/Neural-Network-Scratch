@@ -8,16 +8,21 @@ import os
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", dest="help", action='store_true')
 parser.add_argument("-s", dest="save", action='store_true')
+parser.add_argument("-f",dest="fullMap", action="store_true")
+parser.add_argument("-a",dest="aim")
+
 args = parser.parse_args()
 if(args.help):
     print("-c : Get all command")
     print("-s : Save the model once it has finish training")
+    print("-f : Give all of the grid to the IA")
+    print("-a : The average length you want the IA to reach")
     exit(0)
 
 gameSize = 5
-seeAllMap = False
+seeAllMap = args.fullMap
 
-snakeTrain = snakeTrainTools.snakeTrainTools(gameSize,seeAllMap)
+snakeTrain = snakeTrainTools.snakeTrainTools(gameSize,seeAllMap,int(args.aim),[75])
 snakeTrain.train()
 
 if(args.save):
