@@ -4,6 +4,7 @@ import snakeTrainTools
 import argparse
 import pickle
 import os
+import classe
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", dest="help", action='store_true')
@@ -22,7 +23,7 @@ if(args.help):
 gameSize = 5
 seeAllMap = args.fullMap
 
-snakeTrain = snakeTrainTools.snakeTrainTools(gameSize,seeAllMap,int(args.aim),[75])
+snakeTrain = snakeTrainTools.snakeTrainTools(gameSize,seeAllMap,int(args.aim),hiddenLayers=[50],activationFunction=classe.relu,softmaxState=True)
 snakeTrain.train()
 
 if(args.save):

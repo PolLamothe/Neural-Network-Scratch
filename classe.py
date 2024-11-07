@@ -21,13 +21,36 @@ def tanh(x):
 def tanh_prime(x):
     return 1-(tanh(x)**2)
 
+def softmax(X : list[float]) -> list[float]:
+    somme = 0
+    result = []
+
+    X = np.clip(X,-500, 500)
+    for x in X:
+        try:
+            somme += math.exp(x)
+        except OverflowError:
+            print(x)
+    for x in X:
+        result.append(math.exp(x)/somme)
+    return result
+
+def relu(x):
+    return max(0,x)
+
+def drelu(x):
+    if(x == 0):return 0
+    return 1
+
 
 class Perceptron():#Single nerone
-    def __init__(self,input_size : int,activation,learningRate : float=1):
+    def __init__(self,input_size : int,activation : callable,learningRate : float=1,rnn : bool = False):
         self.W : np.array.__class__ = np.random.rand(1,input_size)[0]#generating random connection wheights to every previous nerones
         self.activation = activation
         if(activation == tanh):self.activationPrime = tanh_prime
         elif(activation == sigmoid):self.activationPrime = dsigmoid
+        elif(activation == relu):self.activationPrime = drelu
+        elif(activation == softmax):pass
         else:raise ValueError()
         self.learningRate = learningRate
         self.bias = random.random()
@@ -35,13 +58,16 @@ class Perceptron():#Single nerone
     def forward(self,this_input : np.array.__class__) -> float:
         self.input : np.array.__class__ = this_input
         a = np.dot(this_input,self.W)
+        if(self.activation == softmax):
+            return (a+self.bias)
         result = self.activation(a + self.bias)
         self.output : float = result
         return result
     
     def backward(self,error : float,input : list[float] = None):
         if(input is not list):input = self.input
-        error *= self.activationPrime(self.output)
+        if(self.activation != softmax):
+            error *= self.activationPrime(self.output)
         a = error*np.array(input)
         self.W += a*self.learningRate#adjusting the weight
         self.bias += self.learningRate*error
@@ -50,17 +76,24 @@ class Perceptron():#Single nerone
 class Layer():
     #input_size : the number of neurones of the previous layer
     #output_size : the number of neurones in this layer
-    def __init__(self,input_size : int,output_size : int,activation,learningRate : float=1):
+    def __init__(self,input_size : int,output_size : int,activation : callable,learningRate : float=1,rnn : bool = False):
         self.nerone : list = []
         self.input_size = input_size
+        self.activation = activation
+        if(activation == softmax):
+            self.softmaxStore = []
         for i in range(output_size):
-            self.nerone.append(Perceptron(input_size,activation,learningRate))
+            self.nerone.append(Perceptron(input_size,activation,learningRate,rnn))
     
     #this function return the result of each of the neurones of this layer
     def forward(self,this_input : np.array.__class__) -> np.array.__class__:
         result = []
         for i in range(len(self.nerone)):
             result.append(self.nerone[i].forward(this_input))
+        if(self.activation == softmax):
+            result = softmax(result)
+            for i in range(len(self.nerone)):
+                self.nerone[i].output = result[i]
         return np.array(result)
     
     #error : an array containing the error for each of the neurones of this layer
@@ -81,10 +114,13 @@ class Layer():
         return input_error
     
 class Networks():
-    def __init__(self,neuroneNumber : list[int],activation,learningRate : float=1) -> None:
+    def __init__(self,neuroneNumber : list[int],activation,learningRate : float=1,rnn : bool = False,softmaxState : bool = False) -> None:
         self.layers : list[Layer] = []
         for i in range(1,len(neuroneNumber)):
-            self.layers.append(Layer(neuroneNumber[i-1],neuroneNumber[i],activation,learningRate))
+            if(i != len(neuroneNumber)-1 or not softmaxState):
+                self.layers.append(Layer(neuroneNumber[i-1],neuroneNumber[i],activation,learningRate,rnn))
+            else:
+                self.layers.append(Layer(neuroneNumber[i-1],neuroneNumber[i],softmax,learningRate,rnn))
     
     def forward(self,this_input) -> list[float]:
         first = True

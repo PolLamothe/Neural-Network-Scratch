@@ -11,7 +11,7 @@ import classe
 
 class snakeTrainTools():
 
-    def __init__(self,gameSize : int, seeAllMap : bool,averageAim : int,hiddenLayers : list[int]=[]) -> None:
+    def __init__(self,gameSize : int, seeAllMap : bool,averageAim : int,hiddenLayers : list[int]=[],activationFunction : callable=classe.sigmoid,softmaxState : bool = False) -> None:
         self.state = None
         self.previousGrid = []#store every step of the current game
         self.stepSinceLastFood = 0
@@ -28,10 +28,10 @@ class snakeTrainTools():
         self.fileName+=".json"
 
         if(seeAllMap == False):
-            self.network = classe.Networks([8*2]+hiddenLayers+[4],classe.sigmoid,0.1)
+            self.network = classe.Networks([8*2]+hiddenLayers+[4],activationFunction,learningRate=0.1,softmaxState=softmaxState)
         else:
             #self.network = classe.Networks([(((gameSize*2)-1)**2-1)*2]+hiddenLayers+[4],classe.sigmoid,0.1)
-            self.network = classe.Networks([gameSize**2*3]+hiddenLayers+[4],classe.sigmoid,0.1)
+            self.network = classe.Networks([gameSize**2*3]+hiddenLayers+[4],activationFunction,learningRate=0.1,softmaxState=softmaxState)
 
     def train(self):
         with open(self.fileName, 'w') as json_file:
@@ -85,7 +85,7 @@ class snakeTrainTools():
                 errors = [0]*4
                 errors[answerIndex] = -result[answerIndex]
                 self.network.backward(errors)
-                if(self.seeAllMap and False):
+                if(self.seeAllMap):
                     for step in self.dataSinceLastFood:
                         errors = [0]*4
                         errors[step["answerIndex"]] = -step["answerValue"]*0.2
@@ -110,7 +110,7 @@ class snakeTrainTools():
                         self.network.backward(errors,snakeTrainTools.generateInput(step["grid"],True,step["snake"]))'''
 
                 self.__reset()
-            elif(self.seeAllMap and False):#The network can learn to move to the food only if he can see where it is
+            elif(self.seeAllMap):#The network can learn to move to the food only if he can see where it is
                 if(self.previousHead != None):
                     currentDistance = abs(self.game.snake[-1][0]-self.game.fruit[0])+abs(self.game.snake[-1][1]-self.game.fruit[1])
                     previousDistance = abs(self.previousHead[0]-self.game.fruit[0])+abs(self.previousHead[1]-self.game.fruit[1])
@@ -122,9 +122,9 @@ class snakeTrainTools():
                 self.dataSinceLastFood.append({"grid":self.game.getGrid(),"snake":self.game.snake,"answerIndex":answerIndex,"answerValue":result[answerIndex]})
                 self.previousHead = self.game.snake[-1]
                 self.stepSinceLastFood += 1
-            if(state == None):#reward for surviving
+            if(state == None and False):#reward for surviving
                 errors = [0]*4
-                errors[answerIndex] = (1-result[answerIndex])*0.2
+                errors[answerIndex] = (1-result[answerIndex])*0.1
                 self.network.backward(errors)
         print("\nTraining is over !")
 

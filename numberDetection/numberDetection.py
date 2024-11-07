@@ -76,7 +76,7 @@ if(not useTrainedModel):
             if(state):
                 break
         else:
-            if(rightCount[right] > 0):rightCount[right] -= 4
+            if(rightCount[right] > 0):rightCount[right] -= 3
         err = []
         for i in range(10):
             if(i != right):
