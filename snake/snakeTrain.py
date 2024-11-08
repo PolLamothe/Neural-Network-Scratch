@@ -23,7 +23,7 @@ if(args.help):
 gameSize = 5
 seeAllMap = args.fullMap
 
-snakeTrain = snakeTrainTools.snakeTrainTools(gameSize,seeAllMap,int(args.aim),hiddenLayers=[50],activationFunction=classe.relu,softmaxState=True)
+snakeTrain = snakeTrainTools.snakeTrainTools(gameSize,seeAllMap,int(args.aim),hiddenLayers=[300],activationFunction=classe.sigmoid,softmaxState=False)
 snakeTrain.train()
 
 if(args.save):

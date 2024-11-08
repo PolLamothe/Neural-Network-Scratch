@@ -80,7 +80,7 @@ if(not useTrainedModel):
         err = []
         for i in range(10):
             if(i != right):
-                err.append(0-lastLayerResult[i])
+                err.append(-lastLayerResult[i])
             else:
                 err.append(1-lastLayerResult[i])
         network.backward(err)

@@ -16,9 +16,11 @@ def dsigmoid(x):
     return sigmoid(x)*(1-sigmoid(x))
         
 def tanh(x):
+    x = np.clip(x,-600,600)
     return (math.exp(x)-math.exp(-x))/(math.exp(x)+math.exp(-x))
 
 def tanh_prime(x):
+    x = np.clip(x,-600,600)
     return 1-(tanh(x)**2)
 
 def softmax(X : list[float]) -> list[float]:
