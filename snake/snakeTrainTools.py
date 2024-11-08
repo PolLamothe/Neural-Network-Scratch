@@ -74,6 +74,8 @@ class snakeTrainTools():
 
             if(self.game.fruit != fruitSave):#if the snake ate a fruit
                 errors = [0]*4
+                for i in range(len(errors)):
+                    errors[i] = -result[i]
                 errors[answerIndex] = 1-result[answerIndex]
                 self.network.backward(errors)
                 self.previousHead = None
@@ -83,13 +85,15 @@ class snakeTrainTools():
             state = self.game.checkState()
             if(state == False or self.stepSinceLastFood > self.gameSize**2*2):#If we have lost
                 errors = [0]*4
+                for i in range(len(errors)):
+                    errors[i] = 1-result[i]
                 errors[answerIndex] = -result[answerIndex]
                 self.network.backward(errors)
-                if(self.seeAllMap):
+                '''if(self.seeAllMap):
                     for step in self.dataSinceLastFood:
                         errors = [0]*4
                         errors[step["answerIndex"]] = -step["answerValue"]*0.2
-                        self.network.backward(errors,snakeTrainTools.generateInput(step["grid"],True,step["snake"]))
+                        self.network.backward(errors,snakeTrainTools.generateInput(step["grid"],True,step["snake"]))'''
 
                 if(len(self.game.snake) > maxlength):
                     maxlength = len(self.game.snake)
@@ -103,11 +107,11 @@ class snakeTrainTools():
                 errors[answerIndex] = (1-result[answerIndex])
                 self.network.backward(errors)
 
-                '''if(self.seeAllMap):
+                if(self.seeAllMap):
                     for step in self.dataSinceLastFood:
                         errors = [0]*4
                         errors[step["answerIndex"]] = (1-result[answerIndex])*0.25
-                        self.network.backward(errors,snakeTrainTools.generateInput(step["grid"],True,step["snake"]))'''
+                        self.network.backward(errors,snakeTrainTools.generateInput(step["grid"],True,step["snake"]))
 
                 self.__reset()
             elif(self.seeAllMap):#The network can learn to move to the food only if he can see where it is
