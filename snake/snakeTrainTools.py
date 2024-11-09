@@ -74,8 +74,6 @@ class snakeTrainTools():
 
             if(self.game.fruit != fruitSave):#if the snake ate a fruit
                 errors = [0]*4
-                for i in range(len(errors)):
-                    errors[i] = -result[i]
                 errors[answerIndex] = 1-result[answerIndex]
                 self.network.backward(errors)
                 self.previousHead = None
@@ -85,8 +83,9 @@ class snakeTrainTools():
             state = self.game.checkState()
             if(state == False or self.stepSinceLastFood > self.gameSize**2*2):#If we have lost
                 errors = [0]*4
-                for i in range(len(errors)):
-                    errors[i] = 1-result[i]
+                if(self.seeAllMap):
+                    for i in range(len(errors)):
+                        errors[i] = 1-result[i]
                 errors[answerIndex] = -result[answerIndex]
                 self.network.backward(errors)
                 '''if(self.seeAllMap):

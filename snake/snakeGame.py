@@ -1,6 +1,6 @@
 import numpy as np
 import random
-#import tkinter as tk
+import tkinter as tk
 
 class Game():
     def __init__(self,size : int) -> None:

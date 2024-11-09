@@ -23,7 +23,7 @@ if(args.help):
 gameSize = 5
 seeAllMap = args.fullMap
 try:
-    snakeTrain = snakeTrainTools.snakeTrainTools(gameSize,seeAllMap,int(args.aim),hiddenLayers=[100,100],activationFunction=classe.sigmoid,softmaxState=False)
+    snakeTrain = snakeTrainTools.snakeTrainTools(gameSize,seeAllMap,int(args.aim),hiddenLayers=[],activationFunction=classe.sigmoid,softmaxState=False)
 except TypeError:
     print("You forgot the parameter -a (press -c to see all comands)")
     exit(1)
