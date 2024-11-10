@@ -22,6 +22,7 @@ class snakeTrainTools():
         self.seeAllMap = seeAllMap
         self.previousHead = None
         self.fileName = "./data/game_"+str(gameSize)
+        self.maxAverageLength = -1
         self.averageAim = averageAim
         if(seeAllMap):self.fileName+="_FullMap"
         else:self.fileName+="_NearHead"
@@ -30,8 +31,8 @@ class snakeTrainTools():
         if(seeAllMap == False):
             self.network = classe.Networks([8*2]+hiddenLayers+[4],activationFunction,learningRate=0.1,softmaxState=softmaxState)
         else:
-            #self.network = classe.Networks([(((gameSize*2)-1)**2-1)*2]+hiddenLayers+[4],classe.sigmoid,0.1)
-            self.network = classe.Networks([gameSize**2*3]+hiddenLayers+[4],activationFunction,learningRate=0.1,softmaxState=softmaxState)
+            self.network = classe.Networks([(((gameSize*2)-1)**2-1)*2]+hiddenLayers+[4],activationFunction,learningRate=0.1,softmaxState=softmaxState)
+            #self.network = classe.Networks([gameSize**2*3]+hiddenLayers+[4],activationFunction,learningRate=0.1,softmaxState=softmaxState)
 
     def train(self):
         with open(self.fileName, 'w') as json_file:
@@ -47,7 +48,9 @@ class snakeTrainTools():
             if(self.iteration < 99):
                 print("number of iteration :"+str(self.iteration)+" max length : "+str(maxlength),end="\r")
             else:
-                print("number of iteration :"+str(self.iteration)+" max length : "+str(maxlength)+" average length : "+str(sum(self.previousLength)/len(self.previousLength)),end="\r")
+                if(sum(self.previousLength)/len(self.previousLength) > self.maxAverageLength):
+                    self.maxAverageLength = sum(self.previousLength)/len(self.previousLength)
+                print("number of iteration :"+str(self.iteration)+" max length : "+str(maxlength)+" average length : "+str(sum(self.previousLength)/len(self.previousLength))+" max average length : "+str(self.maxAverageLength),end="\r")
 
             Networkinput = snakeTrainTools.generateInput(self.game.getGrid(),self.seeAllMap,self.game.snake)
                 
@@ -175,7 +178,7 @@ class snakeTrainTools():
         networkInput = []
         snakeHead = snake[-1]
         gameSize = len(grid)
-        if(not seeAllMap):
+        if(True):
             radius = 1
             if(seeAllMap):
                 radius = gameSize-1
