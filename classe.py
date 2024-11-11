@@ -27,12 +27,13 @@ def softmax(X : list[float]) -> list[float]:
     somme = 0
     result = []
 
-    X = np.clip(X,-500, 500)
+    X = np.clip(X,-600, 600)
     for x in X:
         try:
             somme += math.exp(x)
         except OverflowError:
             print(x)
+            exit(1)
     for x in X:
         result.append(math.exp(x)/somme)
     return result
@@ -41,7 +42,7 @@ def relu(x):
     return max(0,x)
 
 def drelu(x):
-    if(x == 0):return 0
+    if(x <= 0):return 0
     return 1
 
 
@@ -116,13 +117,22 @@ class Layer():
         return input_error
     
 class Networks():
-    def __init__(self,neuroneNumber : list[int],activation,learningRate : float=1,softmaxState : bool = False) -> None:
+    def __init__(self,neuroneNumber : list[int],activation=None,learningRate : float=1,neuroneActivation : list[callable]=None) -> None:
         self.layers : list[Layer] = []
+        activationList = []
+        if(neuroneActivation == None):
+            if(activation == None):
+                raise Exception("No activation function was provided")
+            for i in range(len(neuroneNumber)):
+                activationList.append(activation)
+        else:
+            for i in range(len(neuroneActivation)):
+                activationList.append(neuroneActivation[i])
         for i in range(1,len(neuroneNumber)):
-            if(i != len(neuroneNumber)-1 or not softmaxState):
-                self.layers.append(Layer(neuroneNumber[i-1],neuroneNumber[i],activation,learningRate))
-            else:
-                self.layers.append(Layer(neuroneNumber[i-1],neuroneNumber[i],softmax,learningRate))
+            try:
+                self.layers.append(Layer(neuroneNumber[i-1],neuroneNumber[i],activationList[i-1],learningRate))
+            except IndexError:
+                raise Exception("You forgot to provide the activation function for a layer")
     
     def forward(self,this_input) -> list[float]:
         first = True

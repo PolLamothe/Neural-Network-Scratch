@@ -11,7 +11,7 @@ import classe
 
 class snakeTrainTools():
 
-    def __init__(self,gameSize : int, seeAllMap : bool,averageAim : int,hiddenLayers : list[int]=[],activationFunction : callable=classe.sigmoid,softmaxState : bool = False) -> None:
+    def __init__(self,gameSize : int, seeAllMap : bool,averageAim : int,hiddenLayers : list[int]=[],activationFunction : callable=None,neuroneActivation : list[callable]=None) -> None:
         self.state = None
         self.previousGrid = []#store every step of the current game
         self.stepSinceLastFood = 0
@@ -29,9 +29,9 @@ class snakeTrainTools():
         self.fileName+=".json"
 
         if(seeAllMap == False):
-            self.network = classe.Networks([8*2]+hiddenLayers+[4],activationFunction,learningRate=0.1,softmaxState=softmaxState)
+            self.network = classe.Networks([8*2]+hiddenLayers+[4],activation=activationFunction,learningRate=0.1,neuroneActivation=neuroneActivation)
         else:
-            self.network = classe.Networks([(((gameSize*2)-1)**2-1)*2]+hiddenLayers+[4],activationFunction,learningRate=0.1,softmaxState=softmaxState)
+            self.network = classe.Networks([(((gameSize*2)-1)**2-1)*2]+hiddenLayers+[4],activation=activationFunction,learningRate=0.1,neuroneActivation=neuroneActivation)
             #self.network = classe.Networks([gameSize**2*3]+hiddenLayers+[4],activationFunction,learningRate=0.1,softmaxState=softmaxState)
 
     def train(self):
@@ -79,6 +79,11 @@ class snakeTrainTools():
                 errors = [0]*4
                 errors[answerIndex] = 1-result[answerIndex]
                 self.network.backward(errors)
+                '''if(self.seeAllMap):
+                    for step in self.dataSinceLastFood:
+                        errors = [0]*4
+                        errors[step["answerIndex"]] = step["answerValue"]*0.2
+                        self.network.backward(errors,snakeTrainTools.generateInput(step["grid"],True,step["snake"]))'''
                 self.previousHead = None
                 self.stepSinceLastFood = 0
                 self.dataSinceLastFood = []
@@ -91,11 +96,11 @@ class snakeTrainTools():
                         errors[i] = 1-result[i]
                 errors[answerIndex] = -result[answerIndex]
                 self.network.backward(errors)
-                '''if(self.seeAllMap):
+                if(self.seeAllMap and False):
                     for step in self.dataSinceLastFood:
                         errors = [0]*4
                         errors[step["answerIndex"]] = -step["answerValue"]*0.2
-                        self.network.backward(errors,snakeTrainTools.generateInput(step["grid"],True,step["snake"]))'''
+                        self.network.backward(errors,snakeTrainTools.generateInput(step["grid"],True,step["snake"]))
 
                 if(len(self.game.snake) > maxlength):
                     maxlength = len(self.game.snake)
