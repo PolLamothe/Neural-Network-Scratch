@@ -1,18 +1,18 @@
 # Multilayer Perceptron from scratch
 
-## Presentation
+# Presentation
 
 ![demo](./demo.png)
 
 This project aim to help me understanding how IA works. That's why I choosed to use only numpy and math.
 
-## List of the projects : 
+# List of the projects : 
  - An IA capable of detecting the number draw in a 28 x 28 square (data provided by [MNIST](https://en.wikipedia.org/wiki/MNIST_database)).
 
  - A IA capable of doing a very good score in the snake game
 
 ---
-## File
+# File
 
 Here is the list of the file in this project and what are they used for :
 
@@ -48,7 +48,35 @@ Here is the list of the file in this project and what are they used for :
  - **model (folder)** : This folder contain all of the trained IA
 
 ---
-## Sources :
+# Math
+
+## Variables :
+- $X$ is the input of the nerone
+- $W$ is the weight of the nerones connection
+- $b$ is the bias of the nerone
+- $f$ is the activation function
+- $l$ is the learning rate
+- $y$ is the output of the nerone
+- $\sigma Y$ is the output error
+- $\sigma W$ is the new weight matrix for the nerone
+- $\sigma b$ is the new bias of the nerone
+- $\sigma X$ is the input error of the nerone `warning: it's not directly the output error of the previous layer`
+
+## Forward Propagation :
+$$y = f(X*W+b)$$
+
+## Backward Propagation : 
+### Weight adjustment :
+$$\sigma W = W + \sigma Y*f'(y)*X*l$$
+
+### Bias adjustment : 
+$$\sigma b = b + \sigma Y*f'(y)*l$$
+
+### Input error :
+$$\sigma X = \sigma Y * f'(y)*W*X$$
+
+---
+# Sources :
 
 https://towardsdatascience.com/math-neural-network-from-scratch-in-python-d6da9f29ce65
 
