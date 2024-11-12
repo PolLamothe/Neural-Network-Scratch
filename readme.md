@@ -57,7 +57,7 @@ Here is the list of the file in this project and what are they used for :
 - $f$ is the activation function
 - $l$ is the learning rate
 - $y$ is the output of the nerone
-- $\sigma Y$ is the output error
+- $\sigma y$ is the output error
 - $\sigma W$ is the new weight matrix for the nerone
 - $\sigma b$ is the new bias of the nerone
 - $\sigma X$ is the input error of the nerone `warning: it's not directly the output error of the previous layer`
@@ -67,13 +67,13 @@ $$y = f(X*W+b)$$
 
 ## Backward Propagation : 
 ### Weight adjustment :
-$$\sigma W = W + \sigma Y*f'(y)*X*l$$
+$$\sigma W = W + \sigma y * f'(y) * X * l$$
 
 ### Bias adjustment : 
-$$\sigma b = b + \sigma Y*f'(y)*l$$
+$$\sigma b = b + \sigma y * f'(y) * l$$
 
 ### Input error :
-$$\sigma X = \sigma Y * f'(y)*W*X$$
+$$\sigma X = \sigma y * f'(y) * W * X$$
 
 ---
 # Sources :
