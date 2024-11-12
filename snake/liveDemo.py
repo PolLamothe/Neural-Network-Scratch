@@ -3,6 +3,7 @@ from os import walk
 import pickle
 import snakeTrainTools
 import random
+import classe
 
 allModel = []
 for (dirpath, dirnames, filenames) in walk("./model"):
@@ -16,7 +17,7 @@ def handleModelChoice(name : str):
     global ui
     global game
     with open("./model/"+name, "rb") as file:
-        network = pickle.load(file)
+        network : classe.Networks = pickle.load(file)
     
     gameSize = int(name.split("_")[1])
     fullMap = name.split("_")[2] == "FullMap.pkl"
