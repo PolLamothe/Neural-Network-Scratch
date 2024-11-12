@@ -1,6 +1,9 @@
 import numpy as np
 import random
-import tkinter as tk
+try:
+    import tkinter as tk
+except ModuleNotFoundError:
+    print("you are running in no UI mode")
 
 class Game():
     def __init__(self,size : int) -> None:
