@@ -6,8 +6,9 @@
     <title>Number Detection IA</title>
 </head>
 <body>
-    <div id="numberGlobalGrid">
-    </div>
+    <div id="numberGlobalGrid"></div>
+    <div id="answerGlobalDiv"></div>
+    <p id="answerText"></p>
     <script defer>
         var url = `${window.location.protocol}//${window.location.hostname}`
         if(window.location.hostname != "pollamothe.fr"){
@@ -24,26 +25,74 @@
             document.getElementById("numberGlobalGrid").children[document.getElementById("numberGlobalGrid").children.length-1].appendChild(temp)
         }
 
-        async function getAgentData(){
-            const response = await (await fetch(`${url}/numberDetection/getData`,{method:"GET"})).json()
-            console.log(response)
-            for(let i = 0;i<28;i++){
-                for(let x = 0;x<28;x++){
-                    let divider = response["data"]["data"][i][x]/255
-                    document.getElementById("numberGlobalGrid").children[i].children[x].style.backgroundColor = `rgb(${255*divider},${255*divider},${255*divider})`
+        function indexOfMax(arr) {
+            if (arr.length === 0) {
+                return -1;
+            }
+
+            var max = arr[0];
+            var maxIndex = 0;
+
+            for (var i = 1; i < arr.length; i++) {
+                if (arr[i] > max) {
+                    maxIndex = i;
+                    max = arr[i];
                 }
             }
+
+            return maxIndex;
+        }
+
+        async function getAgentData(){
+            const response = await (await fetch(`${url}/numberDetection/getData`,{method:"GET"})).json()
+            for(let i = 0;i<28;i++){
+                for(let x = 0;x<28;x++){
+                    let color = response["data"]["data"][i][x]
+                    document.getElementById("numberGlobalGrid").children[i].children[x].style.backgroundColor = `rgb(${color},${color},${color})`
+                }
+            }
+            for(let i = 0;i<response["agentAnswer"].length;i++){
+                let temp = document.createElement("p")
+                temp.innerText=Math.round(response["agentAnswer"][i]*100)/100
+                if(i != response["data"]["rightAnswer"]){
+                    temp.style.color = "red"
+                }else{
+                    temp.style.color = "green"
+                }
+                document.getElementById("answerGlobalDiv").appendChild(temp)
+            }
+            document.getElementById("answerText").innerText = `The model predict the number ${indexOfMax(response["agentAnswer"])} | The right answer is : ${response["data"]["rightAnswer"]}`
         }
         getAgentData()
     </script>
     <style>
+        #answerText{
+            text-align: center;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 24px;
+        }
+        #answerGlobalDiv p{
+            border: solid 4px black;
+            width: 3vw;
+            height: 3vh;
+            text-align: center;
+            align-content: center;
+        }
+        #answerGlobalDiv{
+            display: flex;
+            width: 50vw;
+            justify-content: space-around;
+            margin-left: 50%;
+            transform: translateX(-50%);
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 24px;
+        }
         body{
             overflow: hidden;
         }
         #numberGlobalGrid{
             margin-left: 50%;
-            margin-top: 50vh;
-            transform: translate(-50%,-50%);
+            transform: translateX(-50%);
         }
         .globalGridChild{
             display: flex;
