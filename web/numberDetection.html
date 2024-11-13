@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Detection IA</title>
+</head>
+<body>
+    <div id="numberGlobalGrid">
+    </div>
+    <script defer>
+        var url = `${window.location.protocol}//${window.location.hostname}`
+        if(window.location.hostname != "pollamothe.fr"){
+            url += ":5000"
+        }
+
+        for(let i = 0;i<28*28;i++){
+            if(i%28 == 0){
+                let temp = document.createElement("div")
+                temp.setAttribute("class","globalGridChild")
+                document.getElementById("numberGlobalGrid").appendChild(temp)
+            }
+            let temp = document.createElement("div")
+            document.getElementById("numberGlobalGrid").children[document.getElementById("numberGlobalGrid").children.length-1].appendChild(temp)
+        }
+
+        async function getAgentData(){
+            const response = await (await fetch(`${url}/numberDetection/getData`,{method:"GET"})).json()
+            console.log(response)
+            for(let i = 0;i<28;i++){
+                for(let x = 0;x<28;x++){
+                    let divider = response["data"]["data"][i][x]/255
+                    document.getElementById("numberGlobalGrid").children[i].children[x].style.backgroundColor = `rgb(${255*divider},${255*divider},${255*divider})`
+                }
+            }
+        }
+        getAgentData()
+    </script>
+    <style>
+        body{
+            overflow: hidden;
+        }
+        #numberGlobalGrid{
+            margin-left: 50%;
+            margin-top: 50vh;
+            transform: translate(-50%,-50%);
+        }
+        .globalGridChild{
+            display: flex;
+            flex-direction: row;
+        }
+        .globalGridChild div {
+            background-color: black;
+            width: 3vw;
+            height: 3vh;
+        }
+    </style>
+</body>
+</html>
