@@ -30,8 +30,8 @@ class snakeTrainTools():
         if(seeAllMap == False):
             self.network = classe.Networks([8*2]+hiddenLayers+[4],activation=activationFunction,learningRate=0.1,neuroneActivation=neuroneActivation)
         else:
-            self.network = classe.Networks([(((gameSize*2)-1)**2-1)*2]+hiddenLayers+[4],activation=activationFunction,learningRate=0.1,neuroneActivation=neuroneActivation)
-            #self.network = classe.Networks([gameSize**2*3]+hiddenLayers+[4],activationFunction,learningRate=0.1,softmaxState=softmaxState)
+            #self.network = classe.Networks([(((gameSize*2)-1)**2-1)*2]+hiddenLayers+[4],activation=activationFunction,learningRate=0.1,neuroneActivation=neuroneActivation)
+            self.network = classe.Networks([gameSize**2*3]+hiddenLayers+[4],activation=activationFunction,learningRate=0.1,neuroneActivation=neuroneActivation)
 
     def train(self):
         with open(self.fileName, 'w') as json_file:
@@ -78,16 +78,16 @@ class snakeTrainTools():
                 errors = [0]*4
                 errors[answerIndex] = 1-result[answerIndex]
                 self.network.backward(errors)
-                if(self.seeAllMap and False):
+                if(self.seeAllMap):
                     for step in self.dataSinceLastFood:
                         errors = [0]*4
-                        errors[step["answerIndex"]] = step["answerValue"]/len(self.dataSinceLastFood)
+                        errors[step["answerIndex"]] = (1-step["answerValue"])*0.5
                         self.network.backward(errors,snakeTrainTools.generateInput(step["grid"],True,step["snake"]))
                 self.previousHead = None
                 self.dataSinceLastFood = []
 
             state = self.game.checkState()
-            if(state == False or len(self.dataSinceLastFood) > self.gameSize**2):#If we have lost
+            if(state == False or str(self.game.getGrid()) in [str(i["grid"]) for i in self.dataSinceLastFood]):#If we have lost
                 errors = [0]*4
                 for i in range(len(errors)):
                     errors[i] = 1-result[i]
@@ -96,7 +96,7 @@ class snakeTrainTools():
                 if(self.seeAllMap):
                     for step in self.dataSinceLastFood:
                         errors = [0]*4
-                        errors[step["answerIndex"]] = -step["answerValue"]*0.2#/len(self.dataSinceLastFood)
+                        errors[step["answerIndex"]] = -step["answerValue"]*0.5#/len(self.dataSinceLastFood)
                         self.network.backward(errors,snakeTrainTools.generateInput(step["grid"],True,step["snake"]))
 
                 if(len(self.game.snake) > maxlength):
@@ -118,7 +118,11 @@ class snakeTrainTools():
                     previousDistance = abs(self.previousHead[0]-self.game.fruit[0])+abs(self.previousHead[1]-self.game.fruit[1])
                     if(currentDistance < previousDistance):
                         errors = [0]*4
-                        errors[answerIndex] = (1-result[answerIndex])*0.5
+                        errors[answerIndex] = (1-result[answerIndex])*0.2
+                        self.network.backward(errors)
+                    elif(currentDistance > previousDistance):
+                        errors = [0]*4
+                        errors[answerIndex] = -result[answerIndex]*0.2
                         self.network.backward(errors)
             if(state == None):
                 self.dataSinceLastFood.append({"grid":self.game.getGrid(),"snake":self.game.snake,"answerIndex":answerIndex,"answerValue":result[answerIndex]})
@@ -195,7 +199,7 @@ class snakeTrainTools():
         networkInput = []
         snakeHead = snake[-1]
         gameSize = len(grid)
-        if(True):
+        if(not seeAllMap):
             radius = 1
             if(seeAllMap):
                 radius = gameSize-1

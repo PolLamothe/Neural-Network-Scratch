@@ -14,8 +14,6 @@ gridIndex = 0
 iterationAvaible = []
 
 def selectionHandler(name : str):
-    print(name)
-
     with open("./data/"+name, 'r') as fichier:
         jsonData = json.load(fichier)
 
@@ -42,6 +40,7 @@ def selectionHandler(name : str):
         for i in range(len(jsonData["data"])):
             if(jsonData["data"][i]["iteration"] == iteration):
                 gameIndex = i
+                gridIndex = 0
         ui.startGame(jsonData["data"][gameIndex]["data"][gridIndex]["data"],jsonData["data"][gameIndex]["data"][gridIndex]["head"],updateGrid=updateData,replayGame=replayData)
     
     ui.startChoosingDataMenu(iterationAvaible,iterationChoosed)
