@@ -1,10 +1,14 @@
-from flask import Flask
+from flask import Flask,render_template
 from flask_cors import CORS
 import numberDetection.numberDetectionTools
 import numpy as np
 
-app = Flask(__name__)
+app = Flask(__name__,template_folder="web")
 CORS(app)
+
+@app.route('/numberDetection', methods=['GET'])
+def serve_page():
+    return render_template("numberDetection.html")
 
 # Endpoint GET
 @app.route('/numberDetection/getData', methods=['GET'])
@@ -14,4 +18,4 @@ def post_data():
 
 # Lancer le serveur
 if __name__ == '__main__':
-    app.run(port=5000)
+    app.run(host="0.0.0.0",port=5000)

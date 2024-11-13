@@ -10,10 +10,7 @@
     <div id="answerGlobalDiv"></div>
     <p id="answerText"></p>
     <script defer>
-        var url = `${window.location.protocol}//${window.location.hostname}`
-        if(window.location.hostname != "pollamothe.fr"){
-            url += ":5000"
-        }
+        var url = `${window.location.protocol}//${window.location.hostname}:${window.location.port}`
 
         for(let i = 0;i<28*28;i++){
             if(i%28 == 0){
