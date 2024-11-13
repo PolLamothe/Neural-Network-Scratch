@@ -10,8 +10,6 @@
     <div id="answerGlobalDiv"></div>
     <p id="answerText"></p>
     <script defer>
-        var url = `${window.location.protocol}//${window.location.hostname}:${window.location.port}`
-
         for(let i = 0;i<28*28;i++){
             if(i%28 == 0){
                 let temp = document.createElement("div")
@@ -41,7 +39,7 @@
         }
 
         async function getAgentData(){
-            const response = await (await fetch(`${url}/numberDetection/getData`,{method:"GET"})).json()
+            const response = await (await fetch(`${window.location}/getData`,{method:"GET"})).json()
             for(let i = 0;i<28;i++){
                 for(let x = 0;x<28;x++){
                     let color = response["data"]["data"][i][x]
