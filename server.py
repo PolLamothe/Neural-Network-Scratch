@@ -1,10 +1,14 @@
-from flask import Flask,render_template
+from flask import Flask,render_template,redirect
 from flask_cors import CORS
 import numberDetection.numberDetectionTools
 import numpy as np
 
 app = Flask(__name__,template_folder="web")
 CORS(app)
+
+@app.route('/', methods=['GET'])
+def redirect_temporarily():
+    return redirect("/numberDetection")
 
 @app.route('/numberDetection', methods=['GET'])
 def serve_page():
