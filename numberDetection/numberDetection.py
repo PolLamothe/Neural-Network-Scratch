@@ -66,7 +66,7 @@ if(not useTrainedModel):
         right = numberDetectionTools.y_train[currentIndex]
         lastLayerResult = network.forward(np.append(numberDetectionTools.x_train[currentIndex],[]))
         if(checkAnswer(right,lastLayerResult)):
-            if(rightCount[right] <= 50):
+            if(rightCount[right] < 10):
                 rightCount[right] += 1
             state = True
             for i in range(10):
@@ -76,7 +76,7 @@ if(not useTrainedModel):
             if(state):
                 break
         else:
-            if(rightCount[right] > 0):rightCount[right] -= 3
+            if(rightCount[right] > 0):rightCount[right] = 0
         err = []
         for i in range(10):
             if(i != right):
