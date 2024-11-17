@@ -47,8 +47,13 @@ def drelu(x):
 
 
 class Perceptron():#Single nerone
-    def __init__(self,input_size : int,activation : callable,learningRate : float=1):
-        self.W : np.array.__class__ = np.random.rand(1,input_size)[0]#generating random connection wheights to every previous nerones
+    def __init__(self,input_size : int,activation : callable,learningRate : float=1,parents : list=None):
+        if(parents == None):
+            self.W : np.array.__class__ = np.random.uniform(low=-1, high=1, size=(input_size,))#generating random connection wheights to every previous nerones
+        else:
+            self.W = (parents[0].W+parents[1].W)/2
+            for w in self.W:
+                w += random.uniform(-0.1,0.1)
         self.activation = activation
         if(activation == tanh):self.activationPrime = tanh_prime
         elif(activation == sigmoid):self.activationPrime = dsigmoid
@@ -56,7 +61,10 @@ class Perceptron():#Single nerone
         elif(activation == softmax):pass
         else:raise ValueError()
         self.learningRate = learningRate
-        self.bias = random.random()
+        if(parents == None):
+            self.bias = random.uniform(-1,1)
+        else:
+            self.bias = (parents[0].bias+parents[1].bias)/2 + random.uniform(-0.1,0.1)
 
     def forward(self,this_input : np.array.__class__) -> float:
         self.input : np.array.__class__ = this_input
@@ -67,26 +75,28 @@ class Perceptron():#Single nerone
         self.output : float = result
         return result
     
-    def backward(self,error : float,input : list[float] = None):
-        if(input is not list):input = self.input
+    def backward(self,error : float):
         if(self.activation != softmax):
             error *= self.activationPrime(self.output)
-        a = error*np.array(input)
+        a = error*np.array(self.input)
         self.W += a*self.learningRate#adjusting the weight
         self.bias += self.learningRate*error
-        return error*self.W*input
+        return error*self.W*self.input
 
 class Layer():
     #input_size : the number of neurones of the previous layer
     #output_size : the number of neurones in this layer
-    def __init__(self,input_size : int,output_size : int,activation : callable,learningRate : float=1):
+    def __init__(self,input_size : int,output_size : int,activation : callable,learningRate : float=1,parents : list=None):
         self.nerone : list = []
         self.input_size = input_size
         self.activation = activation
         if(activation == softmax):
             self.softmaxStore = []
         for i in range(output_size):
-            self.nerone.append(Perceptron(input_size,activation,learningRate))
+            if(parents == None):
+                self.nerone.append(Perceptron(input_size,activation,learningRate))
+            else:
+                self.nerone.append(Perceptron(input_size,activation,learningRate,parents=[parents[0].nerone[i],parents[1].nerone[i]]))
     
     #this function return the result of each of the neurones of this layer
     def forward(self,this_input : np.array.__class__) -> np.array.__class__:
@@ -100,12 +110,12 @@ class Layer():
         return np.array(result)
     
     #error : an array containing the error for each of the neurones of this layer
-    def backward(self,output_error : np.array.__class__,input : list[float] = None):
+    def backward(self,output_error : np.array.__class__):
         nerones_error = []
         nerones_weight = []
         nerones_output = []
         for i in range(len(self.nerone)):#pour chaque neurone
-            nerones_error.append(self.nerone[i].backward(output_error[i],input))
+            nerones_error.append(self.nerone[i].backward(output_error[i]))
             nerones_weight.append(self.nerone[i].W)
             nerones_output.append(self.nerone[i].output)
         input_error = []
@@ -117,7 +127,7 @@ class Layer():
         return input_error
     
 class Networks():
-    def __init__(self,neuroneNumber : list[int],activation=None,learningRate : float=1,neuroneActivation : list[callable]=None) -> None:
+    def __init__(self,neuroneNumber : list[int],activation=None,learningRate : float=1,neuroneActivation : list[callable]=None,parents : list=None) -> None:
         self.layers : list[Layer] = []
         activationList = []
         if(neuroneActivation == None):
@@ -130,7 +140,10 @@ class Networks():
                 activationList.append(neuroneActivation[i])
         for i in range(1,len(neuroneNumber)):
             try:
-                self.layers.append(Layer(neuroneNumber[i-1],neuroneNumber[i],activationList[i-1],learningRate))
+                if(parents != None):
+                    self.layers.append(Layer(neuroneNumber[i-1],neuroneNumber[i],activationList[i-1],learningRate,parents=[parents[0].layers[i-1],parents[1].layers[i-1]]))
+                else:
+                    self.layers.append(Layer(neuroneNumber[i-1],neuroneNumber[i],activationList[i-1],learningRate))
             except IndexError:
                 raise Exception("You forgot to provide the activation function for a layer")
     
@@ -145,18 +158,12 @@ class Networks():
                 previousResult = layer.forward(previousResult)
         return previousResult
 
-    def backward(self,output_error,input : list[float]=None):
+    def backward(self,output_error):
         first = True
         previousResult = None
-        if(input is list):
-            previousInput = input
-            for i in range(len(self.layers)):
-                previousInput.append(self.layers[i].forward(previousInput[i]))
-        else:
-            previousInput = [None]*(len(self.layers))
         for i in range(len(self.layers)-1,-1,-1):
             if(first):
-                previousResult = np.array(self.layers[i].backward(output_error,previousInput[i]))
+                previousResult = np.array(self.layers[i].backward(output_error))
                 first = False
             else:
-                previousResult = np.array(self.layers[i].backward(previousResult,previousInput[i]))
+                previousResult = np.array(self.layers[i].backward(previousResult))
