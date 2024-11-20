@@ -78,7 +78,7 @@ if(not useTrainedModel):
         else:
             if(rightCount[right] > 0):
                 for i in range(10):
-                    rightCount[i] = max(rightCount[i]-4,0)
+                    rightCount[i] = rightCount[i]-9*min(rightCount[i]/9,1)
         err = []
         for i in range(10):
             if(i != right):
