@@ -14,8 +14,8 @@ class trainSnakeEvo(snakeTrainTools.snakeTrainTools):
         self.gameSize = gameSize
         self.averageAim = averageAim
         self.childPerformance = []
-        #self.child = [classe.Networks([gameSize**2*3]+hiddenLayers+[4],activation=activationFunction,learningRate=0.1,neuroneActivation=neuroneActivation) for i in range(SELECTIONSIZE*MULTIPLIER)]
-        self.child = [classe.Networks([(((gameSize*2)-1)**2-1)*2]+hiddenLayers+[4],activation=activationFunction,learningRate=0.1,neuroneActivation=neuroneActivation) for i in range(SELECTIONSIZE*MULTIPLIER)]
+        self.child = [classe.Networks([gameSize**2*3]+hiddenLayers+[4],activation=activationFunction,learningRate=0.1,neuroneActivation=neuroneActivation) for i in range(SELECTIONSIZE*MULTIPLIER)]
+        #self.child = [classe.Networks([(((gameSize*2)-1)**2-1)*2]+hiddenLayers+[4],activation=activationFunction,learningRate=0.1,neuroneActivation=neuroneActivation) for i in range(SELECTIONSIZE*MULTIPLIER)]
         self.parents = []
         self.hiddenLayers = hiddenLayers
         self.activationFunction = activationFunction
@@ -38,15 +38,15 @@ class trainSnakeEvo(snakeTrainTools.snakeTrainTools):
             survivor += self.childPerformance[:SELECTIONSIZE]
             survivor.sort(reverse=True,key=operator.itemgetter("performance"))
             survivor = survivor[:SELECTIONSIZE]
-            if(not filter(lambda x : x["performance"] >= self.averageAim,survivor)):break
+            if(survivor[0]["performance"] >= float(self.averageAim)):break
             tempNetworks = []
             for i in range(1,len(survivor)):#creating the next childs
                 for x in range(i,len(survivor)):
                     tempNetworks.append(classe.Networks([self.gameSize**2*3]+self.hiddenLayers+[4],activation=self.activationFunction,learningRate=0.1,neuroneActivation=self.neuroneActivation,parents=[survivor[i]["network"],survivor[x]["network"]]))
             self.child = tempNetworks.copy()
             self.iterationData.append({"generation":currentGeneration,"maxLength":survivor[0]["performance"],"averageLength":trainSnakeEvo.getAveragePerformance(survivor)})
-            plt.plot([i for i in range(len(self.iterationData))],[self.iterationData[i]["averageLength"] for i in range(len(self.iterationData))], label="AverageLength of the selected agent")
-            plt.plot([i for i in range(len(self.iterationData))],[self.iterationData[i]["maxLength"] for i in range(len(self.iterationData))],label = "AverageLength of the best agent")
+            plt.plot([i+1 for i in range(len(self.iterationData))],[self.iterationData[i]["averageLength"] for i in range(len(self.iterationData))], label="AverageLength of the selected agent")
+            plt.plot([i+1 for i in range(len(self.iterationData))],[self.iterationData[i]["maxLength"] for i in range(len(self.iterationData))],label = "AverageLength of the best agent")
             plt.xlabel("generation")
             plt.ylabel("snake length")
             plt.savefig('evoData.png')
@@ -135,7 +135,7 @@ class trainSnakeEvo(snakeTrainTools.snakeTrainTools):
         networkInput = []
         snakeHead = snake[-1]
         gameSize = len(grid)
-        if(True):
+        if(False):
             radius = 1
             if(seeAllMap):
                 radius = gameSize-1
