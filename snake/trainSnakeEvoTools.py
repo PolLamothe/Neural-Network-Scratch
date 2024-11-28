@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 SELECTIONSIZE = 21 #The number of snake in survivor
 
-MULTIPLIER = 20 #The number of snake that will be generated during the first generation
+MULTIPLIER = 10 #The number of snake that will be generated during the first generation
 
 class trainSnakeEvo(snakeTrainTools.snakeTrainTools):
     def __init__(self, gameSize: int, averageAim: int, hiddenLayers: list[int] = [], activationFunction: callable = None, neuroneActivation: list = None) -> None:
@@ -31,6 +31,9 @@ class trainSnakeEvo(snakeTrainTools.snakeTrainTools):
                 print("currentGeneration : "+str(currentGeneration),end="\r")
             else:
                 print("currentGeneration : "+str(currentGeneration)+" maxLength : "+str(survivor[0]["performance"])+" averageLength : "+str(trainSnakeEvo.getAveragePerformance(survivor)),end="\r")
+            if(currentGeneration > 1):
+                if(survivor[0]["performance"] >= float(self.averageAim)):
+                    return survivor[0]["network"]
             self.childPerformance = []
             for i in range(len(self.child)):#benchmarking the childs
                 self.childPerformance.append({"number" : (currentGeneration-1)*SELECTIONSIZE*MULTIPLIER+i,"performance":self.__runChild(self.child[i]),"network":self.child[i]})
@@ -38,7 +41,7 @@ class trainSnakeEvo(snakeTrainTools.snakeTrainTools):
             survivor += self.childPerformance[:SELECTIONSIZE]
             survivor.sort(reverse=True,key=operator.itemgetter("performance"))
             survivor = survivor[:SELECTIONSIZE]
-            if(survivor[0]["performance"] >= float(self.averageAim)):break
+            
             tempNetworks = []
             for i in range(1,len(survivor)):#creating the next childs
                 for x in range(i,len(survivor)):
@@ -67,7 +70,7 @@ class trainSnakeEvo(snakeTrainTools.snakeTrainTools):
             while(state == None):
                 Networkinput = trainSnakeEvo.generateInput(game.getGrid(),True,game.snake)
                 result = network.forward(Networkinput)
-                answerIndex = random.choice(snakeTrainTools.snakeTrainTools.getAllMaxIndex(self.__superviseAnswer(game,result,network)))
+                answerIndex = random.choice(snakeTrainTools.snakeTrainTools.getAllMaxIndex(trainSnakeEvo.superviseAnswer(self.gameSize,game,result,network)))
 
                 if(answerIndex == 0):
                     game.directionY = -1
@@ -109,7 +112,7 @@ class trainSnakeEvo(snakeTrainTools.snakeTrainTools):
             currentPerformance.append(len(game.snake))
         return sum(currentPerformance)/len(currentPerformance)
     
-    def __superviseAnswer(self,game : snakeGame.Game,result : list[float],network : classe.Networks) -> int:
+    def superviseAnswer(gameSize : int,game : snakeGame.Game,result : list[float],network : classe.Networks) -> int:
         gameGrid = game.getGrid()
         modifiedResult = result.copy()
         errors = [i for i in result]*4
@@ -117,16 +120,15 @@ class trainSnakeEvo(snakeTrainTools.snakeTrainTools):
             if(game.snake[-1][1]-1 < 0 or gameGrid[game.snake[-1][1]-1,game.snake[-1][0]] == -1):
                 errors[0] = -result[0]
                 modifiedResult[0] = 0
-            if(game.snake[-1][1]+1 >= self.gameSize or gameGrid[game.snake[-1][1]+1,game.snake[-1][0]] == -1):
+            if(game.snake[-1][1]+1 >= gameSize or gameGrid[game.snake[-1][1]+1,game.snake[-1][0]] == -1):
                 errors[1] = -result[1]
                 modifiedResult[1] = 0
             if(game.snake[-1][0]-1 < 0 or gameGrid[game.snake[-1][1],game.snake[-1][0]-1] == -1):
                 errors[2] = -result[2]
                 modifiedResult[2] = 0
-            if(game.snake[-1][0]+1 >= self.gameSize or gameGrid[game.snake[-1][1],game.snake[-1][0]+1] == -1):
+            if(game.snake[-1][0]+1 >= gameSize or gameGrid[game.snake[-1][1],game.snake[-1][0]+1] == -1):
                 errors[3] = -result[3]
                 modifiedResult[3] = 0
-            #network.backward(errors)
             return modifiedResult
         except IndexError:
             print(game.snake[-1])

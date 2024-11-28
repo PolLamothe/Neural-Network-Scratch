@@ -23,10 +23,10 @@ if(args.help):
 gameSize = 5
 
 try:
-    snakeTrain = trainSnakeEvoTools.trainSnakeEvo(gameSize,args.aim,[160],classe.sigmoid)
+    snakeTrain = trainSnakeEvoTools.trainSnakeEvo(gameSize,args.aim,[160,160],classe.sigmoid)
 except TypeError:
     raise Exception("You forgot the parameter -a (press -c to see all comands)")
-snakeTrain.train()
+network = snakeTrain.train()
 
 if(args.save):
     print("saving your model")
@@ -34,6 +34,6 @@ if(args.save):
     file_name+="_FullMap"
     file_name+=".pkl"
     with open(file_name, 'wb') as file:
-        pickle.dump(snakeTrain.childPerformance[0]["network"], file)
+        pickle.dump(network, file)
 
 os._exit(0)

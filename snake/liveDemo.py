@@ -2,6 +2,7 @@ import snakeGame
 from os import walk
 import pickle
 import snakeTrainTools
+import trainSnakeEvoTools
 import random
 import classe
 
@@ -26,8 +27,12 @@ def handleModelChoice(name : str):
 
     def updateGrid():
         global game
-        result = network.forward(snakeTrainTools.snakeTrainTools.generateInput(game.getGrid(),fullMap,game.snake))
-        answerIndex = random.choice(snakeTrainTools.snakeTrainTools.getAllMaxIndex(result))
+        if(not fullMap):
+            result = network.forward(snakeTrainTools.snakeTrainTools.generateInput(game.getGrid(),fullMap,game.snake))
+            answerIndex = random.choice(snakeTrainTools.snakeTrainTools.getAllMaxIndex(result))
+        else:
+            result = network.forward(trainSnakeEvoTools.trainSnakeEvo.generateInput(game.getGrid(),True,game.snake))
+            answerIndex = random.choice(trainSnakeEvoTools.trainSnakeEvo.getAllMaxIndex(trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(game.size,game,result,network)))
 
         if(answerIndex == 0):
             game.directionY = -1
