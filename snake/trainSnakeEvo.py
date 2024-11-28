@@ -23,7 +23,7 @@ if(args.help):
 gameSize = 5
 
 try:
-    snakeTrain = trainSnakeEvoTools.trainSnakeEvo(gameSize,args.aim,[150],classe.sigmoid)
+    snakeTrain = trainSnakeEvoTools.trainSnakeEvo(gameSize,args.aim,[160],classe.sigmoid)
 except TypeError:
     raise Exception("You forgot the parameter -a (press -c to see all comands)")
 snakeTrain.train()

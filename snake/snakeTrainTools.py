@@ -199,7 +199,7 @@ class snakeTrainTools():
         networkInput = []
         snakeHead = snake[-1]
         gameSize = len(grid)
-        if(not seeAllMap):
+        if(True):
             radius = 1
             if(seeAllMap):
                 radius = gameSize-1

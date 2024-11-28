@@ -6,7 +6,7 @@ import numpy as np
 app = Flask(__name__,template_folder="web")
 CORS(app)
 
-BASE = ""
+BASE = "/IA/"
 
 @app.route('/', methods=['GET'])
 def redirect_temporarily():

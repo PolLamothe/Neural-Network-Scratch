@@ -7,15 +7,15 @@ import matplotlib.pyplot as plt
 
 SELECTIONSIZE = 21 #The number of snake in survivor
 
-MULTIPLIER = 10 #The number of snake that will be generated during the first generation
+MULTIPLIER = 20 #The number of snake that will be generated during the first generation
 
 class trainSnakeEvo(snakeTrainTools.snakeTrainTools):
     def __init__(self, gameSize: int, averageAim: int, hiddenLayers: list[int] = [], activationFunction: callable = None, neuroneActivation: list = None) -> None:
         self.gameSize = gameSize
         self.averageAim = averageAim
         self.childPerformance = []
-        self.child = [classe.Networks([gameSize**2*3]+hiddenLayers+[4],activation=activationFunction,learningRate=0.1,neuroneActivation=neuroneActivation) for i in range(SELECTIONSIZE*MULTIPLIER)]
-        #self.child = [classe.Networks([(((gameSize*2)-1)**2-1)*2]+hiddenLayers+[4],activation=activationFunction,learningRate=0.1,neuroneActivation=neuroneActivation) for i in range(SELECTIONSIZE*MULTIPLIER)]
+        #self.child = [classe.Networks([gameSize**2*3]+hiddenLayers+[4],activation=activationFunction,learningRate=0.1,neuroneActivation=neuroneActivation) for i in range(SELECTIONSIZE*MULTIPLIER)]
+        self.child = [classe.Networks([(((gameSize*2)-1)**2-1)*2]+hiddenLayers+[4],activation=activationFunction,learningRate=0.1,neuroneActivation=neuroneActivation) for i in range(SELECTIONSIZE*MULTIPLIER)]
         self.parents = []
         self.hiddenLayers = hiddenLayers
         self.activationFunction = activationFunction
@@ -135,7 +135,7 @@ class trainSnakeEvo(snakeTrainTools.snakeTrainTools):
         networkInput = []
         snakeHead = snake[-1]
         gameSize = len(grid)
-        if(False):
+        if(True):
             radius = 1
             if(seeAllMap):
                 radius = gameSize-1
