@@ -23,6 +23,12 @@ if(args.help):
 gameSize = 5
 
 try:
+    if(int(args.aim) > gameSize**2 or int(args.aim) < 4):
+        print("the length you want to reach is incorrect")
+except TypeError:
+    raise Exception("You forgot the parameter -a (press -c to see all comands)")
+
+try:
     snakeTrain = trainSnakeEvoTools.trainSnakeEvo(gameSize,args.aim,[160,160],classe.sigmoid)
 except TypeError:
     raise Exception("You forgot the parameter -a (press -c to see all comands)")

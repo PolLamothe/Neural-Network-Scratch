@@ -33,7 +33,12 @@ class trainSnakeEvo(snakeTrainTools.snakeTrainTools):
                 print("currentGeneration : "+str(currentGeneration)+" maxLength : "+str(survivor[0]["performance"])+" averageLength : "+str(trainSnakeEvo.getAveragePerformance(survivor)),end="\r")
             if(currentGeneration > 1):
                 if(survivor[0]["performance"] >= float(self.averageAim)):
-                    return survivor[0]["network"]
+                    verifiyPerformance = self.__runChild(survivor[0]["network"])
+                    if(verifiyPerformance >= float(self.averageAim)):
+                        return survivor[0]["network"]
+                    else:
+                        survivor[0]["performance"] = verifiyPerformance
+                        survivor.sort(reverse=True,key=operator.itemgetter("performance"))
             self.childPerformance = []
             for i in range(len(self.child)):#benchmarking the childs
                 self.childPerformance.append({"number" : (currentGeneration-1)*SELECTIONSIZE*MULTIPLIER+i,"performance":self.__runChild(self.child[i]),"network":self.child[i]})
