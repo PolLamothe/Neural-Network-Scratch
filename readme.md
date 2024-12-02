@@ -37,9 +37,9 @@ Here is the list of the file in this project and what are they used for :
 
  - **testGame.py** : A script to test the snake game by playing it yourself (include a UI)
 
- - **snakeTrain.py** : The script that allow you to choose the parameter of the IA
+ - **trainSnakeEvo.py** : The script that allow you to choose the parameter of the IA
 
- - **snakeTrainTools.py** : The script that train the IA
+ - **trainSnakeEvoTools.py** : The script that train the IA
 
  - **snakeGame.py** : The script that contain the code for the snake game and the different UI
 
