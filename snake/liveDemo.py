@@ -1,10 +1,12 @@
 import snakeGame
 from os import walk
 import pickle
-import snakeTrainTools
 import trainSnakeEvoTools
 import random
+import sys
+sys.path.append("../")
 import classe
+import copy
 
 allModel = []
 for (dirpath, dirnames, filenames) in walk("./model"):
@@ -15,6 +17,7 @@ ui = snakeGame.UI()
 game = None
 
 def handleModelChoice(name : str):
+    global dataSinceLastFood
     global ui
     global game
     with open("./model/"+name, "rb") as file:
@@ -24,16 +27,13 @@ def handleModelChoice(name : str):
     fullMap = name.split("_")[2] == "FullMap.pkl"
 
     game = snakeGame.Game(gameSize)
+    dataSinceLastFood = []
 
     def updateGrid():
+        global dataSinceLastFood
         global game
-        if(not fullMap):
-            result = network.forward(snakeTrainTools.snakeTrainTools.generateInput(game.getGrid(),fullMap,game.snake))
-            answerIndex = random.choice(snakeTrainTools.snakeTrainTools.getAllMaxIndex(result))
-        else:
-            result = network.forward(trainSnakeEvoTools.trainSnakeEvo.generateInput(game.getGrid(),True,game.snake))
-            answerIndex = random.choice(trainSnakeEvoTools.trainSnakeEvo.getAllMaxIndex(trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(game.size,game,result,network)))
-
+        result = network.forward(trainSnakeEvoTools.trainSnakeEvo.generateInput(game.getGrid(),True,game.snake))
+        answerIndex = random.choice(trainSnakeEvoTools.trainSnakeEvo.getAllMaxIndex(trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(game.size,game,result,network,copy.deepcopy(dataSinceLastFood))))
         if(answerIndex == 0):
             game.directionY = -1
             game.directionX = 0
@@ -46,7 +46,12 @@ def handleModelChoice(name : str):
         elif(answerIndex == 3):
             game.directionX = 1
             game.directionY = 0
+        fruitSave = game.fruit.copy()
         game.update()
+        if(fruitSave != game.fruit):
+            dataSinceLastFood = []
+        else:
+            dataSinceLastFood.append({"snake":copy.deepcopy(game.snake),"index":answerIndex})
         if(game.checkState() == False):
             return "GameOver"
         ui.grid = game.getGrid()

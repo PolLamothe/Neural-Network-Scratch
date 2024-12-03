@@ -9,22 +9,22 @@ import copy
 
 SELECTIONSIZE = 10 #The number of snake in survivor
 
-MULTIPLIER = 10 #The number of agent wich will be created at start for each place in the selection (MULTIPLIER * SELECTIONSIZE)
+MULTIPLIER = 5 #The number of agent wich will be created at start for each place in the selection (totale agent generated = MULTIPLIER * SELECTIONSIZE)
 
 class trainSnakeEvo():
     def __init__(self, gameSize: int, averageAim: int, hiddenLayers: list[int] = [], activationFunction: callable = None, neuroneActivation: list = None) -> None:
         self.gameSize = gameSize
         self.averageAim = averageAim
         self.childPerformance = []
-        self.child = [classe.Networks([gameSize**2*3]+hiddenLayers+[4],activation=activationFunction,learningRate=0.1,neuroneActivation=neuroneActivation) for i in range(SELECTIONSIZE*MULTIPLIER)]
-        #self.child = [classe.Networks([(((gameSize*2)-1)**2-1)*2]+hiddenLayers+[4],activation=activationFunction,learningRate=0.1,neuroneActivation=neuroneActivation) for i in range(SELECTIONSIZE*MULTIPLIER)]
+        #self.child = [classe.Networks([gameSize**2*3]+hiddenLayers+[4],activation=activationFunction,learningRate=0.1,neuroneActivation=neuroneActivation) for i in range(SELECTIONSIZE*MULTIPLIER)]
+        self.child = [classe.Networks([(((gameSize*2)-1)**2-1)*2]+hiddenLayers+[4],activation=activationFunction,learningRate=0.1,neuroneActivation=neuroneActivation) for i in range(SELECTIONSIZE*MULTIPLIER)]
         self.parents = []
         self.hiddenLayers = hiddenLayers
         self.activationFunction = activationFunction
         self.neuroneActivation = neuroneActivation
         self.iterationData = []
     
-    def train(self):
+    def train(self) -> classe.Networks:
         currentGeneration = 1
         survivor = []
 
@@ -42,7 +42,6 @@ class trainSnakeEvo():
                         if(verifiyPerformance >= float(self.averageAim)):
                             return survivor[i]["network"]
                         else:
-                            print(survivor[i]["performance"],verifiyPerformance)
                             survivor[i]["performance"] = (survivor[i]["performance"]*survivor[i]["verification"]+verifiyPerformance)/(survivor[i]["verification"]+1)
                             survivor[i]["verification"] += 1
                     else:
@@ -61,7 +60,7 @@ class trainSnakeEvo():
             survivor = survivor[:SELECTIONSIZE]
             
             tempNetworks = []
-            for i in range(1,len(survivor)):#creating the next childs
+            for i in range(0,len(survivor)):#creating the next childs
                 for x in range(i,len(survivor)):
                     tempNetworks.append(classe.Networks([self.gameSize**2*3]+self.hiddenLayers+[4],activation=self.activationFunction,learningRate=0.1,neuroneActivation=self.neuroneActivation,parents=[survivor[i]["network"],survivor[x]["network"]]))
             
@@ -80,9 +79,9 @@ class trainSnakeEvo():
             somme += i["performance"]
         return round(somme/len(survivor),2)
 
-    def __runChild(self,network : classe.Networks) -> float:
+    def __runChild(self,network : classe.Networks) -> float:#return the average length of the agent on a certain number of simulation
         currentPerformance = []
-        for i in range(20):
+        for i in range(30):
             state = None
             game = snakeGame.Game(self.gameSize)
             dataSincelastFood = []
@@ -114,16 +113,16 @@ class trainSnakeEvo():
                     errors[answerIndex] = 1-result[answerIndex]
                     network.backward(errors)
                 else:
-                    dataSincelastFood.append({"snake":game.snake.copy(),"index":answerIndex})
+                    dataSincelastFood.append({"snake":copy.deepcopy(game.snake),"index":answerIndex})
                     currentDistance = abs(game.snake[-1][0]-game.fruit[0])+abs(game.snake[-1][1]-game.fruit[1])
                     previousDistance = abs(headSave[0]-game.fruit[0])+abs(headSave[1]-game.fruit[1])
                     if(currentDistance < previousDistance):
                         errors = [0]*4
-                        errors[answerIndex] = (1-result[answerIndex])* 0.2
+                        errors[answerIndex] = (1-result[answerIndex])* 0.5
                         network.backward(errors)
                     elif(currentDistance > previousDistance):
                         errors = [0]*4
-                        errors[answerIndex] = -result[answerIndex]*0.2
+                        errors[answerIndex] = -result[answerIndex]*0.6
                         network.backward(errors)
                 if(len(dataSincelastFood) > self.gameSize**2):
                     state = False
@@ -150,8 +149,9 @@ class trainSnakeEvo():
                 modifiedResult[3] = -1
             for i in range(len(dataSinceLastFood)):
                 if(dataSinceLastFood[i]["snake"] == game.snake):
-                    modifiedResult[dataSinceLastFood[i]["index"]] = -1
-            #network.backward(errors)
+                    modifiedResult[dataSinceLastFood[i]["index"]] = -0.5
+            #if(network != None):
+                #network.backward(errors)
             return modifiedResult
         except IndexError:
             print(game.snake[-1])
@@ -176,7 +176,7 @@ class trainSnakeEvo():
         networkInput = []
         snakeHead = snake[-1]
         gameSize = len(grid)
-        if(False):
+        if(True):
             radius = 1
             if(seeAllMap):
                 radius = gameSize-1
