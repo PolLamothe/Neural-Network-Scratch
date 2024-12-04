@@ -31,14 +31,14 @@ def stateChecker():
 thread = threading.Thread(target=stateChecker)
 thread.start()
 
-perceptron = Perceptron(3,tanh,0.5)
+perceptron = Layer(3,1,sigmoid,1)
 
 #training
 count = 0
 while True:
     count += 1
     currentData = random.choice(data)
-    result = perceptron.forward(currentData)
+    result = perceptron.forward(np.array(currentData))
     if(checkResponse(currentData,result)):
         state = True
         for array in data:
@@ -56,4 +56,4 @@ print("\ntraining over")
 #test
 for array in data:
     result = perceptron.forward(array)
-    print(array,round(result,3))
+    print(array,np.round(result,2))

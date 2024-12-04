@@ -38,14 +38,12 @@ def stateChecker():
 thread = threading.Thread(target=stateChecker)
 thread.start()
 
-learningRate = 0.1
+learningRate = 1
 activation = sigmoid
 layers = [3,10,1]
 
 firstLayer = Layer(layers[0],layers[1],activation,learningRate)
 lastLayer = Layer(layers[1],layers[2],activation,learningRate)
-
-#for neurones in (firstLayer.nerone+lastLayer.nerone):print(neurones.W,neurones.bias)
 
 count = 0
 while(True):
