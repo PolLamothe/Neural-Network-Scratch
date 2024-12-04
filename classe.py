@@ -1,7 +1,6 @@
 import math
 import numpy as np
 from time import sleep
-import random
 
 def sigmoid(x):
     try:

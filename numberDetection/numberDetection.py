@@ -53,6 +53,8 @@ def checkAnswer(right, response):
 thread = threading.Thread(target=stateChecker)
 thread.start()
 
+EXPECTEDRIGHTANSWER = 30#we expect the model to get 20 consecutive right number for every number to be consider as trained
+
 if(not useTrainedModel):
     trainingState = True
 
@@ -66,11 +68,11 @@ if(not useTrainedModel):
         right = numberDetectionTools.y_train[currentIndex]
         lastLayerResult = network.forward(np.append(numberDetectionTools.x_train[currentIndex],[]))
         if(checkAnswer(right,lastLayerResult)):
-            if(rightCount[right] < 10):
+            if(rightCount[right] < EXPECTEDRIGHTANSWER):
                 rightCount[right] += 1
             state = True
             for i in range(10):
-                if(rightCount[i] < 10):
+                if(rightCount[i] < EXPECTEDRIGHTANSWER):
                     state = False
                     break
             if(state):
@@ -78,7 +80,7 @@ if(not useTrainedModel):
         else:
             if(rightCount[right] > 0):
                 for i in range(10):
-                    rightCount[i] = rightCount[i]-9*min(rightCount[i]/9,1)
+                    rightCount[i] = 0
         err = []
         for i in range(10):
             if(i != right):

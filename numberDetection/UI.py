@@ -38,7 +38,7 @@ def generateGrid():
             canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="gray")
 
 def generateText():
-    networkResult = network.forward(grid_data.reshape(1, 28*28))
+    networkResult = network.forward(np.append(grid_data,[]))
     for i in range(len(networkResult)):
         if(i == numberDetectionTools.y_test[currentIndex]):
             text.insert(tk.END,str(round(networkResult[i],2))+", ","vert")
