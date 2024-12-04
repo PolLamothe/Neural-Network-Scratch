@@ -1,10 +1,7 @@
 import numpy as np
-import math
-from time import sleep
 import random
 import sys
 from classe import *
-import threading
 
 data = []
 for i in range(2):
@@ -27,47 +24,28 @@ def checkResponse(array,response):
 def getRightAnswer(array):
     return sum(array) == 2
 
-def stateChecker():
-    while(True):
-        input()
-        choice = random.choice(data)
-        firstLayerResult = firstLayer.forward(currentData)
-        lastLayerResult = lastLayer.forward(firstLayerResult)[0]
-        print(choice,lastLayerResult)
-
-thread = threading.Thread(target=stateChecker)
-thread.start()
-
-learningRate = 1
-activation = sigmoid
-layers = [3,10,1]
-
-firstLayer = Layer(layers[0],layers[1],activation,learningRate)
-lastLayer = Layer(layers[1],layers[2],activation,learningRate)
+network = Networks([3,10,1],learningRate=1,neuroneActivation=[sigmoid,sigmoid])
 
 count = 0
 while(True):
     count += 1
     currentData = random.choice(data)
-    firstLayerResult = firstLayer.forward(currentData)
-    lastLayerResult = lastLayer.forward(firstLayerResult)[0]
+    lastLayerResult = network.forward(currentData)[0]
+
     if(checkResponse(currentData,lastLayerResult)):
         state = True
         for array in data:
-            firstLayerResult = firstLayer.forward(array)
-            resultTemp = lastLayer.forward(firstLayerResult)[0]
+            resultTemp = network.forward(np.array(array))[0]
             if(not checkResponse(array,resultTemp)):
                 state = False
         if(state):
             break
     err = np.array([(getRightAnswer(currentData)-lastLayerResult)])
-    err = lastLayer.backward(err)
-    firstLayer.backward(err)
+    network.backward(err)
     print("number of iterations : "+str(count), end='\r')
     sys.stdout.flush()
 print("\nTraining is over !")
 
 for array in data:
-    firstLayerResult = firstLayer.forward(array)
-    lastLayerResult = lastLayer.forward(firstLayerResult)[0]
+    lastLayerResult = network.forward(array)[0]
     print(array,round(lastLayerResult,2))

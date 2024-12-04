@@ -31,7 +31,7 @@ def stateChecker():
 thread = threading.Thread(target=stateChecker)
 thread.start()
 
-perceptron = Layer(3,1,sigmoid,1)
+perceptron = Layer(3,1,relu,0.1)
 
 #training
 count = 0

@@ -7,17 +7,22 @@ import operator
 import matplotlib.pyplot as plt
 import copy
 
-SELECTIONSIZE = 10 #The number of snake in survivor
+SELECTIONSIZE = 21 #The number of snake in survivor
 
-MULTIPLIER = 5 #The number of agent wich will be created at start for each place in the selection (totale agent generated = MULTIPLIER * SELECTIONSIZE)
+MULTIPLIER = 10 #The number of agent wich will be created at start for each place in the selection (totale agent generated = MULTIPLIER * SELECTIONSIZE)
+
+NEARHEAD = True
 
 class trainSnakeEvo():
     def __init__(self, gameSize: int, averageAim: int, hiddenLayers: list[int] = [], activationFunction: callable = None, neuroneActivation: list = None) -> None:
+        if(NEARHEAD):
+            self.firstNeurones = (((gameSize*2)-1)**2-1)*2
+        else:
+            self.firstNeurones =  gameSize**2*3
         self.gameSize = gameSize
         self.averageAim = averageAim
         self.childPerformance = []
-        #self.child = [classe.Networks([gameSize**2*3]+hiddenLayers+[4],activation=activationFunction,learningRate=0.1,neuroneActivation=neuroneActivation) for i in range(SELECTIONSIZE*MULTIPLIER)]
-        self.child = [classe.Networks([(((gameSize*2)-1)**2-1)*2]+hiddenLayers+[4],activation=activationFunction,learningRate=0.1,neuroneActivation=neuroneActivation) for i in range(SELECTIONSIZE*MULTIPLIER)]
+        self.child = [classe.Networks([self.firstNeurones]+hiddenLayers+[4],activation=activationFunction,learningRate=0.1,neuroneActivation=neuroneActivation) for i in range(SELECTIONSIZE*MULTIPLIER)]
         self.parents = []
         self.hiddenLayers = hiddenLayers
         self.activationFunction = activationFunction
@@ -60,9 +65,9 @@ class trainSnakeEvo():
             survivor = survivor[:SELECTIONSIZE]
             
             tempNetworks = []
-            for i in range(0,len(survivor)):#creating the next childs
+            for i in range(len(survivor)):#creating the next childs
                 for x in range(i,len(survivor)):
-                    tempNetworks.append(classe.Networks([self.gameSize**2*3]+self.hiddenLayers+[4],activation=self.activationFunction,learningRate=0.1,neuroneActivation=self.neuroneActivation,parents=[survivor[i]["network"],survivor[x]["network"]]))
+                    tempNetworks.append(classe.Networks([self.firstNeurones]+self.hiddenLayers+[4],activation=self.activationFunction,learningRate=0.1,neuroneActivation=self.neuroneActivation,parents=[survivor[i]["network"],survivor[x]["network"]]))
             
             self.child = tempNetworks.copy()
             self.iterationData.append({"generation":currentGeneration,"maxLength":survivor[0]["performance"],"averageLength":trainSnakeEvo.getAveragePerformance(survivor)})
@@ -118,11 +123,11 @@ class trainSnakeEvo():
                     previousDistance = abs(headSave[0]-game.fruit[0])+abs(headSave[1]-game.fruit[1])
                     if(currentDistance < previousDistance):
                         errors = [0]*4
-                        errors[answerIndex] = (1-result[answerIndex])* 0.5
+                        errors[answerIndex] = (1-result[answerIndex])*0.5
                         network.backward(errors)
                     elif(currentDistance > previousDistance):
                         errors = [0]*4
-                        errors[answerIndex] = -result[answerIndex]*0.6
+                        errors[answerIndex] = -result[answerIndex] *0.6
                         network.backward(errors)
                 if(len(dataSincelastFood) > self.gameSize**2):
                     state = False
@@ -176,7 +181,7 @@ class trainSnakeEvo():
         networkInput = []
         snakeHead = snake[-1]
         gameSize = len(grid)
-        if(True):
+        if(NEARHEAD):
             radius = 1
             if(seeAllMap):
                 radius = gameSize-1

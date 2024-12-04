@@ -3,6 +3,7 @@ import numpy as np
 from time import sleep
 
 def sigmoid(x):
+    x = np.clip(x,-600,600)
     try:
         return 1/(1+np.exp(-x))
     except OverflowError:
@@ -12,11 +13,12 @@ def sigmoid(x):
             return 1
         
 def dsigmoid(x):
+    x = np.clip(x,-600,600)
     return sigmoid(x)*(1-sigmoid(x))
         
 def tanh(x):
     x = np.clip(x,-600,600)
-    return (np.exp(x)-np.exp(-x))/(np.exp(x)+np.exp(-x))
+    return np.tanh(x)
 
 def tanh_prime(x):
     x = np.clip(x,-600,600)
@@ -38,11 +40,12 @@ def softmax(X : list[float]) -> list[float]:
     return result
 
 def relu(x):
-    return max(0,x)
+    x = np.clip(x,-600,600)
+    return np.maximum(0,x)
 
 def drelu(x):
-    if(x <= 0):return 0
-    return 1
+    x = np.clip(x,-600,600)
+    return relu(x)
 
 class Layer():
     #input_size : the number of neurones of the previous layer
@@ -56,8 +59,12 @@ class Layer():
         if(activation == tanh):self.activationPrime = tanh_prime
         elif(activation == sigmoid):self.activationPrime = dsigmoid
         elif(activation == relu):self.activationPrime = drelu
-        self.W = np.random.uniform(low=-1,high=1,size=(output_size,input_size))
-        self.B = np.random.uniform(low=-1,high=1,size=(output_size))
+        if(parents == None):
+            self.W = np.random.uniform(low=-1,high=1,size=(output_size,input_size))
+            self.B = np.random.uniform(low=-1,high=1,size=(output_size))
+        else:
+            self.W = (parents[0].W+parents[1].W)/2 + np.random.uniform(low=-0.1,high=0.1,size=(output_size,input_size))
+            self.B = (parents[0].B+parents[1].B)/2 + np.random.uniform(low=-0.1,high=0.1,size=(output_size))
     
     #this function return the result of each of the neurones of this layer
     def forward(self,this_input : np.array.__class__) -> np.array.__class__:
@@ -67,7 +74,7 @@ class Layer():
     
     #error : an array containing the error for each of the neurones of this layer
     def backward(self,output_error : np.array.__class__):
-        output_error = output_error*self.activationPrime(self.Y)
+        output_error *= self.activationPrime(self.Y)
         self.W += (output_error[:,np.newaxis]*self.X)*self.learningRate
         self.B += output_error*self.learningRate
         return np.dot(output_error,self.W*self.X)
@@ -93,7 +100,7 @@ class Networks():
             except IndexError:
                 raise Exception("You forgot to provide the activation function for a layer")
     
-    def forward(self,this_input) -> list[float]:
+    def forward(self,this_input : np.array.__class__) -> list[float]:
         first = True
         previousResult = None
         for layer in self.layers:
