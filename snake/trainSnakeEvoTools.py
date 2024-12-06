@@ -6,6 +6,7 @@ import random
 import operator
 import matplotlib.pyplot as plt
 import copy
+import math
 
 SELECTIONSIZE = 21 #The number of snake in survivor
 
@@ -110,6 +111,7 @@ class trainSnakeEvo():
                 
                 fruitSave = game.fruit.copy()
                 headSave = game.snake[-1].copy()
+                snakeSave = copy.deepcopy(game.snake)
                 game.update()
                 state = game.checkState()
                 if(game.fruit != fruitSave):
@@ -118,16 +120,16 @@ class trainSnakeEvo():
                     errors[answerIndex] = 1-result[answerIndex]
                     network.backward(errors)
                 else:
-                    dataSincelastFood.append({"snake":copy.deepcopy(game.snake),"index":answerIndex})
+                    dataSincelastFood.append({"snake":copy.deepcopy(snakeSave),"index":answerIndex})
                     currentDistance = abs(game.snake[-1][0]-game.fruit[0])+abs(game.snake[-1][1]-game.fruit[1])
                     previousDistance = abs(headSave[0]-game.fruit[0])+abs(headSave[1]-game.fruit[1])
                     if(currentDistance < previousDistance):
                         errors = [0]*4
-                        errors[answerIndex] = (1-result[answerIndex])*0.5
+                        errors[answerIndex] = (1-result[answerIndex])
                         network.backward(errors)
                     elif(currentDistance > previousDistance):
                         errors = [0]*4
-                        errors[answerIndex] = -result[answerIndex] *0.6
+                        errors[answerIndex] = -result[answerIndex]
                         network.backward(errors)
                 if(len(dataSincelastFood) > self.gameSize**2):
                     state = False
@@ -154,7 +156,7 @@ class trainSnakeEvo():
                 modifiedResult[3] = -1
             for i in range(len(dataSinceLastFood)):
                 if(dataSinceLastFood[i]["snake"] == game.snake):
-                    modifiedResult[dataSinceLastFood[i]["index"]] = -0.5
+                    modifiedResult[dataSinceLastFood[i]["index"]] = -math.inf
             #if(network != None):
                 #network.backward(errors)
             return modifiedResult

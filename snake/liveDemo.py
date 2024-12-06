@@ -46,12 +46,13 @@ def handleModelChoice(name : str):
         elif(answerIndex == 3):
             game.directionX = 1
             game.directionY = 0
+        snakeSave = copy.deepcopy(game.snake)
         fruitSave = game.fruit.copy()
         game.update()
         if(fruitSave != game.fruit):
             dataSinceLastFood = []
         else:
-            dataSinceLastFood.append({"snake":copy.deepcopy(game.snake),"index":answerIndex})
+            dataSinceLastFood.append({"snake":copy.deepcopy(snakeSave),"index":answerIndex})
         if(game.checkState() == False):
             return "GameOver"
         ui.grid = game.getGrid()

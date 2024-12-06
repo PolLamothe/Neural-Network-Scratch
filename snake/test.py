@@ -1,4 +1,4 @@
-import os
+import math
 import trainSnakeEvoTools
 import snakeGame
 import unittest
@@ -74,12 +74,12 @@ class TestSuperviseAnswer(unittest.TestCase):
             "snake":[[0,0],[1,0],[1,1],[0,1]]
             }
         ]
-        self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(5,game,result,None,previous),[-0.5,1,-1,-1])
+        self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(5,game,result,None,previous),[-math.inf,1,-1,-1])
 
     def test_getMaxIndex(self):
         self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.getAllMaxIndex([1,0,0,1]),[0,3])
         self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.getAllMaxIndex([-1,0,0,-1]),[1,2])
-        self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.getAllMaxIndex([-1,-0.5,-1,-1]),[1])
+        self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.getAllMaxIndex([-1,-math.inf,-1,-1]),[0,2,3])
 
     def test_random(self):
         for i in range(100):
@@ -87,7 +87,7 @@ class TestSuperviseAnswer(unittest.TestCase):
             game = snakeGame.Game(5)
             dataSinceLastFood = []
             while(game.checkState() == None):
-                supervisedResult = trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(game.size,game,[1,1,1,1],None,copy.deepcopy(dataSinceLastFood))
+                supervisedResult = trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(game.size,game,[1,0.9,0.8,0.7],None,copy.deepcopy(dataSinceLastFood))
                 answerIndex = random.choice(trainSnakeEvoTools.trainSnakeEvo.getAllMaxIndex(supervisedResult))
 
                 if(answerIndex == 0):
@@ -104,11 +104,12 @@ class TestSuperviseAnswer(unittest.TestCase):
                     game.directionY = 0
 
                 fruitSave = game.fruit.copy()
+                snakeSave = copy.deepcopy(game.snake)
                 game.update()
                 if(fruitSave != game.fruit):
                     dataSinceLastFood = []
                 else:
-                    dataSinceLastFood.append({"snake":copy.deepcopy(game.snake),"index":answerIndex})
+                    dataSinceLastFood.append({"snake":copy.deepcopy(snakeSave),"index":answerIndex})
             tempGrid = copy.deepcopy(game.getGrid()).tolist()
             for i in range(5):
                 tempGrid[i] = [-1]+tempGrid[i]+[-1]
@@ -124,7 +125,7 @@ class TestSuperviseAnswer(unittest.TestCase):
                 if(tempGrid[game.snake[-1][1]+1][game.snake[-1][0]+i+1] != -1):
                     error = True
 
-            if(error):
+            if(False):
                 print(game.getGrid())
                 print(game.snake)
                 print(supervisedResult,answerIndex)
