@@ -12,7 +12,7 @@ SELECTIONSIZE = 21 #The number of snake in survivor
 
 MULTIPLIER = 10 #The number of agent wich will be created at start for each place in the selection (totale agent generated = MULTIPLIER * SELECTIONSIZE)
 
-NEARHEAD = True
+NEARHEAD = False
 
 class trainSnakeEvo():
     def __init__(self, gameSize: int, averageAim: int, hiddenLayers: list[int] = [], activationFunction: callable = None, neuroneActivation: list = None) -> None:
@@ -125,11 +125,11 @@ class trainSnakeEvo():
                     previousDistance = abs(headSave[0]-game.fruit[0])+abs(headSave[1]-game.fruit[1])
                     if(currentDistance < previousDistance):
                         errors = [0]*4
-                        errors[answerIndex] = (1-result[answerIndex])
+                        errors[answerIndex] = (1-result[answerIndex])*0.5
                         network.backward(errors)
                     elif(currentDistance > previousDistance):
                         errors = [0]*4
-                        errors[answerIndex] = -result[answerIndex]
+                        errors[answerIndex] = -result[answerIndex]*0.5
                         network.backward(errors)
                 if(len(dataSincelastFood) > self.gameSize**2):
                     state = False
@@ -156,7 +156,7 @@ class trainSnakeEvo():
                 modifiedResult[3] = -1
             for i in range(len(dataSinceLastFood)):
                 if(dataSinceLastFood[i]["snake"] == game.snake):
-                    modifiedResult[dataSinceLastFood[i]["index"]] = -math.inf
+                    modifiedResult[dataSinceLastFood[i]["index"]] = -0.5
             #if(network != None):
                 #network.backward(errors)
             return modifiedResult
