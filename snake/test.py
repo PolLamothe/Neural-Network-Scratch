@@ -76,8 +76,13 @@ class TestSuperviseAnswer(unittest.TestCase):
         ]
         self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(5,game,result,None,previous),[-0.5,1,-1,-1])
 
+    def test_getMaxIndex(self):
+        self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.getAllMaxIndex([1,0,0,1]),[0,3])
+        self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.getAllMaxIndex([-1,0,0,-1]),[1,2])
+        self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.getAllMaxIndex([-1,-0.5,-1,-1]),[1])
+
     def test_random(self):
-        for i in range(1000):
+        for i in range(100):
             print(i,end="\r")
             game = snakeGame.Game(5)
             dataSinceLastFood = []

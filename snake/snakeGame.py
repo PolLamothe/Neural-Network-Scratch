@@ -80,45 +80,6 @@ class UI:
         self.inputHandler(self.input_field.get())
         self.input_field.delete(0, tk.END)
 
-    def handleReplay(self):
-        self.replayGame()
-        self.gameOverText.pack_forget()
-        self.replayButton.pack_forget()
-        self.update_game()
-
-    def handeIterationChoice(self,iteration : int):
-        self.root.destroy()
-        self.choiceHandler(iteration)
-
-    def startChoosingDataMenu(self,allData : list[str],selectionHandler : callable):
-        self.root = tk.Tk()
-        self.root.title("Snake Game")
-
-        label = tk.Label(self.root,text="Select the versions of the IA wich you want to see play")
-        label.pack()
-
-        canvas = tk.Canvas(self.root, width=400, height=300)
-        scrollbar = tk.Scrollbar(self.root, orient="vertical", command=canvas.yview)
-        canvas.config(yscrollcommand=scrollbar.set)
-
-        frame = tk.Frame(canvas)
-
-        buttons = []
-        for dataName in allData:
-            buttons.append(tk.Button(frame,text=dataName,command=lambda m=dataName:selectionHandler(m)))
-            
-        for button in buttons:
-            button.pack()
-
-        canvas.create_window((0, 0), window=frame, anchor="nw")
-        frame.update_idletasks()
-        canvas.config(scrollregion=canvas.bbox("all"))
-
-        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-
-        self.root.mainloop()
-
     def startChoosingModel(self,allModel : list[str],selectionHandler : callable):
         self.root = tk.Tk()
         self.root.title("Snake Game")

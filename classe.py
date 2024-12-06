@@ -24,7 +24,7 @@ def tanh_prime(x):
     x = np.clip(x,-600,600)
     return 1-(tanh(x)**2)
 
-def softmax(X : list[float]) -> list[float]:
+def softmax(X : np.array.__class__) -> np.array.__class__:
     somme = 0
     result = []
 
@@ -38,6 +38,12 @@ def softmax(X : list[float]) -> list[float]:
     for x in X:
         result.append(math.exp(x)/somme)
     return result
+
+def dsoftmax(X : np.array.__class__) -> np.array.__class__:
+    result = []
+    for i in range(len(X)):
+        result.append(X[i] * (1-X[i]))
+    return np.array(result)
 
 def relu(x):
     x = np.clip(x,-600,600)
@@ -59,6 +65,7 @@ class Layer():
         if(activation == tanh):self.activationPrime = tanh_prime
         elif(activation == sigmoid):self.activationPrime = dsigmoid
         elif(activation == relu):self.activationPrime = drelu
+        elif(activation == softmax):self.activationPrime = dsoftmax
         if(parents == None):
             self.W = np.random.uniform(low=-1,high=1,size=(output_size,input_size))
             self.B = np.random.uniform(low=-1,high=1,size=(output_size))

@@ -24,7 +24,7 @@ def checkResponse(array,response):
 def getRightAnswer(array):
     return sum(array) == 2
 
-network = Networks([3,10,1],learningRate=1,neuroneActivation=[sigmoid,sigmoid])
+network = Networks([3,10,1],learningRate=0.5,neuroneActivation=[tanh,sigmoid])
 
 count = 0
 while(True):
