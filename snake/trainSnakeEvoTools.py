@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import copy
 import math
 
-SELECTIONSIZE = 21 #The number of snake in survivor
+SELECTIONSIZE = 10 #The number of snake in survivor
 
 MULTIPLIER = 10 #The number of agent wich will be created at start for each place in the selection (totale agent generated = MULTIPLIER * SELECTIONSIZE)
 
@@ -94,7 +94,7 @@ class trainSnakeEvo():
             while(state == None):
                 Networkinput = trainSnakeEvo.generateInput(game.getGrid(),True,game.snake)
                 result = network.forward(Networkinput)
-                answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(trainSnakeEvo.superviseAnswer(self.gameSize,game,result,network,dataSincelastFood)))
+                answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(trainSnakeEvo.superviseAnswer(self.gameSize,game.snake,result,dataSincelastFood)))
 
                 if(answerIndex == 0):
                     game.directionY = -1
@@ -120,48 +120,54 @@ class trainSnakeEvo():
                     errors[answerIndex] = 1-result[answerIndex]
                     network.backward(errors)
                 else:
-                    dataSincelastFood.append({"snake":copy.deepcopy(snakeSave),"index":answerIndex})
-                    currentDistance = abs(game.snake[-1][0]-game.fruit[0])+abs(game.snake[-1][1]-game.fruit[1])
-                    previousDistance = abs(headSave[0]-game.fruit[0])+abs(headSave[1]-game.fruit[1])
-                    if(currentDistance < previousDistance):
-                        errors = [0]*4
-                        errors[answerIndex] = (1-result[answerIndex])*0.5
-                        network.backward(errors)
-                    elif(currentDistance > previousDistance):
-                        errors = [0]*4
-                        errors[answerIndex] = -result[answerIndex]*0.5
-                        network.backward(errors)
-                if(len(dataSincelastFood) > self.gameSize**2):
-                    state = False
+                    dataSincelastFood.append({"snake":copy.deepcopy(snakeSave),"index":answerIndex,"grid":game.getGrid()})
+                    if(state == False):
+                        for element in dataSincelastFood:
+                            Networkinput = trainSnakeEvo.generateInput(element["grid"],True,element["snake"])
+                            result = network.forward(Networkinput)
+                            answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(trainSnakeEvo.superviseAnswer(self.gameSize,game.snake,result,dataSincelastFood)))
+                            errors = [0]*4
+                            errors[answerIndex] = -result[answerIndex]
+                            network.backward(errors)
+                    else:
+                        currentDistance = abs(game.snake[-1][0]-game.fruit[0])+abs(game.snake[-1][1]-game.fruit[1])
+                        previousDistance = abs(headSave[0]-game.fruit[0])+abs(headSave[1]-game.fruit[1])
+                        if(currentDistance < previousDistance):
+                            errors = [0]*4
+                            errors[answerIndex] = (1-result[answerIndex])*0.5
+                            network.backward(errors)
+                        elif(currentDistance > previousDistance):
+                            errors = [0]*4
+                            errors[answerIndex] = -result[answerIndex]*0.5
+                            network.backward(errors)
 
             currentPerformance.append(len(game.snake))
         return sum(currentPerformance)/len(currentPerformance)
     
-    def superviseAnswer(gameSize : int,game : snakeGame.Game,result : list[float],network : classe.Networks,dataSinceLastFood : list[dict]) -> int:
-        gameGrid = game.getGrid()
+    def superviseAnswer(gameSize : int,snake : list[list[int]],result : list[float],dataSinceLastFood : list[dict]) -> int:
         modifiedResult = result.copy()
         errors = [1-i for i in result]
         try:
-            if(game.snake[-1][1]-1 < 0 or ([game.snake[-1][0],game.snake[-1][1]-1] in game.snake[1:])):
+            if(snake[-1][1]-1 < 0 or ([snake[-1][0],snake[-1][1]-1] in snake[1:])):
                 errors[0] = -result[0]
                 modifiedResult[0] = -1
-            if(game.snake[-1][1]+1 >= gameSize or ([game.snake[-1][0],game.snake[-1][1]+1] in game.snake[1:])):
+            if(snake[-1][1]+1 >= gameSize or ([snake[-1][0],snake[-1][1]+1] in snake[1:])):
                 errors[1] = -result[1]
                 modifiedResult[1] = -1
-            if(game.snake[-1][0]-1 < 0 or ([game.snake[-1][0]-1,game.snake[-1][1]] in game.snake[1:])):
+            if(snake[-1][0]-1 < 0 or ([snake[-1][0]-1,snake[-1][1]] in snake[1:])):
                 errors[2] = -result[2]
                 modifiedResult[2] = -1
-            if(game.snake[-1][0]+1 >= gameSize or ([game.snake[-1][0]+1,game.snake[-1][1]] in game.snake[1:])):
+            if(snake[-1][0]+1 >= gameSize or ([snake[-1][0]+1,snake[-1][1]] in snake[1:])):
                 errors[3] = -result[3]
                 modifiedResult[3] = -1
             for i in range(len(dataSinceLastFood)):
-                if(dataSinceLastFood[i]["snake"] == game.snake):
+                if(dataSinceLastFood[i]["snake"] == snake):
                     modifiedResult[dataSinceLastFood[i]["index"]] = -0.5
             #if(network != None):
                 #network.backward(errors)
             return modifiedResult
         except IndexError:
-            print(game.snake[-1])
+            print(snake[-1])
 
     def getAllMaxIndex(answer : list[float]) -> list[int]:
         max = None
