@@ -29,11 +29,9 @@ allModel = []
 for (dirpath, dirnames, filenames) in os.walk("./model"):#getting all of the files in model folder
     allModel.extend(filenames)
 
-for model in allModel:
-    if(model.split(".")[1] != "pkl"): #keeping only the model files
-        allModel.remove(model)
-    else:
-        model = model.split("_")[2]
+for i in range(len(allModel)):
+    if(allModel[i].split(".")[1] == "pkl"): #keeping only the model files
+        allModel[i] = allModel[i].split("_")[1]
 
 with open("./model/trainedData.json","r") as file:
     data : dict= json.load(file)
@@ -80,7 +78,7 @@ if(args.save):
     data[ID] = dict({
         "gameSize":gameSize,
         "aim":args.aim,
-        "hiddenLayes":HIDDENLAYERS,
+        "hiddenLayers":HIDDENLAYERS,
         "activationFunction":str(snakeTrain.activationFunction),
         "neuroneActivation":str(snakeTrain.neuroneActivation),
         "trainingTime":(time.time()-STARTINGTIME)/60,
