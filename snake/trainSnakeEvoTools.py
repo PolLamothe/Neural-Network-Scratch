@@ -44,7 +44,7 @@ class trainSnakeEvo():
                 for i in range(len(survivor)):
                     if(survivor[i]["performance"] >= float(self.averageAim)):
                         security = True
-                        verifiyPerformance = self.__runChild(survivor[i]["network"])
+                        verifiyPerformance = self.__runChild(survivor[i]["network"],modification=False)
                         if(verifiyPerformance >= float(self.averageAim)):
                             return survivor[i]["network"]
                         else:
@@ -85,9 +85,9 @@ class trainSnakeEvo():
             somme += i["performance"]
         return round(somme/len(survivor),2)
 
-    def __runChild(self,network : classe.Networks) -> float:#return the average length of the agent on a certain number of simulation
+    def __runChild(self,network : classe.Networks,modification = True) -> float:#return the average length of the agent on a certain number of simulation
         currentPerformance = []
-        for i in range(30):
+        for i in range(50):
             state = None
             game = snakeGame.Game(self.gameSize)
             dataSincelastFood = []
@@ -115,31 +115,43 @@ class trainSnakeEvo():
                 game.update()
                 state = game.checkState()
                 if(game.fruit != fruitSave):
-                    dataSincelastFood = []
-                    errors = [0]*4
-                    errors[answerIndex] = 1-result[answerIndex]
-                    network.backward(errors)
-                else:
-                    dataSincelastFood.append({"snake":copy.deepcopy(snakeSave),"index":answerIndex,"grid":game.getGrid()})
-                    if(state == False):
+                    if(modification and False):
                         for element in dataSincelastFood:
                             Networkinput = trainSnakeEvo.generateInput(element["grid"],True,element["snake"])
                             result = network.forward(Networkinput)
                             answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(trainSnakeEvo.superviseAnswer(self.gameSize,game.snake,result,dataSincelastFood)))
                             errors = [0]*4
-                            errors[answerIndex] = -result[answerIndex]
-                            network.backward(errors)
-                    else:
-                        currentDistance = abs(game.snake[-1][0]-game.fruit[0])+abs(game.snake[-1][1]-game.fruit[1])
-                        previousDistance = abs(headSave[0]-game.fruit[0])+abs(headSave[1]-game.fruit[1])
-                        if(currentDistance < previousDistance):
-                            errors = [0]*4
                             errors[answerIndex] = (1-result[answerIndex])*0.5
                             network.backward(errors)
-                        elif(currentDistance > previousDistance):
-                            errors = [0]*4
-                            errors[answerIndex] = -result[answerIndex]*0.5
-                            network.backward(errors)
+                    dataSincelastFood = []
+                    if(modification):
+                        errors = [0]*4
+                        errors[answerIndex] = 1-result[answerIndex]
+                        network.backward(errors)
+                else:
+                    dataSincelastFood.append({"snake":copy.deepcopy(snakeSave),"index":answerIndex,"grid":game.getGrid()})
+                    if(modification):
+                        if(state == False):
+                            for i in range(len(dataSincelastFood)):
+                                dataCopy = copy.deepcopy(dataSincelastFood)
+                                dataCopy = dataCopy[:i]
+                                Networkinput = trainSnakeEvo.generateInput(dataSincelastFood[i]["grid"],True,dataSincelastFood[i]["snake"])
+                                result = network.forward(Networkinput)
+                                answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(trainSnakeEvo.superviseAnswer(self.gameSize,dataSincelastFood[i]["snake"],result,dataCopy)))
+                                errors = [0]*4
+                                errors[answerIndex] = -result[answerIndex]*0.5
+                                network.backward(errors)
+                        else:
+                            currentDistance = abs(game.snake[-1][0]-game.fruit[0])+abs(game.snake[-1][1]-game.fruit[1])
+                            previousDistance = abs(headSave[0]-game.fruit[0])+abs(headSave[1]-game.fruit[1])
+                            if(currentDistance < previousDistance):
+                                errors = [0]*4
+                                errors[answerIndex] = (1-result[answerIndex]) *0.2
+                                network.backward(errors)
+                            elif(currentDistance > previousDistance):
+                                errors = [0]*4
+                                errors[answerIndex] = -result[answerIndex] * 0.2
+                                network.backward(errors)
 
             currentPerformance.append(len(game.snake))
         return sum(currentPerformance)/len(currentPerformance)

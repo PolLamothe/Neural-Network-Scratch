@@ -29,7 +29,7 @@ except TypeError:
     raise Exception("You forgot the parameter -a (press -c to see all comands)")
 
 try:
-    snakeTrain = trainSnakeEvoTools.trainSnakeEvo(gameSize,args.aim,[150],neuroneActivation=[classe.tanh,classe.sigmoid])
+    snakeTrain = trainSnakeEvoTools.trainSnakeEvo(gameSize,args.aim,[375],neuroneActivation=[classe.tanh,classe.sigmoid])
 except TypeError:
     raise Exception("You forgot the parameter -a (press -c to see all comands)")
 network = snakeTrain.train()
