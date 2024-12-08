@@ -1,0 +1,15 @@
+{
+  "397767": {
+    "gameSize": 5,
+    "aim": "15",
+    "hiddenLayes": [
+      150
+    ],
+    "activationFunction": "None",
+    "neuroneActivation": "[<function tanh at 0x7f50fbd98fe0>, <function sigmoid at 0x7f50fbd98e00>]",
+    "trainingTime": 8.604545080661774,
+    "selectionSize": 10,
+    "multiplier": 10,
+    "iteration": 60
+  }
+}

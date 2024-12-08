@@ -14,6 +14,8 @@ MULTIPLIER = 10 #The number of agent wich will be created at start for each plac
 
 NEARHEAD = False
 
+ITERATION = 60
+
 class trainSnakeEvo():
     def __init__(self, gameSize: int, averageAim: int, hiddenLayers: list[int] = [], activationFunction: callable = None, neuroneActivation: list = None) -> None:
         if(NEARHEAD):
@@ -87,7 +89,7 @@ class trainSnakeEvo():
 
     def __runChild(self,network : classe.Networks,modification = True) -> float:#return the average length of the agent on a certain number of simulation
         currentPerformance = []
-        for i in range(50):
+        for i in range(ITERATION):
             state = None
             game = snakeGame.Game(self.gameSize)
             dataSincelastFood = []
@@ -115,14 +117,16 @@ class trainSnakeEvo():
                 game.update()
                 state = game.checkState()
                 if(game.fruit != fruitSave):
-                    if(modification and False):
-                        for element in dataSincelastFood:
-                            Networkinput = trainSnakeEvo.generateInput(element["grid"],True,element["snake"])
+                    '''if(modification):
+                        for i in range(len(dataSincelastFood)):
+                            dataCopy = copy.deepcopy(dataSincelastFood)
+                            dataCopy = dataCopy[:i]
+                            Networkinput = trainSnakeEvo.generateInput(dataSincelastFood[i]["grid"],True,dataSincelastFood[i]["snake"])
                             result = network.forward(Networkinput)
-                            answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(trainSnakeEvo.superviseAnswer(self.gameSize,game.snake,result,dataSincelastFood)))
+                            answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(trainSnakeEvo.superviseAnswer(self.gameSize,dataSincelastFood[i]["snake"],result,dataCopy)))
                             errors = [0]*4
                             errors[answerIndex] = (1-result[answerIndex])*0.5
-                            network.backward(errors)
+                            network.backward(errors)'''
                     dataSincelastFood = []
                     if(modification):
                         errors = [0]*4
@@ -139,7 +143,7 @@ class trainSnakeEvo():
                                 result = network.forward(Networkinput)
                                 answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(trainSnakeEvo.superviseAnswer(self.gameSize,dataSincelastFood[i]["snake"],result,dataCopy)))
                                 errors = [0]*4
-                                errors[answerIndex] = -result[answerIndex]*0.5
+                                errors[answerIndex] = -result[answerIndex]
                                 network.backward(errors)
                         else:
                             currentDistance = abs(game.snake[-1][0]-game.fruit[0])+abs(game.snake[-1][1]-game.fruit[1])

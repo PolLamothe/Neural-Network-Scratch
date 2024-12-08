@@ -1,10 +1,14 @@
 import sys
+import time
 sys.path.append("../")
 import classe
 import trainSnakeEvoTools
 import argparse
 import pickle
 import os
+import json
+import random
+import copy
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", dest="help", action='store_true')
@@ -20,7 +24,32 @@ if(args.help):
     print("-a : The average length you want the IA to reach")
     exit(0)
 
+allModel = []
+
+for (dirpath, dirnames, filenames) in os.walk("./model"):#getting all of the files in model folder
+    allModel.extend(filenames)
+
+for model in allModel:
+    if(model.split(".")[1] != "pkl"): #keeping only the model files
+        allModel.remove(model)
+    else:
+        model = model.split("_")[2]
+
+with open("./model/trainedData.json","r") as file:
+    data : dict= json.load(file)
+
+dataCopy = copy.deepcopy(data)
+
+for Id in dataCopy.keys():#verifying that every data in trainedData.json is linked to an exisisting file
+    if(Id not in allModel):
+        del data[Id]
+
+with open("./model/trainedData.json","w") as file:
+    json.dump(data,file,indent=2)
+
 gameSize = 5
+
+HIDDENLAYERS = [150]
 
 try:
     if(int(args.aim) > gameSize**2 or int(args.aim) < 4):
@@ -29,17 +58,37 @@ except TypeError:
     raise Exception("You forgot the parameter -a (press -c to see all comands)")
 
 try:
-    snakeTrain = trainSnakeEvoTools.trainSnakeEvo(gameSize,args.aim,[375],neuroneActivation=[classe.tanh,classe.sigmoid])
+    STARTINGTIME = time.time()
+    snakeTrain = trainSnakeEvoTools.trainSnakeEvo(gameSize,args.aim,HIDDENLAYERS,neuroneActivation=[classe.tanh,classe.sigmoid])
 except TypeError:
     raise Exception("You forgot the parameter -a (press -c to see all comands)")
+
+SELECTIONSIZE = trainSnakeEvoTools.SELECTIONSIZE
+MULTIPLIER = trainSnakeEvoTools.MULTIPLIER
+ITERATION = trainSnakeEvoTools.ITERATION
+
 network = snakeTrain.train()
 
 if(args.save):
     print("saving your model")
-    file_name = './model/snake_'+str(gameSize)
-    file_name+="_FullMap"
-    file_name+=".pkl"
+    ID = random.randint(100000,999999)
+    file_name = './model/snake_'+str(ID)+"_.pkl"
     with open(file_name, 'wb') as file:
         pickle.dump(network, file)
+    with open("./model/trainedData.json","r") as file:
+        data = json.load(file)
+    data[ID] = dict({
+        "gameSize":gameSize,
+        "aim":args.aim,
+        "hiddenLayes":HIDDENLAYERS,
+        "activationFunction":str(snakeTrain.activationFunction),
+        "neuroneActivation":str(snakeTrain.neuroneActivation),
+        "trainingTime":(time.time()-STARTINGTIME)/60,
+        "selectionSize" : SELECTIONSIZE,
+        "multiplier" : MULTIPLIER,
+        "iteration" : ITERATION
+    })
+    with open("./model/trainedData.json","w") as file:
+        json.dump(data,file,indent=2)
 
 os._exit(0)

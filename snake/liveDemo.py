@@ -7,10 +7,17 @@ import sys
 sys.path.append("../")
 import classe
 import copy
+import json
 
 allModel = []
 for (dirpath, dirnames, filenames) in walk("./model"):
     allModel.extend(filenames)
+
+for model in allModel:
+    if(model.split(".")[1] != "pkl"): #keeping only the model files
+        allModel.remove(model)
+    else:
+        model = model.split("_")[2]
 
 ui = snakeGame.UI()
 
@@ -23,8 +30,9 @@ def handleModelChoice(name : str):
     with open("./model/"+name, "rb") as file:
         network : classe.Networks = pickle.load(file)
     
-    gameSize = int(name.split("_")[1])
-    fullMap = name.split("_")[2] == "FullMap.pkl"
+    with open("./model/trainedData.json","r") as file:
+        data : dict= json.load(file)
+    gameSize = int(data[name.split("_")[1]]["gameSize"])
 
     game = snakeGame.Game(gameSize)
     dataSinceLastFood = []
