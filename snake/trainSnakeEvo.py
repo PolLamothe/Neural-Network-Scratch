@@ -84,7 +84,7 @@ if(args.save):
         "trainingTime":(time.time()-STARTINGTIME)/60,
         "selectionSize" : SELECTIONSIZE,
         "multiplier" : MULTIPLIER,
-        "iteration" : ITERATION
+        "iteration" : ITERATION,
     })
     with open("./model/trainedData.json","w") as file:
         json.dump(data,file,indent=2)

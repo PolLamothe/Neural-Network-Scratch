@@ -70,8 +70,8 @@ class Layer():
             self.W = np.random.uniform(low=-1,high=1,size=(output_size,input_size))
             self.B = np.random.uniform(low=-1,high=1,size=(output_size))
         else:
-            self.W = (parents[0].W+parents[1].W)/2 + np.random.uniform(low=-0.1,high=0.1,size=(output_size,input_size))
-            self.B = (parents[0].B+parents[1].B)/2 + np.random.uniform(low=-0.1,high=0.1,size=(output_size))
+            self.W = (parents[0].W+parents[1].W)/2# * np.random.uniform(low=0.9,high=1.1,size=(output_size,input_size))
+            self.B = (parents[0].B+parents[1].B)/2# * np.random.uniform(low=0.9,high=1.1,size=(output_size))
     
     #this function return the result of each of the neurones of this layer
     def forward(self,this_input : np.array.__class__) -> np.array.__class__:

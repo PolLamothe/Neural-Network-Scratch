@@ -40,7 +40,7 @@ class trainSnakeEvo():
             if(currentGeneration == 1):
                 print("currentGeneration : "+str(currentGeneration),end="\r")
             else:
-                print("currentGeneration : "+str(currentGeneration)+" maxLength : "+str(survivor[0]["performance"])+" averageLength : "+str(trainSnakeEvo.getAveragePerformance(survivor)),end="\r")
+                print("currentGeneration : "+str(currentGeneration)+" maxLength : "+str(round(survivor[0]["performance"],2))+" averageLength : "+str(trainSnakeEvo.getAveragePerformance(survivor)),end="\r")
             if(currentGeneration > 1):
                 security = False
                 for i in range(len(survivor)):
