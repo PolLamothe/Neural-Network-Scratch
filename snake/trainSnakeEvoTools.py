@@ -1,4 +1,4 @@
-import snakeGame
+import snake.snakeGame as snakeGame
 import sys
 sys.path.append("../")
 import classe
@@ -6,7 +6,8 @@ import random
 import operator
 import matplotlib.pyplot as plt
 import copy
-import math
+import pickle
+import os
 
 SELECTIONSIZE = 10 #The number of snake in survivor
 
@@ -251,3 +252,52 @@ class trainSnakeEvo():
                             else:
                                 networkInput.append(0)
         return networkInput
+
+def getWholeGameData() -> list[dict]:
+    allModel = []
+    for (dirpath, dirnames, filenames) in os.walk("./snake/model"):
+        allModel.extend(filenames)
+
+    for model in allModel:
+        if(model.split(".")[1] != "pkl"): #keeping only the model files
+            allModel.remove(model)
+        else:
+            model = model.split("_")[2]
+
+    print(allModel)
+
+    with open("./snake/model/"+allModel[0], "rb") as file:
+        network : classe.Networks = pickle.load(file)
+    
+    game = snakeGame.Game(5)
+    dataSinceLastFood = []
+    data = []
+
+    while(game.checkState() == None):
+        data.append({
+            "fruit":copy.deepcopy(game.fruit),
+            "snake":copy.deepcopy(game.snake)
+        })
+        result = network.forward(trainSnakeEvo.generateInput(game.getGrid(),True,game.snake))
+        answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(trainSnakeEvo.superviseAnswer(game.size,game.snake,result,copy.deepcopy(dataSinceLastFood))))
+
+        if(answerIndex == 0):
+            game.directionY = -1
+            game.directionX = 0
+        elif(answerIndex == 1):
+            game.directionY = 1
+            game.directionX = 0
+        elif(answerIndex == 2):
+            game.directionX = -1
+            game.directionY = 0
+        elif(answerIndex == 3):
+            game.directionX = 1
+            game.directionY = 0
+        snakeSave = copy.deepcopy(game.snake)
+        fruitSave = game.fruit.copy()
+        game.update()
+        if(fruitSave != game.fruit):
+            dataSinceLastFood = []
+        else:
+            dataSinceLastFood.append({"snake":copy.deepcopy(snakeSave),"index":answerIndex})
+    return data

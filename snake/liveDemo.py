@@ -1,7 +1,7 @@
-import snakeGame
-from os import walk
+import os
+import snake.snakeGame as snakeGame
+import snake.trainSnakeEvoTools as trainSnakeEvoTools
 import pickle
-import trainSnakeEvoTools
 import random
 import sys
 sys.path.append("../")
@@ -10,7 +10,7 @@ import copy
 import json
 
 allModel = []
-for (dirpath, dirnames, filenames) in walk("./model"):
+for (dirpath, dirnames, filenames) in os.walk("./model"):
     allModel.extend(filenames)
 
 for model in allModel:

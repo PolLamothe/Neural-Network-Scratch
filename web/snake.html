@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake</title>
+</head>
+<body>
+    <div id="globalMap">
+
+    </div>
+</body>
+<script>
+    const gameSize = 5
+
+    let data = null
+
+    let currentIndex = 0
+
+    for(let i = 0;i<gameSize;i++){
+        let temp = document.createElement("div")
+        temp.setAttribute("class","row")
+        document.getElementById("globalMap").appendChild(temp)
+        for(let x = 0;x<gameSize;x++){
+            let temp2 = document.createElement("div")
+            temp2.setAttribute("id","box_"+i+"_"+x)
+            temp2.setAttribute("class","box")
+            temp.appendChild(temp2)
+        }
+    }
+
+    const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay))
+
+    async function getAgentData() {
+        data = await (await fetch(`${window.location}/getData`,{method:"GET"})).json()
+        for(let i = 0;i<data.length;i++){
+            updateGrid()
+            currentIndex++
+            await sleep(300)
+        }
+    }
+
+    function updateGrid(){
+        for(let i = 0;i<gameSize;i++){
+            for(let x = 0;x<gameSize;x++){
+                document.getElementById("box_"+i+"_"+x).classList = ["box"]
+            }
+        }
+        let currentSnake = data[currentIndex]["snake"]
+        for(let i = 0;i<currentSnake.length-1;i++){
+            document.getElementById("box_"+currentSnake[i][1]+"_"+currentSnake[i][0]).classList.add("body")
+        }
+
+        let currentFruit = data[currentIndex]["fruit"]
+
+        document.getElementById("box_"+currentSnake[currentSnake.length-1][1]+"_"+currentSnake[currentSnake.length-1][0]).classList.add("head")
+
+        document.getElementById("box_"+currentFruit[1]+"_"+currentFruit[0]).classList.add("food")
+    }
+
+    getAgentData()
+</script>
+<style>
+    .food{
+        background-color: green!important;
+    }
+    .head{
+        background-color: red!important;
+    }
+    .body{
+        background-color: black !important;
+    }
+    #globalMap{
+        display: flex;
+        flex-direction: column;
+        width: fit-content;
+        margin-left: 50vw;
+        margin-top: 50vh;
+        transform: translate(-50%,-50%);
+    }
+    .row{
+        display: flex;
+        flex-direction: row;
+    }
+    .box{
+        width: 5vw;
+        aspect-ratio: 1/1;
+        background-color: lightgreen;
+    }
+</style>
+</html>
