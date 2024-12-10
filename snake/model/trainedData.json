@@ -1,27 +1,14 @@
 {
-  "411693": {
+  "286955": {
     "gameSize": 5,
     "aim": "15",
     "hiddenLayers": [
       150
     ],
     "activationFunction": "None",
-    "neuroneActivation": "[<function tanh at 0x7f44b4999620>, <function sigmoid at 0x7f44b49994e0>]",
-    "trainingTime": 8.661840681234995,
-    "selectionSize": 10,
-    "multiplier": 10,
-    "iteration": 60
-  },
-  "775970": {
-    "gameSize": 5,
-    "aim": "15",
-    "hiddenLayers": [
-      150
-    ],
-    "activationFunction": "None",
-    "neuroneActivation": "[<function tanh at 0x7fe6f7598fe0>, <function sigmoid at 0x7fe6f7598e00>]",
-    "trainingTime": 6.084721064567566,
-    "selectionSize": 10,
+    "neuroneActivation": "[<function tanh at 0x7fdd1cc94fe0>, <function sigmoid at 0x7fdd1cc94e00>]",
+    "trainingTime": 2.922783708572388,
+    "selectionSize": 5,
     "multiplier": 10,
     "iteration": 60
   }

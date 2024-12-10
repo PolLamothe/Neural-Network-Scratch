@@ -9,7 +9,7 @@ import copy
 import pickle
 import os
 
-SELECTIONSIZE = 10 #The number of snake in survivor
+SELECTIONSIZE = 5 #The number of snake in survivor
 
 MULTIPLIER = 10 #The number of agent wich will be created at start for each place in the selection (totale agent generated = MULTIPLIER * SELECTIONSIZE)
 
