@@ -1,4 +1,8 @@
-import snake.snakeGame as snakeGame
+import os
+if(os.getcwd().split(os.path.sep)[-1] != "snake"):
+    import snake.snakeGame as snakeGame
+else:
+    import snakeGame as snakeGame
 import sys
 sys.path.append("../")
 import classe
@@ -7,9 +11,8 @@ import operator
 import matplotlib.pyplot as plt
 import copy
 import pickle
-import os
 
-SELECTIONSIZE = 5 #The number of snake in survivor
+SELECTIONSIZE = 10 #The number of snake in survivor
 
 MULTIPLIER = 10 #The number of agent wich will be created at start for each place in the selection (totale agent generated = MULTIPLIER * SELECTIONSIZE)
 

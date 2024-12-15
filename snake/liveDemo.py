@@ -1,6 +1,5 @@
 import os
-import snake.snakeGame as snakeGame
-import snake.trainSnakeEvoTools as trainSnakeEvoTools
+import trainSnakeEvoTools as trainSnakeEvoTools
 import pickle
 import random
 import sys
@@ -19,7 +18,7 @@ for model in allModel:
     else:
         model = model.split("_")[2]
 
-ui = snakeGame.UI()
+ui = trainSnakeEvoTools.snakeGame.UI()
 
 game = None
 
@@ -34,7 +33,7 @@ def handleModelChoice(name : str):
         data : dict= json.load(file)
     gameSize = int(data[name.split("_")[1]]["gameSize"])
 
-    game = snakeGame.Game(gameSize)
+    game = trainSnakeEvoTools.snakeGame.Game(gameSize)
     dataSinceLastFood = []
 
     def updateGrid():
@@ -69,7 +68,7 @@ def handleModelChoice(name : str):
     def replayGame():
         global game
         global ui
-        game = snakeGame.Game(gameSize)
+        game = trainSnakeEvoTools.snakeGame.Game(gameSize)
         ui.grid = game.getGrid()
     
     ui.startGame(game.getGrid(),False,updateGrid=updateGrid,replayGame=replayGame)
