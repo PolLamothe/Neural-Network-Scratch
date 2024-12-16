@@ -1,17 +1,19 @@
 from flask import Flask,render_template,redirect,request
 from flask_cors import CORS
+import sys
+sys.path.append("../")
 import numberDetection.numberDetectionTools
 import numpy as np
 import snake.trainSnakeEvoTools
 
-app = Flask(__name__,template_folder="web")
+app = Flask(__name__,template_folder="static/html")
 CORS(app)
 
 BASE = "/IA/"
 
 @app.route('/', methods=['GET'])
 def redirect_temporarily():
-    return redirect(BASE+"numberDetection")
+    return render_template("index.html")
 
 @app.route('/numberDetection', methods=['GET'])
 def serve_numberDetection_page():

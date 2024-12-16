@@ -258,7 +258,7 @@ class trainSnakeEvo():
 
 def getWholeGameData() -> list[dict]:
     allModel = []
-    for (dirpath, dirnames, filenames) in os.walk("./snake/model"):
+    for (dirpath, dirnames, filenames) in os.walk("../snake/model"):
         allModel.extend(filenames)
 
     for model in allModel:
@@ -269,7 +269,7 @@ def getWholeGameData() -> list[dict]:
 
     print(allModel)
 
-    with open("./snake/model/"+allModel[0], "rb") as file:
+    with open("../snake/model/"+allModel[0], "rb") as file:
         network : classe.Networks = pickle.load(file)
     
     game = snakeGame.Game(5)
