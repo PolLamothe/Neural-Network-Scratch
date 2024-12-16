@@ -9,16 +9,21 @@
     <div id="mainContainer">
         <div class="imgContainer">
             <h2>Number Detection</h2>
-            <img src="./static/images/number.png">
+            <img id="numberDetectionPicture">
             <button onclick="window.location = 'numberDetection'">See live demo</button>
         </div>
         <div class="imgContainer">
             <h1>Snake</h1>
-            <img src="./static/images/snake.png">
+            <img id="snakePicture">
             <button onclick="window.location = 'snake'">See live demo</button>
         </div>
     </div>
 </body>
+
+<script defer>
+    document.getElementById("numberDetectionPicture").setAttribute("src",`${window.location.pathname}static/images/number.png`)
+    document.getElementById("snakePicture").setAttribute("src",`${window.location.pathname}static/images/snake.png`)
+</script>
 
 <style>
     .imgContainer{
