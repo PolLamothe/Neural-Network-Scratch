@@ -6,7 +6,7 @@ import numberDetection.numberDetectionTools
 import numpy as np
 import snake.trainSnakeEvoTools
 
-app = Flask(__name__,template_folder="static/html")
+app = Flask(__name__,template_folder="")
 CORS(app)
 
 BASE = "/IA/"
