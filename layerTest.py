@@ -16,17 +16,17 @@ for i in range(2):
 def checkResponse(array,response):
     expected = getRightAnswer(array)
     if(expected == 1):
-        if(response >= 0.95):
+        if(response >= 0.99):
             return True
     else:
-        if(response <= 0.05):
+        if(response <= 0.01):
             return True
     return False
 
 def getRightAnswer(array):
     return sum(array) == 2
 
-network = Networks([3,3,1],learningRate=0.5,neuroneActivation=[sigmoid,sigmoid])
+network = Networks([3,2,1],learningRate=2,neuroneActivation=[sigmoid,sigmoid])
 
 count = 0
 while(True):
