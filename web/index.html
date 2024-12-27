@@ -25,7 +25,7 @@
 <script defer>
 
     async function getTrainedData(){
-        let response = await (await fetch("/static/trainedData.json")).json()
+        let response = await (await fetch(`${window.location.pathname}static/trainedData.json`)).json()
         return response
     }
 
