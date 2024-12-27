@@ -13,20 +13,114 @@
             <button onclick="window.location += 'numberDetection'">See live demo</button>
         </div>
         <div class="imgContainer">
-            <h1>Snake</h1>
+            <h2>Snake</h2>
             <img id="snakePicture">
             <button onclick="window.location += 'snake'">See live demo</button>
         </div>
     </div>
+    <h2>4 Neurones can guess this pattern, can you ?</h2>
+    <canvas id="perceptronCanvas" width="600" height="200"></canvas>
 </body>
 
 <script defer>
+
+    async function getTrainedData(){
+        let response = await (await fetch("/static/trainedData.json")).json()
+        return response
+    }
+
     document.getElementById("numberDetectionPicture").setAttribute("src",`${window.location.pathname}static/images/number.png`)
     document.getElementById("snakePicture").setAttribute("src",`${window.location.pathname}static/images/snake.png`)
+
+    let trainedData = getTrainedData()
+
+    const canvas = document.getElementById('perceptronCanvas')
+    const ctx = canvas.getContext('2d')
+
+    const radius = 25
+    const hSpacing = 200
+    const vSpacing = 60
+
+    function drawNeuron(x, y, value) {
+        ctx.beginPath()
+        ctx.arc(x, y, radius, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${255-255*value},${255},${255-255*value})`
+        ctx.fill()
+        ctx.strokeStyle = '#000'
+        ctx.lineWidth = 2
+        ctx.stroke()
+        ctx.closePath()
+        
+        ctx.fillStyle = '#000'
+        ctx.font = '14px Arial'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText(value, x, y)
+    }
+
+    function drawConnection(x1, y1, x2, y2) {
+        ctx.beginPath()
+        ctx.moveTo(x1, y1)
+        ctx.lineTo(x2, y2)
+        ctx.strokeStyle = '#aaa'
+        ctx.lineWidth = 1.5
+        ctx.stroke()
+        ctx.closePath()
+    }
+
+    function drawPerceptron(layers) {
+        const layerPositions = []
+        
+        for (let i = 0; i < layers.length; i++) {
+            const layer = []
+            const x = 100 + i * hSpacing
+            const numNeurons = layers[i].length
+            const yOffset = (canvas.height - (numNeurons - 1) * vSpacing) / 2
+
+            for (let j = 0; j < numNeurons; j++) {
+                const y = yOffset + j * vSpacing
+                layer.push({ x, y })
+            }
+            layerPositions.push(layer)
+        }
+
+        for (let i = 0; i < layerPositions.length - 1; i++) {
+            const currentLayer = layerPositions[i]
+            const nextLayer = layerPositions[i + 1]
+            for (const neuron1 of currentLayer) {
+                for (const neuron2 of nextLayer) {
+                    drawConnection(neuron1.x, neuron1.y, neuron2.x, neuron2.y)
+                }
+            }
+        }
+
+        for (let i = 0; i < layerPositions.length; i++) {
+            const layer = layerPositions[i]
+            for (let j = 0; j < layer.length; j++) {
+                drawNeuron(layer[j].x, layer[j].y,Math.round(layers[i][j]*100)/100)
+            }
+        }
+    }
+
+    trainedData.then(async(value)=>{
+        let count = 0
+        drawPerceptron(value[count])
+        count = (count+1)%value.length
+        await setInterval(() => {
+            drawPerceptron(value[count])
+            count = (count+1)%value.length
+        }, 3000)
+    })
+
 </script>
 
 <style>
-    .imgContainer{
+    canvas{
+        width: 50vw;
+        margin-left: 50%;
+        transform: translateX(-50%);
+    }
+    h2{
         font-family: Arial, Helvetica, sans-serif;
         text-align: center;
         text-decoration: underline;
@@ -72,9 +166,25 @@
     .imgContainer img:hover + button{
         opacity: 1;
     }
-    body{
+    body, html{
         overflow-x: hidden;
         background-color: #141414;
+    }
+    @media screen and (max-width : 1000px) {
+        canvas{
+            width: 100vw;
+        }
+    }
+    @media screen and (max-width : 800px) {
+        .imgContainer{
+            width: 100%;
+        }
+        #mainContainer{
+            flex-direction: column;
+            margin-left: 50%;
+            transform: translateX(-50%);
+            width: fit-content;
+        }
     }
 </style>
 </html>

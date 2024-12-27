@@ -1,3 +1,5 @@
+import copy
+import json
 import numpy as np
 import random
 import sys
@@ -24,7 +26,7 @@ def checkResponse(array,response):
 def getRightAnswer(array):
     return sum(array) == 2
 
-network = Networks([3,10,1],learningRate=0.5,neuroneActivation=[tanh,sigmoid])
+network = Networks([3,3,1],learningRate=0.5,neuroneActivation=[sigmoid,sigmoid])
 
 count = 0
 while(True):
@@ -46,6 +48,14 @@ while(True):
     sys.stdout.flush()
 print("\nTraining is over !")
 
+dataSaved = []
 for array in data:
     lastLayerResult = network.forward(array)[0]
+    temp = [network.layers[0].X.tolist()]
+    for layer in network.layers:
+        temp.append(layer.Y.tolist())
+    dataSaved.append(copy.deepcopy(temp))
     print(array,round(lastLayerResult,2))
+
+with open("./web/static/trainedData.json","w") as file:
+    json.dump(dataSaved,file,indent=2)
