@@ -37,5 +37,18 @@
     "selectionSize": 5,
     "multiplier": 10,
     "iteration": 150
+  },
+  "165479": {
+    "gameSize": 5,
+    "aim": "14",
+    "hiddenLayers": [
+      100
+    ],
+    "activationFunction": "None",
+    "neuroneActivation": "[<function tanh at 0x1028ff1a0>, <function sigmoid at 0x100dfeca0>]",
+    "trainingTime": 2.779611655076345,
+    "selectionSize": 5,
+    "multiplier": 10,
+    "iteration": 50
   }
 }

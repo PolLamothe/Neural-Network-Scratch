@@ -19,7 +19,7 @@ MULTIPLIER = 10 #The number of agent wich will be created at start for each plac
 
 NEARHEAD = False
 
-ITERATION = 150
+ITERATION = 50
 
 class trainSnakeEvo():
     def __init__(self, gameSize: int, averageAim: int, hiddenLayers: list[int] = [], activationFunction: callable = None, neuroneActivation: list = None) -> None:
@@ -61,7 +61,7 @@ class trainSnakeEvo():
                     else:
                         break
                 if(security):
-                    print("\nThe bests agents of the generation ",str(currentGeneration-1)+" failed the security test !")
+                    print("The bests agents of the generation ",str(currentGeneration-1)+" failed the security test !")
             self.childPerformance = []
             
             for i in range(len(self.child)):#benchmarking the childs

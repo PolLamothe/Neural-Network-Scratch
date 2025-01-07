@@ -47,7 +47,7 @@ with open("./model/trainedData.json","w") as file:
 
 gameSize = 5
 
-HIDDENLAYERS = [150]
+HIDDENLAYERS = [100]
 
 try:
     if(int(args.aim) > gameSize**2 or int(args.aim) < 4):
