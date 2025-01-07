@@ -140,10 +140,14 @@ class trainSnakeEvo():
                             errors = [0]*4
                             if(supervisedResult[answerIndex] > 0):
                                 errors[answerIndex] = (1-supervisedResult[answerIndex]) * 0.5
-                            '''for x in range(4):
-                                    if(x != answerIndex):
-                                        if(supervisedResult[x] == -1):
-                                            errors[x] = -rawResult[x]'''
+                            '''if(len(self.iterationData) > 2):
+                                if(self.iterationData[-1]["averageLength"] < self.iterationData[-2]["averageLength"]):
+                                    for x in range(4):
+                                        if(x != answerIndex):
+                                            if(supervisedResult[x] == -1):
+                                                errors[x] = -rawResult[x]
+                                            else:
+                                                errors[x] = -rawResult[x]*0.25'''
                             network.backward(errors)
                     dataSincelastFood = []
                     if(modification):
@@ -169,21 +173,25 @@ class trainSnakeEvo():
                                 errors = [0]*4
                                 if(supervisedResult[answerIndex] > 0):
                                     errors[answerIndex] = -rawResult[answerIndex] * 0.5
-                                '''for x in range(4):
-                                    if(x != answerIndex):
-                                        if(supervisedResult[x] == -1):
-                                            errors[x] = -rawResult[x]'''
+                                '''if(len(self.iterationData) > 2):
+                                    if(self.iterationData[-1]["averageLength"] < self.iterationData[-2]["averageLength"]):
+                                        for x in range(4):
+                                            if(x != answerIndex):
+                                                if(supervisedResult[x] == -1):
+                                                    errors[x] = -rawResult[x]
+                                                else:
+                                                    errors[x] = (1-rawResult[x]) * 0.25'''
                                 network.backward(errors)
                         else:#Reward the snake when it get closer to the fruit
                             currentDistance = abs(game.snake[-1][0]-game.fruit[0])+abs(game.snake[-1][1]-game.fruit[1])
                             previousDistance = abs(headSave[0]-game.fruit[0])+abs(headSave[1]-game.fruit[1])
                             if(currentDistance < previousDistance):
                                 errors = [0]*4
-                                errors[answerIndex] = (1-result[answerIndex]) *0.5
+                                errors[answerIndex] = (1-result[answerIndex]) * 0.25
                                 network.backward(errors)
                             elif(currentDistance > previousDistance):
                                 errors = [0]*4
-                                errors[answerIndex] = -result[answerIndex] * 0.5
+                                errors[answerIndex] = -result[answerIndex] * 0.25
                                 network.backward(errors)
 
             currentPerformance.append(len(game.snake))
@@ -208,8 +216,6 @@ class trainSnakeEvo():
             for i in range(len(dataSinceLastFood)):
                 if(dataSinceLastFood[i]["snake"] == snake):
                     modifiedResult[dataSinceLastFood[i]["index"]] = -0.5
-            #if(network != None):
-                #network.backward(errors)
             return modifiedResult
         except IndexError:
             print(snake[-1])

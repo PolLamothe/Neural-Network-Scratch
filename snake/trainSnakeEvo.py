@@ -47,7 +47,7 @@ with open("./model/trainedData.json","w") as file:
 
 gameSize = 5
 
-HIDDENLAYERS = [100]
+HIDDENLAYERS = [150]
 
 try:
     if(int(args.aim) > gameSize**2 or int(args.aim) < 4):
@@ -69,7 +69,7 @@ network = snakeTrain.train()
 
 if(args.save):
     print("saving your model")
-    ID = random.randint(100000,999999)
+    ID = int(time.time())
     file_name = './model/snake_'+str(ID)+"_.pkl"
     with open(file_name, 'wb') as file:
         pickle.dump(network, file)
