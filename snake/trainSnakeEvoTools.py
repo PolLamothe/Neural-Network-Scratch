@@ -13,7 +13,7 @@ import copy
 import pickle
 import time
 
-SELECTIONSIZE = 5 #The number of snake in survivor
+SELECTIONSIZE = 6 #The number of snake in survivor
 
 MULTIPLIER = 10 #The number of agent wich will be created at start for each place in the selection (totale agent generated = MULTIPLIER * SELECTIONSIZE)
 
@@ -56,8 +56,7 @@ class trainSnakeEvo():
                         if(verifiyPerformance >= float(self.averageAim)):
                             return survivor[i]["network"]
                         else:
-                            survivor[i]["performance"] = (survivor[i]["performance"]*survivor[i]["verification"]+verifiyPerformance)/(survivor[i]["verification"]+1)
-                            survivor[i]["verification"] += 1
+                            survivor[i]["performance"] = verifiyPerformance
                     else:
                         break
                 if(security):
@@ -65,11 +64,10 @@ class trainSnakeEvo():
             self.childPerformance = []
             
             for i in range(len(self.child)):#benchmarking the childs
-                self.childPerformance.append({"number" : (currentGeneration-1)*SELECTIONSIZE*MULTIPLIER+i,"performance":self.__runChild(self.child[i]),"network":self.child[i],"verification":1})
+                self.childPerformance.append({"number" : (currentGeneration-1)*SELECTIONSIZE*MULTIPLIER+i,"performance":self.__runChild(self.child[i]),"network":copy.deepcopy(self.child[i])})
             
             for i in range(len(survivor)):#re-benchmarking the survivor to reduce randomness
-                survivor[i]["performance"] = (survivor[i]["performance"]*survivor[i]["verification"]+self.__runChild(survivor[i]["network"]))/(survivor[i]["verification"]+1)
-                survivor[i]["verification"] += 1
+                survivor[i]["performance"] = self.__runChild(survivor[i]["network"])
             
             self.childPerformance.sort(reverse=True,key=operator.itemgetter("performance"))
             survivor += self.childPerformance[:SELECTIONSIZE]
@@ -81,7 +79,7 @@ class trainSnakeEvo():
                 for x in range(i+1,len(survivor)):
                     tempNetworks.append(classe.Networks([self.firstNeurones]+self.hiddenLayers+[4],activation=self.activationFunction,learningRate=0.1,neuroneActivation=self.neuroneActivation,parents=[survivor[i]["network"],survivor[x]["network"]]))
             
-            self.child = tempNetworks.copy()
+            self.child = copy.deepcopy(tempNetworks)
             self.iterationData.append({"generation":currentGeneration,"maxLength":survivor[0]["performance"],"averageLength":trainSnakeEvo.getAveragePerformance(survivor)})
             plt.plot([i+1 for i in range(len(self.iterationData))],[self.iterationData[i]["averageLength"] for i in range(len(self.iterationData))], label="AverageLength of the selected agent")
             plt.plot([i+1 for i in range(len(self.iterationData))],[self.iterationData[i]["maxLength"] for i in range(len(self.iterationData))],label = "AverageLength of the best agent")
@@ -130,7 +128,7 @@ class trainSnakeEvo():
                         errors = [0] * 4
                         errors[answerIndex] = 1-result[answerIndex]
                         network.backward(errors)
-                        for i in range(len(dataSincelastFood)):
+                        '''for i in range(len(dataSincelastFood)):
                             dataCopy = copy.deepcopy(dataSincelastFood)
                             dataCopy = dataCopy[:i]
                             Networkinput = trainSnakeEvo.generateInput(dataSincelastFood[i]["grid"],True,dataSincelastFood[i]["snake"])
@@ -140,15 +138,15 @@ class trainSnakeEvo():
                             errors = [0]*4
                             if(supervisedResult[answerIndex] > 0):
                                 errors[answerIndex] = (1-supervisedResult[answerIndex]) * 0.5
-                            '''if(len(self.iterationData) > 2):
+                            if(len(self.iterationData) > 2):
                                 if(self.iterationData[-1]["averageLength"] < self.iterationData[-2]["averageLength"]):
                                     for x in range(4):
                                         if(x != answerIndex):
                                             if(supervisedResult[x] == -1):
                                                 errors[x] = -rawResult[x]
                                             else:
-                                                errors[x] = -rawResult[x]*0.25'''
-                            network.backward(errors)
+                                                errors[x] = -rawResult[x]*0.25
+                            network.backward(errors)'''
                     dataSincelastFood = []
                     if(modification):
                         errors = [0]*4
