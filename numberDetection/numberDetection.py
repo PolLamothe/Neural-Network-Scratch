@@ -24,21 +24,7 @@ if(useTrainedModel):
 else:
     network = numberDetectionTools.getNetwork()
 
-
-print("importation over")
-
-def stateChecker():
-    while(True):
-        input()
-        index = random.randint(0,len(numberDetectionTools.x_train)-1)
-        data = network.forward(np.append(numberDetectionTools.x_train[index],[]))
-        liste = data.tolist()
-        for i in range(len(liste)):
-            liste[i] = round(liste[i],2)
-        if(trainingState):
-            print("right answer : "+str(numberDetectionTools.y_train[index])+"\nresult : "+str(liste)+"\nprevious right answer : "+str(rightCount))
-        else:
-            print("right answer : "+str(numberDetectionTools.y_train[index])+"\nresult : "+str(liste))
+print("importation of the training dataset is over")
 
 def checkAnswer(right, response):
     greater = None
@@ -50,37 +36,29 @@ def checkAnswer(right, response):
     if(greater[0] == right):return True
     else:return False
 
-thread = threading.Thread(target=stateChecker)
-thread.start()
+previousAnswerRatio = 0
+previousAnswerCoeff = 0
 
-EXPECTEDRIGHTANSWER = 10#we expect the model to get 20 consecutive right number for every number to be consider as trained
+previousAnswerNumber = 2500
 
-if(not useTrainedModel):
+if(not useTrainedModel or args.save):
     trainingState = True
 
     count = 0
     rightCount = dict({})
     for i in range(10):
         rightCount[i] = 0
-    while(True):
+    while(previousAnswerRatio < 0.95 or previousAnswerCoeff < previousAnswerNumber):
         count += 1
         currentIndex = random.randint(0,len(numberDetectionTools.x_train)-1)
         right = numberDetectionTools.y_train[currentIndex]
         lastLayerResult = network.forward(np.append(numberDetectionTools.x_train[currentIndex],[]))
         if(checkAnswer(right,lastLayerResult)):
-            if(rightCount[right] < EXPECTEDRIGHTANSWER):
-                rightCount[right] += 1
-            else:
-                state = True
-                for i in range(10):
-                    if(rightCount[i] < EXPECTEDRIGHTANSWER):
-                        state = False
-                        break
-                if(state):
-                    break
+            previousAnswerRatio = (previousAnswerRatio*previousAnswerCoeff+1)/(previousAnswerCoeff+1)
+            previousAnswerCoeff = min(previousAnswerNumber,previousAnswerCoeff+1)
         else:
-            for i in range(10):
-                rightCount[i] = 0
+            previousAnswerRatio = (previousAnswerRatio*previousAnswerCoeff-1)/(previousAnswerCoeff+1)
+            previousAnswerCoeff = min(previousAnswerNumber,previousAnswerCoeff+1)
         err = []
         for i in range(10):
             if(i != right):
@@ -88,14 +66,24 @@ if(not useTrainedModel):
             else:
                 err.append(1-lastLayerResult[i])
         network.backward(err)
-        print("number of iterations : "+str(count), end='\r')
+        print("number of iterations : "+str(count)," success rate : ",round(previousAnswerRatio,2), end='\r')
         sys.stdout.flush()
     print("\ntraining over")
     trainingState = False
+
+
     if(args.save):
         print("saving your model")
         file_name = 'numberDetection.pkl'
         with open(file_name, 'wb') as file:
             pickle.dump(network, file)
-else:
-    trainingState = False
+successCout = 0
+testCount = 0
+for i in range(len(numberDetectionTools.x_test)):
+    result = network.forward(np.append(numberDetectionTools.x_test[i],[]))
+    right = numberDetectionTools.y_test[i]
+    if(checkAnswer(right,result)):
+        successCout += 1
+    testCount += 1
+
+print("The success rate of the model on the whole testing dataset is : ",round(successCout/testCount,2))

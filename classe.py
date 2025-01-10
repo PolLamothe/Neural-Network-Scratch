@@ -49,9 +49,6 @@ def relu(x):
     x = np.clip(x,-600,600)
     return np.maximum(0,x)
 
-def drelu(x):
-    x = np.clip(x,-600,600)
-    return relu(x)
 
 class Layer():
     #input_size : the number of neurones of the previous layer
@@ -64,7 +61,7 @@ class Layer():
         self.learningRate = learningRate
         if(activation == tanh):self.activationPrime = tanh_prime
         elif(activation == sigmoid):self.activationPrime = dsigmoid
-        elif(activation == relu):self.activationPrime = drelu
+        elif(activation == relu):self.activationPrime = relu
         elif(activation == softmax):self.activationPrime = dsoftmax
         if(parents == None):
             self.W = np.random.uniform(low=-1,high=1,size=(output_size,input_size))
