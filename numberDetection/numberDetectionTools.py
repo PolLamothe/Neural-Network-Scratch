@@ -16,7 +16,7 @@ x_train = x_train.astype('float32')
 x_train /= 255
 
 def getNetwork():
-    return Networks([28*28,450,10],activation=sigmoid,learningRate=0.05)
+    return Networks([28*28,600,250,10],neuroneActivation=[Tanh,Tanh,Softmax],learningRate=0.01)
 
 def getTrainedNetwork() -> Networks:
     with open(os.path.dirname(os.path.realpath(__file__))+"/numberDetection.pkl", "rb") as file:

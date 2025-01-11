@@ -2,69 +2,51 @@ import math
 import numpy as np
 from time import sleep
 
-def sigmoid(x):
-    x = np.clip(x,-600,600)
-    try:
-        return 1/(1+np.exp(-x))
-    except OverflowError:
-        if(x < 0):
-            return 0
-        else:
-            return 1
-        
-def dsigmoid(x):
-    x = np.clip(x,-600,600)
-    return sigmoid(x)*(1-sigmoid(x))
-        
-def tanh(x):
-    x = np.clip(x,-600,600)
-    return np.tanh(x)
+class ActivationFunction():
+    def function(X):
+        raise NotImplemented("")
+    
+    def derivative(X):
+        raise NotImplemented("")
+    
+class Sigmoid(ActivationFunction):
+    def function(X):
+        X = np.clip(X,-600,600)
+        return 1/(1+np.exp(-X))
+    
+    def derivative(X):
+        X = np.clip(X,-600,600)
+        return Sigmoid.function(X)*(1-Sigmoid.function(X))
 
-def tanh_prime(x):
-    x = np.clip(x,-600,600)
-    return 1-(tanh(x)**2)
-
-def softmax(X : np.array.__class__) -> np.array.__class__:
-    somme = 0
-    result = []
-
-    X = np.clip(X,-600, 600)
-    for x in X:
-        try:
-            somme += math.exp(x)
-        except OverflowError:
-            print(x)
-            exit(1)
-    for x in X:
-        result.append(math.exp(x)/somme)
-    return result
-
-def dsoftmax(X : np.array.__class__) -> np.array.__class__:
-    result = []
-    for i in range(len(X)):
-        result.append(X[i] * (1-X[i]))
-    return np.array(result)
-
-def relu(x):
-    x = np.clip(x,-600,600)
-    return np.maximum(0,x)
-
+class Softmax(ActivationFunction):
+    def function(X):
+        X = np.clip(X,-600,600)
+        exps = np.exp(X)
+        return exps / np.sum(exps)
+    
+    def derivative(X):
+        return X
+    
+class Tanh(ActivationFunction):
+    def function(X):
+        X = np.clip(X,-600,600)
+        return np.tanh(X)
+    
+    def derivative(X):
+        X = np.clip(X,-600,600)
+        return 1-(Tanh.function(X)**2)
 
 class Layer():
     #input_size : the number of neurones of the previous layer
     #output_size : the number of neurones in this layer
-    def __init__(self,input_size : int,output_size : int,activation : callable,learningRate : float=1,parents : list=None):
+    def __init__(self,input_size : int,output_size : int,activation : ActivationFunction,learningRate : float=1,parents : list=None):
         #self.nerone : list = []
         self.input_size = input_size
         self.output_size = output_size
         self.activation = activation
         self.learningRate = learningRate
-        if(activation == tanh):self.activationPrime = tanh_prime
-        elif(activation == sigmoid):self.activationPrime = dsigmoid
-        elif(activation == relu):self.activationPrime = relu
-        elif(activation == softmax):self.activationPrime = dsoftmax
         if(parents == None):
-            self.W = np.random.uniform(low=-1,high=1,size=(output_size,input_size))
+            self.W = np.random.randn(output_size, input_size) * np.sqrt(2. / (input_size + output_size))
             self.B = np.random.uniform(low=-1,high=1,size=(output_size))
         else:
             self.W = (parents[0].W+parents[1].W)/2# * np.random.uniform(low=0.9,high=1.1,size=(output_size,input_size))
@@ -73,28 +55,25 @@ class Layer():
     #this function return the result of each of the neurones of this layer
     def forward(self,this_input : np.array.__class__) -> np.array.__class__:
         self.X = this_input
-        self.Y = self.activation(np.dot(self.W,this_input)+self.B)
+        self.Y = self.activation.function(np.dot(self.W,this_input)+self.B)
         return self.Y
     
     #error : an array containing the error for each of the neurones of this layer
     def backward(self,output_error : np.array.__class__):
-        output_error *= self.activationPrime(self.Y)
-        self.W += (output_error[:,np.newaxis]*self.X)*self.learningRate
-        self.B += output_error*self.learningRate
-        return np.dot(output_error,self.W*self.X)
+        output_error *= self.activation.derivative(self.Y)
+    
+        batch_size = self.X.shape[0] if len(self.X.shape) > 1 else 1
+        self.W += (output_error[:, np.newaxis] * self.X) * (self.learningRate / batch_size)
+        self.B += output_error * (self.learningRate / batch_size)
+        
+        return np.dot(output_error, self.W)
     
 class Networks():
-    def __init__(self,neuroneNumber : list[int],activation=None,learningRate : float=1,neuroneActivation : list[callable]=None,parents : list=None) -> None:
+    def __init__(self,neuroneNumber : list[int],learningRate : float=1,neuroneActivation : list[ActivationFunction]=None,parents : list=None) -> None:
         self.layers : list[Layer] = []
         activationList = []
-        if(neuroneActivation == None):
-            if(activation == None):
-                raise Exception("No activation function was provided")
-            for i in range(len(neuroneNumber)):
-                activationList.append(activation)
-        else:
-            for i in range(len(neuroneActivation)):
-                activationList.append(neuroneActivation[i])
+        for i in range(len(neuroneActivation)):
+            activationList.append(neuroneActivation[i])
         for i in range(1,len(neuroneNumber)):
             try:
                 if(parents != None):
