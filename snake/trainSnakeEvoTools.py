@@ -1,3 +1,4 @@
+import json
 import os
 
 import numpy as np
@@ -300,9 +301,15 @@ def getWholeGameData() -> list[dict]:
         else:
             model = model.split("_")[2]
 
-    print(allModel)
+    bestModel = None
 
-    with open("../snake/model/"+allModel[0], "rb") as file:
+    with open("../snake/model/trainedData.json","r") as file:
+        jsonData = json.loads(file.read())
+        for i in range(len(allModel)):
+            if(bestModel == None or jsonData[bestModel]["aim"] < jsonData[allModel[i].split("_")[1]]["aim"]):
+                bestModel = allModel[i].split("_")[1]
+
+    with open("../snake/model/snake_"+bestModel+"_.pkl", "rb") as file:
         network : classe.Networks = pickle.load(file)
     
     game = snakeGame.Game(5)
