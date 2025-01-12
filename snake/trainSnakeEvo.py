@@ -57,13 +57,14 @@ except TypeError:
 
 try:
     STARTINGTIME = time.time()
-    snakeTrain = trainSnakeEvoTools.trainSnakeEvo(gameSize,args.aim,HIDDENLAYERS,neuroneActivation=[classe.tanh,classe.sigmoid])
+    snakeTrain = trainSnakeEvoTools.trainSnakeEvo(gameSize,args.aim,HIDDENLAYERS,neuroneActivation=[classe.Tanh,classe.Sigmoid])
 except TypeError:
     raise Exception("You forgot the parameter -a (press -c to see all comands)")
 
 SELECTIONSIZE = trainSnakeEvoTools.SELECTIONSIZE
 MULTIPLIER = trainSnakeEvoTools.MULTIPLIER
 ITERATION = trainSnakeEvoTools.ITERATION
+LEARNINGRATE = trainSnakeEvoTools.LEARNINGRATE
 
 network = snakeTrain.train()
 
@@ -85,6 +86,7 @@ if(args.save):
         "selectionSize" : SELECTIONSIZE,
         "multiplier" : MULTIPLIER,
         "iteration" : ITERATION,
+        "learningRate" : LEARNINGRATE
     })
     with open("./model/trainedData.json","w") as file:
         json.dump(data,file,indent=2)
