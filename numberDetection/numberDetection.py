@@ -39,7 +39,7 @@ def checkAnswer(right, response):
 previousAnswerRatio = 0
 previousAnswerCoeff = 0
 
-previousAnswerNumber = 2500
+previousAnswerNumber = len(numberDetectionTools.x_test)
 
 if(not useTrainedModel or args.save):
     trainingState = True
@@ -48,7 +48,7 @@ if(not useTrainedModel or args.save):
     rightCount = dict({})
     for i in range(10):
         rightCount[i] = 0
-    while(previousAnswerRatio < 0.9 or previousAnswerCoeff < previousAnswerNumber):
+    while(previousAnswerRatio < 0.95 or previousAnswerCoeff < previousAnswerNumber):
         count += 1
         currentIndex = random.randint(0,len(numberDetectionTools.x_train)-1)
         right = numberDetectionTools.y_train[currentIndex]

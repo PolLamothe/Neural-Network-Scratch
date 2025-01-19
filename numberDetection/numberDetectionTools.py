@@ -16,14 +16,14 @@ x_train = x_train.astype('float32')
 x_train /= 255
 
 def getNetwork():
-    return Networks([28*28,600,250,10],neuroneActivation=[Tanh,Tanh,Softmax],learningRate=0.01)
+    return Networks([28*28,50,10],neuroneActivation=[Tanh,Sigmoid],learningRate=0.01)
 
 def getTrainedNetwork() -> Networks:
     with open(os.path.dirname(os.path.realpath(__file__))+"/numberDetection.pkl", "rb") as file:
         return pickle.load(file)
 
 def getTestData() -> dict[np.array]:
-    choice = random.randint(0,1000)
+    choice = random.randint(0,len(x_test)-1)
     return dict({"data":x_test[choice].tolist(),"rightAnswer":y_test[choice].tolist()})
 
 def getNetworkAnswer(input : np.array) -> list[float]:
