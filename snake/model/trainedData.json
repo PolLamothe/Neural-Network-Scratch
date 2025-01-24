@@ -1,27 +1,13 @@
 {
-  "1736688373": {
-    "gameSize": 5,
-    "aim": "14",
-    "hiddenLayers": [
-      150
-    ],
-    "activationFunction": "None",
-    "neuroneActivation": "[<class 'classe.Tanh'>, <class 'classe.Sigmoid'>]",
-    "trainingTime": 0.8688931465148926,
-    "selectionSize": 5,
-    "multiplier": 5,
-    "iteration": 50,
-    "learningRate": 0.1
-  },
-  "1736688540": {
+  "1737719743": {
     "gameSize": 5,
     "aim": "15",
     "hiddenLayers": [
-      150
+      75
     ],
     "activationFunction": "None",
     "neuroneActivation": "[<class 'classe.Tanh'>, <class 'classe.Sigmoid'>]",
-    "trainingTime": 1.0058456182479858,
+    "trainingTime": 0.7255588014920552,
     "selectionSize": 5,
     "multiplier": 5,
     "iteration": 50,
