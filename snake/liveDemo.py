@@ -40,7 +40,7 @@ def handleModelChoice(name : str):
         global dataSinceLastFood
         global game
         result = network.forward(trainSnakeEvoTools.trainSnakeEvo.generateInput(game.getGrid(),True,game.snake))
-        answerIndex = random.choice(trainSnakeEvoTools.trainSnakeEvo.getAllMaxIndex(trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(game.size,game.snake,result,copy.deepcopy(dataSinceLastFood))))
+        answerIndex = random.choice(trainSnakeEvoTools.trainSnakeEvo.getAllMaxIndex(trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(game.size,game.snake,result,copy.deepcopy(dataSinceLastFood),game)))
         if(answerIndex == 0):
             game.directionY = -1
             game.directionX = 0

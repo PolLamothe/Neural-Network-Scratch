@@ -12,5 +12,19 @@
     "multiplier": 5,
     "iteration": 50,
     "learningRate": 0.1
+  },
+  "1737841509": {
+    "gameSize": 5,
+    "aim": "16",
+    "hiddenLayers": [
+      150
+    ],
+    "activationFunction": "None",
+    "neuroneActivation": "[<class 'classe.Tanh'>, <class 'classe.Sigmoid'>]",
+    "trainingTime": 2.5130454182624815,
+    "selectionSize": 5,
+    "multiplier": 5,
+    "iteration": 50,
+    "learningRate": 0.1
   }
 }
