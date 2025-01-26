@@ -1,13 +1,14 @@
 {
-  "1737889363": {
+  "1737892669": {
     "gameSize": 5,
-    "aim": "16",
+    "aim": "17",
     "hiddenLayers": [
-      150
+      75,
+      75
     ],
     "activationFunction": "None",
-    "neuroneActivation": "[<class 'classe.Tanh'>, <class 'classe.Sigmoid'>]",
-    "trainingTime": 1.3962379336357116,
+    "neuroneActivation": "[<class 'classe.Tanh'>, <class 'classe.Tanh'>, <class 'classe.Sigmoid'>]",
+    "trainingTime": 2.0460941553115846,
     "selectionSize": 5,
     "multiplier": 5,
     "iteration": 50,

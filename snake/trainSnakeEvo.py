@@ -47,7 +47,7 @@ with open("./model/trainedData.json","w") as file:
 
 gameSize = 5
 
-HIDDENLAYERS = [150]
+HIDDENLAYERS = [75,75]
 
 try:
     if(int(args.aim) > gameSize**2 or int(args.aim) < 4):
@@ -57,7 +57,7 @@ except TypeError:
 
 try:
     STARTINGTIME = time.time()
-    snakeTrain = trainSnakeEvoTools.trainSnakeEvo(gameSize,args.aim,HIDDENLAYERS,neuroneActivation=[classe.Tanh,classe.Sigmoid])
+    snakeTrain = trainSnakeEvoTools.trainSnakeEvo(gameSize,args.aim,HIDDENLAYERS,neuroneActivation=[classe.Tanh,classe.Tanh,classe.Sigmoid])
 except TypeError:
     raise Exception("You forgot the parameter -a (press -c to see all comands)")
 

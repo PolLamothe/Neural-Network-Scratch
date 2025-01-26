@@ -110,11 +110,10 @@ class trainSnakeEvo():
                 Networkinput = trainSnakeEvo.generateInput(game.getGrid(),True,game.snake)
                 result = network.forward(np.array(Networkinput))
                 supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,game.snake,result,dataSincelastFood,game)
-                '''errors = [0]*4
-                for i in range(4):
-                    if(supervisedResult[i] < 0):
-                        errors[i] = -result[i]
-                network.backward(errors)'''
+                errors = [0]*4
+                '''for i in range(4):
+                    if(supervisedResult[i] == -1):
+                        errors[i] = -result[i]'''
                 answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(supervisedResult))
 
                 if(answerIndex == 0):
@@ -137,34 +136,10 @@ class trainSnakeEvo():
                 state = game.checkState()
                 if(game.fruit != fruitSave):
                     if(modification):
-                        errors = [0] * 4
                         errors[answerIndex] = 1-result[answerIndex]
                         network.backward(errors)
-                        '''for i in range(len(dataSincelastFood)):
-                            dataCopy = copy.deepcopy(dataSincelastFood)
-                            dataCopy = dataCopy[:i]
-                            Networkinput = trainSnakeEvo.generateInput(dataSincelastFood[i]["grid"],True,dataSincelastFood[i]["snake"])
-                            rawResult = network.forward(np.array(Networkinput))
-                            supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,dataSincelastFood[i]["snake"],rawResult,dataSincelastFood[:i])
-                            answerIndex = dataSincelastFood[i]["index"]
-                            errors = [0]*4
-                            if(supervisedResult[answerIndex] > 0):
-                                errors[answerIndex] = (1-supervisedResult[answerIndex]) * (0.5+(i/(len(dataSincelastFood)*2)))
-                                network.backward(errors)
-                            if(len(self.iterationData) > 2):
-                                if(self.iterationData[-1]["averageLength"] < self.iterationData[-2]["averageLength"]):
-                                    for x in range(4):
-                                        if(x != answerIndex):
-                                            if(supervisedResult[x] == -1):
-                                                errors[x] = -rawResult[x]
-                                            else:
-                                                errors[x] = -rawResult[x]*0.25'''
                     previousDataSinceLastFood = copy.deepcopy(dataSincelastFood)
                     dataSincelastFood = []
-                    if(modification):
-                        errors = [0]*4
-                        errors[answerIndex] = 1-result[answerIndex]
-                        network.backward(errors)
                 else:
                     dataSincelastFood.append({"snake":copy.deepcopy(snakeSave),"index":answerIndex,"grid":game.getGrid()})
                     if(len(dataSincelastFood) > game.size**2):
@@ -196,11 +171,9 @@ class trainSnakeEvo():
                             currentDistance = abs(game.snake[-1][0]-game.fruit[0])+abs(game.snake[-1][1]-game.fruit[1])
                             previousDistance = abs(headSave[0]-game.fruit[0])+abs(headSave[1]-game.fruit[1])
                             if(currentDistance < previousDistance):
-                                errors = [0]*4
                                 errors[answerIndex] = (1-result[answerIndex]) * 0.2
                                 network.backward(errors)
                             elif(currentDistance > previousDistance):
-                                errors = [0]*4
                                 errors[answerIndex] = -result[answerIndex] * 0.2
                                 network.backward(errors)
 
