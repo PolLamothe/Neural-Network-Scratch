@@ -110,6 +110,11 @@ class trainSnakeEvo():
                 Networkinput = trainSnakeEvo.generateInput(game.getGrid(),True,game.snake)
                 result = network.forward(np.array(Networkinput))
                 supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,game.snake,result,dataSincelastFood,game)
+                '''errors = [0]*4
+                for i in range(4):
+                    if(supervisedResult[i] < 0):
+                        errors[i] = -result[i]
+                network.backward(errors)'''
                 answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(supervisedResult))
 
                 if(answerIndex == 0):
@@ -165,7 +170,7 @@ class trainSnakeEvo():
                     if(len(dataSincelastFood) > game.size**2):
                         state = False
                     if(modification):
-                        if(state == False):
+                        if(state == False and False):
                             errors = [0] * 4
                             errors[answerIndex] = -result[answerIndex]
                             network.backward(errors)
@@ -263,8 +268,9 @@ class trainSnakeEvo():
 
         data = []
         result = [True]*4
-        snake = snake[1:]
-        head = snake[-1]
+        game = copy.deepcopy(game)
+        game.snake = game.snake[1:]
+        head = game.snake[-1]
         grid = game.getGrid()
         for i in range(-1,2,2):
             if(head[0]+i >= 0 and head[0]+i < len(grid)):

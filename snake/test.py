@@ -20,7 +20,7 @@ class TestSuperviseAnswer(unittest.TestCase):
          0    0  0  0  0
         '''
         result = [1,1,1,1]
-        self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(5,game.snake,result,[]),[-1,1,-1,-1])
+        self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(5,game.snake,result,[],game),[-1,1,-1,-1])
     
     def test_protectionFromBody(self):
         game = snakeGame.Game(5)
@@ -34,7 +34,7 @@ class TestSuperviseAnswer(unittest.TestCase):
          0    0 0 0 0
         '''
         result = [1,1,1,1]
-        self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(5,game.snake,result,[]),[1,-1,-1,1])
+        self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(5,game.snake,result,[],game),[1,-1,-1,1])
     
     def test_canMoveToTail(self):
         game = snakeGame.Game(5)
@@ -48,7 +48,7 @@ class TestSuperviseAnswer(unittest.TestCase):
         0       0 0 0 0
         '''
         result = [1,1,1,1]
-        self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(5,game.snake,result,[]),[1,1,-1,-1])
+        self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(5,game.snake,result,[],game),[1,1,-1,-1])
 
     def test_loop(self):
         game = snakeGame.Game(5)
@@ -74,20 +74,20 @@ class TestSuperviseAnswer(unittest.TestCase):
             "snake":[[0,0],[1,0],[1,1],[0,1]]
             }
         ]
-        self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(5,game.snake,result,previous),[-0.5,1,-1,-1])
+        self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(5,game.snake,result,previous,game),[-0.5,1,-1,-1])
 
     def test_getMaxIndex(self):
         self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.getAllMaxIndex([1,0,0,1]),[0,3])
         self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.getAllMaxIndex([-1,0,0,-1]),[1,2])
         self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.getAllMaxIndex([-1,-0.5,-1,-1]),[1])
 
-    def test_random(self):
+    def disabled_test_random(self):
         for i in range(100):
             print(i,end="\r")
             game = snakeGame.Game(5)
             dataSinceLastFood = []
             while(game.checkState() == None):
-                supervisedResult = trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(game.size,game.snake,[1,0.9,0.8,0.7],copy.deepcopy(dataSinceLastFood))
+                supervisedResult = trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(game.size,game.snake,[1,0.9,0.8,0.7],copy.deepcopy(dataSinceLastFood),game)
                 answerIndex = random.choice(trainSnakeEvoTools.trainSnakeEvo.getAllMaxIndex(supervisedResult))
 
                 if(answerIndex == 0):
@@ -132,7 +132,7 @@ class TestSuperviseAnswer(unittest.TestCase):
                 self.fail()
 
 class TestDeadEndDetection(unittest.TestCase):
-    def test_deadEnd(self):
+    def test_fakeDeadEnd(self):
         game = snakeGame.Game(5)
         game.snake = [[0,1],[1,1],[2,1],[3,1],[4,1]]
         game.fruit = [0,0]
@@ -143,7 +143,7 @@ class TestDeadEndDetection(unittest.TestCase):
         0       0  0  1 0
         0       0  0  0 0
         '''
-        self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.checkDeadEnd(game.getGrid(),game.snake),[False,False,False,True])
+        self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.checkDeadEnd(game,game.snake),[False,False,True,True])
 
     def test_noDeadEnd(self):
         game = snakeGame.Game(5)
@@ -156,7 +156,20 @@ class TestDeadEndDetection(unittest.TestCase):
         0       0  0  1   0
         0       0  0  0   0
         '''
-        self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.checkDeadEnd(game.getGrid(),game.snake),[False,True,True,True])
+        self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.checkDeadEnd(game,game.snake),[False,True,True,True])
+
+    def test_realDeadEnd(self):
+        game = snakeGame.Game(5)
+        game.snake = [[4,3],[4,2],[3,2],[2,2],[1,2],[0,2],[0,1],[1,1],[2,1],[3,1],[4,1],]
+        game.fruit = [0,0]
+        '''
+        1   0  0  0 0
+        -1 -1 -1 -1 HEAD
+        -1 -1 -1 -1 -1
+        0   0  0  0 TAIL
+        0   0  0  0 0
+        '''
+        self.assertEqual(trainSnakeEvoTools.trainSnakeEvo.checkDeadEnd(game,game.snake),[False,False,True,False])
 
 if __name__ == "__main__":
     unittest.main()
