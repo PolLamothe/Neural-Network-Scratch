@@ -9,13 +9,21 @@
     <div id="globalMap">
 
     </div>
+    <div id="loadingWrapper">
+        <img id="loadingImage">
+        <p>Receiving the game data..</p>
+    </div>
 </body>
-<script>
+
+<script defer>
     const gameSize = 5
 
     let data = null
 
     let currentIndex = 0
+
+    console.log(window.location.pathname.replace("snake",""))
+    document.getElementById("loadingImage").setAttribute("src",`${window.location.pathname.replace("snake","")}static/images/loading.gif`)
 
     for(let i = 0;i<gameSize;i++){
         let temp = document.createElement("div")
@@ -33,10 +41,12 @@
 
     async function getAgentData() {
         data = await (await fetch(`${window.location}/getData`,{method:"GET"})).json()
+        document.getElementById("loadingWrapper").style.display = "none"
+        document.getElementById("globalMap").style.display = "flex"
         for(let i = 0;i<data.length;i++){
             updateGrid()
             currentIndex++
-            await sleep(300)
+            await sleep(250)
         }
     }
 
@@ -61,6 +71,21 @@
     getAgentData()
 </script>
 <style>
+    #loadingWrapper p{
+        font-size: 30px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+    #loadingWrapper{
+        margin-top: 50vh;
+        margin-left: 50vw;
+        transform: translate(-50%,-50%);
+        width: fit-content;
+        height: fit-content;
+        text-align: center;
+    }
+    #loadingImage{
+        width: 10vw;
+    }
     .food{
         background-color: green!important;
     }
@@ -71,7 +96,7 @@
         background-color: black !important;
     }
     #globalMap{
-        display: flex;
+        display: none;
         flex-direction: column;
         width: fit-content;
         margin-left: 50vw;
