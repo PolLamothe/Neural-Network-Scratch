@@ -35,14 +35,14 @@ class trainSnakeEvo():
         self.gameSize = gameSize
         self.averageAim = averageAim
         self.childPerformance = []
-        self.child = [classe.Networks([self.firstNeurones]+hiddenLayers+[4],learningRate=LEARNINGRATE,neuroneActivation=neuroneActivation) for i in range(SELECTIONSIZE*MULTIPLIER)]
+        self.child = [classe.FNN([self.firstNeurones]+hiddenLayers+[4],learningRate=LEARNINGRATE,neuroneActivation=neuroneActivation) for i in range(SELECTIONSIZE*MULTIPLIER)]
         self.parents = []
         self.hiddenLayers = hiddenLayers
         self.activationFunction = activationFunction
         self.neuroneActivation = neuroneActivation
         self.iterationData = []
     
-    def train(self) -> classe.Networks:
+    def train(self) -> classe.NN:
         currentGeneration = 1
         survivor = []
 
@@ -82,7 +82,7 @@ class trainSnakeEvo():
             tempNetworks = []
             for i in range(len(survivor)):#creating the next childs
                 for x in range(i+1,len(survivor)):
-                    tempNetworks.append(classe.Networks([self.firstNeurones]+self.hiddenLayers+[4],learningRate=LEARNINGRATE,neuroneActivation=self.neuroneActivation,parents=[survivor[i]["network"],survivor[x]["network"]]))
+                    tempNetworks.append(classe.FNN([self.firstNeurones]+self.hiddenLayers+[4],learningRate=LEARNINGRATE,neuroneActivation=self.neuroneActivation,parents=[survivor[i]["network"],survivor[x]["network"]]))
             
             self.child = copy.deepcopy(tempNetworks)
             self.iterationData.append({"generation":currentGeneration,"maxLength":survivor[0]["performance"],"averageLength":trainSnakeEvo.getAveragePerformance(survivor)})
@@ -99,7 +99,7 @@ class trainSnakeEvo():
             somme += i["performance"]
         return round(somme/len(survivor),2)
 
-    def __runChild(self,network : classe.Networks,modification = True) -> float:#return the average length of the agent on a certain number of simulation
+    def __runChild(self,network : classe.NN,modification = True) -> float:#return the average length of the agent on a certain number of simulation
         currentPerformance = []
         for i in range(ITERATION):
             state = None
@@ -112,7 +112,7 @@ class trainSnakeEvo():
                 supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,game.snake,result,dataSincelastFood,game)
                 errors = [0]*4
                 '''for i in range(4):
-                    if(supervisedResult[i] == -1):
+                    if(supervisedResult[i] < 0):
                         errors[i] = -result[i]'''
                 answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(supervisedResult))
 
@@ -146,7 +146,6 @@ class trainSnakeEvo():
                         state = False
                     if(modification):
                         if(state == False and False):
-                            errors = [0] * 4
                             errors[answerIndex] = -result[answerIndex]
                             network.backward(errors)
                             for i in range(len(previousDataSinceLastFood)):
@@ -183,14 +182,26 @@ class trainSnakeEvo():
     def superviseAnswer(gameSize : int,snake : list[list[int]],result : list[float],dataSinceLastFood : list[dict],game : snakeGame.Game) -> int:
         modifiedResult = result.copy()
         deadEnd = trainSnakeEvo.checkDeadEnd(game,snake)
-        if(snake[-1][1]-1 < 0 or ([snake[-1][0],snake[-1][1]-1] in snake[1:]) or not deadEnd[2]):
+        if(snake[-1][1]-1 < 0 or ([snake[-1][0],snake[-1][1]-1] in snake[1:])):
             modifiedResult[0] = -1
-        if(snake[-1][1]+1 >= gameSize or ([snake[-1][0],snake[-1][1]+1] in snake[1:]) or not deadEnd[3]):
+        elif (not deadEnd[2]):
+            modifiedResult[0] = -0.6
+
+        if(snake[-1][1]+1 >= gameSize or ([snake[-1][0],snake[-1][1]+1] in snake[1:])):
             modifiedResult[1] = -1
-        if(snake[-1][0]-1 < 0 or ([snake[-1][0]-1,snake[-1][1]] in snake[1:]) or not deadEnd[0]):
+        elif(not deadEnd[3]):
+            modifiedResult[1] = -0.6
+        
+        if(snake[-1][0]-1 < 0 or ([snake[-1][0]-1,snake[-1][1]] in snake[1:])):
             modifiedResult[2] = -1
-        if(snake[-1][0]+1 >= gameSize or ([snake[-1][0]+1,snake[-1][1]] in snake[1:]) or not deadEnd[1]):
+        elif(not deadEnd[0]):
+            modifiedResult[2] = -0.6
+        
+        if(snake[-1][0]+1 >= gameSize or ([snake[-1][0]+1,snake[-1][1]] in snake[1:])):
             modifiedResult[3] = -1
+        elif(not deadEnd[1]):
+            modifiedResult[3] = -0.6
+        
         for i in range(len(dataSinceLastFood)):
             if(dataSinceLastFood[i]["snake"] == snake):
                 modifiedResult[dataSinceLastFood[i]["index"]] = -0.5
@@ -355,7 +366,7 @@ def getWholeGameData() -> list[dict]:
                 bestModel = allModel[i].split("_")[1]
 
     with open("../snake/model/snake_"+bestModel+"_.pkl", "rb") as file:
-        network : classe.Networks = pickle.load(file)
+        network : classe.NN = pickle.load(file)
     
     game = snakeGame.Game(5)
     dataSinceLastFood = []

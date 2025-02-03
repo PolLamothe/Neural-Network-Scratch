@@ -35,6 +35,13 @@ class Tanh(ActivationFunction):
     def derivative(X):
         X = np.clip(X,-600,600)
         return 1-(Tanh.function(X)**2)
+    
+class NN():
+    def forward():
+        pass
+
+    def backward():
+        pass
 
 class Layer():
     #input_size : the number of neurones of the previous layer
@@ -68,7 +75,7 @@ class Layer():
         
         return np.dot(output_error, self.W)
     
-class Networks():
+class FNN(NN):
     def __init__(self,neuroneNumber : list[int],learningRate : float=1,neuroneActivation : list[ActivationFunction]=None,parents : list=None) -> None:
         self.layers : list[Layer] = []
         activationList = []

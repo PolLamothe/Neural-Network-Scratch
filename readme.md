@@ -60,20 +60,24 @@ Here is the list of the file in this project and what are they used for :
 - $\sigma y$ is the output error
 - $\sigma W$ is the new weight matrix for the nerone
 - $\sigma b$ is the new bias of the nerone
-- $\sigma X$ is the input error of the nerone `warning: it's not directly the output error of the previous layer`
+- $\sigma X$ is the input error of the nerone
 
 ## Forward Propagation :
 $$y = f(X*W+b)$$
 
 ## Backward Propagation : 
+
+### Error adjustment
+$$\sigma y = \sigma y * f'(y)$$
+
 ### Weight adjustment :
-$$\sigma W = W + \sigma y * f'(y) * X * l$$
+$$\sigma W = W + \sigma y * X * l$$
 
 ### Bias adjustment : 
-$$\sigma b = b + \sigma y * f'(y) * l$$
+$$\sigma b = b + \sigma y * l$$
 
 ### Input error :
-$$\sigma X = \sigma y * f'(y) * W * X$$
+$$\sigma X = \sigma y * W * X$$
 
 ---
 # Sources :

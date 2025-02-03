@@ -16,9 +16,9 @@ x_train = x_train.astype('float32')
 x_train /= 255
 
 def getNetwork():
-    return Networks([28*28,50,10],neuroneActivation=[Tanh,Sigmoid],learningRate=0.01)
+    return FNN([28*28,50,10],neuroneActivation=[Tanh,Sigmoid],learningRate=0.01)
 
-def getTrainedNetwork() -> Networks:
+def getTrainedNetwork() -> NN:
     with open(os.path.dirname(os.path.realpath(__file__))+"/numberDetection.pkl", "rb") as file:
         return pickle.load(file)
 

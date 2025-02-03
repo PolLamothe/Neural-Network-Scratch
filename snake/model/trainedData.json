@@ -1,5 +1,5 @@
 {
-  "1737892669": {
+  "1738580279": {
     "gameSize": 5,
     "aim": "17",
     "hiddenLayers": [
@@ -8,7 +8,7 @@
     ],
     "activationFunction": "None",
     "neuroneActivation": "[<class 'classe.Tanh'>, <class 'classe.Tanh'>, <class 'classe.Sigmoid'>]",
-    "trainingTime": 2.0460941553115846,
+    "trainingTime": 2.100192654132843,
     "selectionSize": 5,
     "multiplier": 5,
     "iteration": 50,
