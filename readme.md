@@ -100,7 +100,7 @@ $$ \sigma K = X \bigstar \sigma Y $$
 $$ \sigma B = \sigma Y $$
 
 #### Input error :
-$$ \sum_{i=1}^{n} \sigma Yi \underset{full}{*} Kij $$
+$$\sigma Xj = \sum_{i=1}^{n} \sigma Yi \underset{full}{*} Kij $$
 
 ---
 # Sources :
