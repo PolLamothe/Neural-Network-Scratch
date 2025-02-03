@@ -58,8 +58,8 @@ Here is the list of the file in this project and what are they used for :
 - $l$ is the learning rate
 - $y$ is the output of the nerone
 - $\sigma y$ is the output error
-- $\sigma W$ is the new weight matrix for the nerone
-- $\sigma b$ is the new bias of the nerone
+- $\sigma W$ is weight error of the nerone
+- $\sigma b$ is bias error of the nerone
 - $\sigma X$ is the input error of the nerone
 
 ## Fully Connected Layers :
@@ -73,10 +73,10 @@ $$y = f(X*W+b)$$
 $$\sigma y = \sigma y * f'(y)$$
 
 #### Weight adjustment :
-$$\sigma W = W + \sigma y * X * l$$
+$$\sigma W = \sigma y * X * l$$
 
 #### Bias adjustment : 
-$$\sigma b = b + \sigma y * l$$
+$$\sigma b = \sigma y * l$$
 
 #### Input error :
 $$\sigma X = \sigma y * W * X$$

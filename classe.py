@@ -2,6 +2,7 @@ import math
 import numpy as np
 import scipy.signal
 import copy
+import skimage
 
 class ActivationFunction():
     def function(X):
@@ -44,7 +45,14 @@ class NN():
     def backward():
         pass
 
-class FullyConnectedLayer():
+class Layer():
+    def forward():
+        pass
+
+    def backward():
+        pass
+
+class FullyConnectedLayer(Layer):
     #input_size : the number of neurones of the previous layer
     #output_size : the number of neurones in this layer
     def __init__(self,input_size : int,output_size : int,activation : ActivationFunction,learningRate : float=1,parents : list=None):
@@ -76,20 +84,20 @@ class FullyConnectedLayer():
         
         return np.dot(output_error, self.W)
 
-class ConvolutionalLayer():
-    def __init__(self,input_size : int,output_size : int,kernel_size : int,kernel_number : int,depth : int = 1):
+class ConvolutionalLayer(Layer):
+    def __init__(self,input_size : int,kernel_size : int,kernel_number : int,depth : int = 1):
         self.input_size = input_size
-        self.output_size = output_size
         self.depth = depth
         self.kernel_size = kernel_size
         self.kernel_number = kernel_number
+        self.selection_size = self.input_size - self.kernel_size +1
 
         self.K = []
         self.B = []
 
         for j in range(self.kernel_number):
             self.K.append([])
-            self.B.append(np.random.randn(kernel_size, kernel_size) * np.sqrt(2. / (kernel_size + kernel_size)))
+            self.B.append(np.random.randn(self.selection_size, self.selection_size) * np.sqrt(2. / (self.selection_size + self.selection_size)))
             for i in range(self.depth):    
                 self.K[-1].append(np.random.randn(kernel_size, kernel_size) * np.sqrt(2. / (kernel_size + kernel_size)))
 
@@ -99,7 +107,7 @@ class ConvolutionalLayer():
 
         this_output = []
         for i in range(self.kernel_number):
-            somme = np.zeros((self.kernel_size,self.kernel_size))
+            somme = np.zeros((self.selection_size,self.selection_size))
             for j in range(self.depth):
                 somme += scipy.signal.convolve2d(
                     this_input[j],
@@ -136,10 +144,51 @@ class ConvolutionalLayer():
             input_error.append(copy.deepcopy(temp))
         return input_error
 
-class PoolingLayer():
-    def __init__(self,input_size : int,output_size : int):
-        pass
+class PoolingLayer(Layer):
+    def __init__(self,input_size : int,output_size : int, max_pooling : bool = True,depth : int = 1):
+        self.input_size = input_size
+        self.output_size = output_size
+        self.max_pooling = max_pooling
+        self.depth = depth
+        if(self.input_size%self.output_size != 0):
+            raise Exception("The size of the layer is not valid")
+        self.selection_size = self.input_size//self.output_size
     
+    def forward(self,this_input : np.ndarray) -> np.ndarray:
+        self.X = copy.deepcopy(this_input)
+        self.Y = []
+        for i in range(self.depth):
+            temp = np.zeros((self.output_size,self.output_size))
+            for j in range(self.input_size//self.selection_size):
+                for x in range(self.input_size//self.selection_size):
+                    region = this_input[i][
+                        j*self.selection_size:(j+1)*self.selection_size,
+                        x*self.selection_size:(x+1)*self.selection_size,
+                        ]
+                    if(self.max_pooling):
+                        temp[j,x] = np.max(region)
+                    else:
+                        temp[j,x] = np.mean(region)
+            self.Y.append(copy.deepcopy(temp))
+
+        return self.Y
+    
+    def backward(self,error : np.ndarray) -> np.ndarray:
+        result = []
+
+        for i in range(self.depth):
+            result.append(np.zeros(self.X[i].shape))
+            for j in range(0,self.input_size,self.selection_size):
+                for x in range(0,self.input_size,self.selection_size):
+                    region = self.X[i][j:j+self.selection_size,x:x+self.selection_size]
+                    if(self.max_pooling):
+                        max_index = np.unravel_index(region.argmax(), region.shape)
+                        print(max_index)
+                        result[-1][j+max_index[0]][x+max_index[1]] = error[i][j//self.selection_size,x//self.selection_size]
+                    else:
+                        result[-1][j:j+self.selection_size,x:x+self.selection_size] += error[i][j//self.selection_size,x//self.selection_size] / (self.selection_size**2)
+        return result
+
 class FNN(NN):
     def __init__(self,neuroneNumber : list[int],learningRate : float=1,neuroneActivation : list[ActivationFunction]=None,parents : list=None) -> None:
         self.layers : list[FullyConnectedLayer] = []
@@ -177,12 +226,26 @@ class FNN(NN):
                 previousResult = np.array(self.layers[i].backward(previousResult))
 
 class CNN(NN):
-    def __init__(self,layers : list[dict]):
-        self.layers = []
-        for layer in layers:
-            if(layer["type"] == "convolution"):
-                self.layers.append(ConvolutionalLayer(layer["input"],layer["output"],layer["kernel_size"],layer["kernel_number"]))
-            elif(layer["type"] == "pool"):
-                self.layers.append(PoolingLayer(layer["input"],layer["output"]))
-            elif(layer["type"] == "fullyConnected"):
-                self.layers.append(FullyConnectedLayer(layer["input"],layer["output"],layer["activation"],layer["learningRate"]))
+    def __init__(self,layers : list[Layer]):
+        self.layers = layers
+
+    def forward(self,this_input : np.ndarray) -> list[float]:
+        first = True
+        previousResult = None
+        for layer in self.layers:
+            if(first):
+                previousResult = layer.forward(this_input)
+                first = False
+            else:
+                previousResult = layer.forward(previousResult)
+        return previousResult
+
+    def backward(self,output_error):
+        first = True
+        previousResult = None
+        for i in range(len(self.layers)-1,-1,-1):
+            if(first):
+                previousResult = np.array(self.layers[i].backward(output_error))
+                first = False
+            else:
+                previousResult = np.array(self.layers[i].backward(previousResult))
