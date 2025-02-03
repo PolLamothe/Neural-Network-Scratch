@@ -38,6 +38,13 @@ class Tanh(ActivationFunction):
         X = np.clip(X,-600,600)
         return 1-(Tanh.function(X)**2)
     
+class Relu(ActivationFunction):
+    def function(X):
+        return np.maximum(X,0)
+    
+    def derivative(X):
+        return (X > 0).astype(float)
+    
 class NN():
     def forward():
         pass
@@ -85,7 +92,7 @@ class FullyConnectedLayer(Layer):
         return np.dot(output_error, self.W)
 
 class ConvolutionalLayer(Layer):
-    def __init__(self,input_size : int,kernel_size : int,kernel_number : int,activation : ActivationFunction,depth : int = 1,learning_rate = 1,):
+    def __init__(self,input_size : int,output_size : int,kernel_size : int,kernel_number : int,activation : ActivationFunction,depth : int = 1,learning_rate = 1):
         self.input_size = input_size
         self.depth = depth
         self.kernel_size = kernel_size
@@ -93,6 +100,10 @@ class ConvolutionalLayer(Layer):
         self.selection_size = self.input_size - self.kernel_size +1
         self.learning_rate = learning_rate
         self.activation = activation
+        self.output_size = output_size
+
+        if(self.selection_size != self.output_size):
+            self.P = self.output_size - self.selection_size
 
         self.K = []
         self.B = []
@@ -108,21 +119,43 @@ class ConvolutionalLayer(Layer):
         self.X = this_input
 
         this_output = []
+
         for i in range(self.kernel_number):
+            
             somme = np.zeros((self.selection_size,self.selection_size))
             for j in range(self.depth):
                 somme += scipy.signal.convolve2d(
-                    this_input[j],
+                    self.X[j],
                     np.rot90(self.K[i][j],2)
                 ,mode="valid")
             somme /= self.depth
             somme += self.B[i]
             this_output.append(copy.deepcopy(somme))
+
+        temp = []
+        for i in range(self.kernel_number):
+            temp.append(np.pad(copy.deepcopy(this_output[i]),((self.P//2+self.P%2,self.P//2),(self.P//2+self.P%2,self.P//2))))
+        this_output = np.array(temp)
+
+        '''temp = []
+        for i in range(self.depth):
+            temp.append(np.pad(self.X[i],((self.P//2+self.P%2,self.P//2),(self.P//2+self.P%2,self.P//2))))
+        self.X = np.array(temp)'''
+
         self.Y = self.activation.function(copy.deepcopy(this_output))
         return self.Y
     
     def backward(self,error : np.ndarray) -> np.ndarray:
+
         error *= self.activation.derivative(self.Y)
+
+        if(self.P != 0):
+            temp = []
+            for i in range(self.kernel_number):
+                temp.append(error[i][self.P//2:-self.P//2,self.P//2:-self.P//2])
+
+        error = np.array(temp)
+
         for i in range(self.depth):        
             for j in range(self.kernel_number):
                 self.K[j][i] += scipy.signal.convolve2d(
@@ -254,7 +287,7 @@ class CNN(NN):
         for i in range(len(self.layers)-1,-1,-1):
             if(first):
                 previousResult = np.array(self.layers[i].backward(output_error))
-                if(type(self.layers[i-1]) != FullyConnectedLayer):
+                if(type(self.layers[i-1]) != FullyConnectedLayer and type(self.layers[i]) == FullyConnectedLayer):
                     temp = []
                     for x in range(0,len(previousResult),self.layers[i-1].output_size**2):#for each depth
                         temp.append([])
