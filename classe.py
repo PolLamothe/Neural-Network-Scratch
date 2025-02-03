@@ -85,12 +85,13 @@ class FullyConnectedLayer(Layer):
         return np.dot(output_error, self.W)
 
 class ConvolutionalLayer(Layer):
-    def __init__(self,input_size : int,kernel_size : int,kernel_number : int,depth : int = 1):
+    def __init__(self,input_size : int,kernel_size : int,kernel_number : int,depth : int = 1,learning_rate = 1):
         self.input_size = input_size
         self.depth = depth
         self.kernel_size = kernel_size
         self.kernel_number = kernel_number
         self.selection_size = self.input_size - self.kernel_size +1
+        self.learning_rate = learning_rate
 
         self.K = []
         self.B = []
@@ -125,9 +126,9 @@ class ConvolutionalLayer(Layer):
                 self.K[j][i] += scipy.signal.convolve2d(
                     self.X[i],
                     np.rot90(error[j])
-                ,mode="valid")
+                ,mode="valid") * self.learning_rate
 
-                self.B += error[j]
+                self.B += error[j] * self.learning_rate
 
         input_error = []
         for i in range(self.depth):
@@ -170,6 +171,7 @@ class PoolingLayer(Layer):
                     else:
                         temp[j,x] = np.mean(region)
             self.Y.append(copy.deepcopy(temp))
+        self.Y = np.array(self.Y)
 
         return self.Y
     
@@ -183,7 +185,6 @@ class PoolingLayer(Layer):
                     region = self.X[i][j:j+self.selection_size,x:x+self.selection_size]
                     if(self.max_pooling):
                         max_index = np.unravel_index(region.argmax(), region.shape)
-                        print(max_index)
                         result[-1][j+max_index[0]][x+max_index[1]] = error[i][j//self.selection_size,x//self.selection_size]
                     else:
                         result[-1][j:j+self.selection_size,x:x+self.selection_size] += error[i][j//self.selection_size,x//self.selection_size] / (self.selection_size**2)
@@ -237,6 +238,8 @@ class CNN(NN):
                 previousResult = layer.forward(this_input)
                 first = False
             else:
+                if(type(layer) == FullyConnectedLayer and previousResult.shape != (0,1)):
+                    previousResult = np.append(previousResult[0],[])
                 previousResult = layer.forward(previousResult)
         return previousResult
 
@@ -246,6 +249,13 @@ class CNN(NN):
         for i in range(len(self.layers)-1,-1,-1):
             if(first):
                 previousResult = np.array(self.layers[i].backward(output_error))
+                if(type(self.layers[i-1]) != FullyConnectedLayer):
+                    temp = []
+                    for x in range(0,len(previousResult),self.layers[i-1].output_size**2):#for each depth
+                        temp.append([])
+                        for j in range(0,len(previousResult),self.layers[i-1].output_size):
+                            temp[-1].append(previousResult[j:j+self.layers[i-1].output_size])
+                    previousResult = np.array(temp)
                 first = False
             else:
                 previousResult = np.array(self.layers[i].backward(previousResult))
