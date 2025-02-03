@@ -85,13 +85,14 @@ class FullyConnectedLayer(Layer):
         return np.dot(output_error, self.W)
 
 class ConvolutionalLayer(Layer):
-    def __init__(self,input_size : int,kernel_size : int,kernel_number : int,depth : int = 1,learning_rate = 1):
+    def __init__(self,input_size : int,kernel_size : int,kernel_number : int,activation : ActivationFunction,depth : int = 1,learning_rate = 1,):
         self.input_size = input_size
         self.depth = depth
         self.kernel_size = kernel_size
         self.kernel_number = kernel_number
         self.selection_size = self.input_size - self.kernel_size +1
         self.learning_rate = learning_rate
+        self.activation = activation
 
         self.K = []
         self.B = []
@@ -117,11 +118,12 @@ class ConvolutionalLayer(Layer):
             somme /= self.depth
             somme += self.B[i]
             this_output.append(copy.deepcopy(somme))
-        self.Y = copy.deepcopy(this_output)
-        return this_output
+        self.Y = self.activation.function(copy.deepcopy(this_output))
+        return self.Y
     
     def backward(self,error : np.ndarray) -> np.ndarray:
-        for i in range(self.depth):            
+        error *= self.activation.derivative(self.Y)
+        for i in range(self.depth):        
             for j in range(self.kernel_number):
                 self.K[j][i] += scipy.signal.convolve2d(
                     self.X[i],
@@ -239,7 +241,10 @@ class CNN(NN):
                 first = False
             else:
                 if(type(layer) == FullyConnectedLayer and previousResult.shape != (0,1)):
-                    previousResult = np.append(previousResult[0],[])
+                    temp = []
+                    for i in range(len(previousResult)):
+                        temp.append(np.append(previousResult[i],[]))
+                    previousResult = np.array(np.append(temp,[]))
                 previousResult = layer.forward(previousResult)
         return previousResult
 
