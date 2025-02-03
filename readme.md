@@ -62,22 +62,45 @@ Here is the list of the file in this project and what are they used for :
 - $\sigma b$ is the new bias of the nerone
 - $\sigma X$ is the input error of the nerone
 
-## Forward Propagation :
+## Fully Connected Layers :
+
+### Forward Propagation :
 $$y = f(X*W+b)$$
 
-## Backward Propagation : 
+### Backward Propagation : 
 
-### Error adjustment
+#### Error adjustment
 $$\sigma y = \sigma y * f'(y)$$
 
-### Weight adjustment :
+#### Weight adjustment :
 $$\sigma W = W + \sigma y * X * l$$
 
-### Bias adjustment : 
+#### Bias adjustment : 
 $$\sigma b = b + \sigma y * l$$
 
-### Input error :
+#### Input error :
 $$\sigma X = \sigma y * W * X$$
+
+## Convolutional Layers :
+
+### Variables :
+
+- $K$ is the kernel
+
+### Forward Propagation :
+
+$$ Yi = Bi + \sum_{j=1}^{n} Xj \bigstar Kij, i = 1..d$$
+
+### Backward Propagation :
+
+#### Kernel adjustment :
+$$ \sigma K = X \bigstar \sigma Y $$
+
+#### Bias adjustment :
+$$ \sigma B = \sigma Y $$
+
+#### Input error :
+$$ \sum_{i=1}^{n} \sigma Yi \underset{full}{*} Kij $$
 
 ---
 # Sources :
