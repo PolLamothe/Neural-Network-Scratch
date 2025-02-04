@@ -11,14 +11,18 @@ import os
 x_train = x_train[0:7000]
 y_train = y_train[0:7000]
 
-KERNELS_SIZE = [3]
+KERNELS_SIZE = [3,3]
 
-KERNELS_NUMBER = [16]
+KERNELS_NUMBER = [32,64]
 
 def getNetwork():
     return CNN([
-        ConvolutionalLayer(28,28,KERNELS_SIZE[0],KERNELS_NUMBER[0],learning_rate=0.1,activation=Relu),PoolingLayer(28,14,depth=KERNELS_NUMBER[0]),
-        FullyConnectedLayer(14*14*KERNELS_NUMBER[0],10,Sigmoid,learningRate=0.1)])
+        ConvolutionalLayer(28,28,KERNELS_SIZE[0],KERNELS_NUMBER[0],learning_rate=1,activation=Relu),PoolingLayer(28,14,depth=KERNELS_NUMBER[0]),
+        ConvolutionalLayer(14,14,KERNELS_SIZE[1],KERNELS_NUMBER[1],depth=KERNELS_NUMBER[0],learning_rate=0.1,activation=Relu),
+        PoolingLayer(14,7,depth=KERNELS_NUMBER[1]),
+        FullyConnectedLayer(7*7*KERNELS_NUMBER[1],128,Sigmoid,learningRate=0.05),
+        FullyConnectedLayer(128,10,Sigmoid,learningRate=0.1),
+    ])
 
 def getTrainedNetwork() -> NN:
     with open(os.path.dirname(os.path.realpath(__file__))+"/numberDetection.pkl", "rb") as file:

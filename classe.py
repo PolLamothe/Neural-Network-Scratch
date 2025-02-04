@@ -137,11 +137,6 @@ class ConvolutionalLayer(Layer):
             temp.append(np.pad(copy.deepcopy(this_output[i]),((self.P//2+self.P%2,self.P//2),(self.P//2+self.P%2,self.P//2))))
         this_output = np.array(temp)
 
-        '''temp = []
-        for i in range(self.depth):
-            temp.append(np.pad(self.X[i],((self.P//2+self.P%2,self.P//2),(self.P//2+self.P%2,self.P//2))))
-        self.X = np.array(temp)'''
-
         self.Y = self.activation.function(copy.deepcopy(this_output))
         return self.Y
     
@@ -287,13 +282,13 @@ class CNN(NN):
         for i in range(len(self.layers)-1,-1,-1):
             if(first):
                 previousResult = np.array(self.layers[i].backward(output_error))
-                if(type(self.layers[i-1]) != FullyConnectedLayer and type(self.layers[i]) == FullyConnectedLayer):
-                    temp = []
-                    for x in range(0,len(previousResult),self.layers[i-1].output_size**2):#for each depth
-                        temp.append([])
-                        for j in range(0,len(previousResult),self.layers[i-1].output_size):
-                            temp[-1].append(previousResult[j:j+self.layers[i-1].output_size])
-                    previousResult = np.array(temp)
                 first = False
             else:
+                if(type(self.layers[i]) != FullyConnectedLayer and type(self.layers[i+1]) == FullyConnectedLayer):
+                    temp = []
+                    for x in range(0,len(previousResult),self.layers[i].output_size**2):#for each depth
+                        temp.append([])
+                        for j in range(0,len(previousResult),self.layers[i].output_size):
+                            temp[-1].append(previousResult[j:j+self.layers[i].output_size])
+                    previousResult = np.array(temp)
                 previousResult = np.array(self.layers[i].backward(previousResult))
