@@ -16,14 +16,14 @@ x_train /= 255
 
 KERNELS_SIZE = 3
 
-KERNELS_NUMBER = [5]
+KERNELS_NUMBER = [1]
 
 LEARNING_RATE = 0.01
 
 def getNetwork():
     return CNN([
         ConvolutionalLayer(28,28,KERNELS_SIZE,KERNELS_NUMBER[0],learning_rate=LEARNING_RATE,activation=Sigmoid),
-        PoolingLayer(28,28,depth=KERNELS_NUMBER[0]),
+        FlateningLayer(28,KERNELS_NUMBER[-1]),
         FullyConnectedLayer(28*28*KERNELS_NUMBER[-1],128,Sigmoid,learningRate=LEARNING_RATE),
         FullyConnectedLayer(128,10,Sigmoid,learningRate=LEARNING_RATE),
     ])

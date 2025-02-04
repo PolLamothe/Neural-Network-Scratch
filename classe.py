@@ -225,6 +225,28 @@ class PoolingLayer(Layer):
                         result[-1][j+max_index[0]][x+max_index[1]] = error[i][j//self.selection_size,x//self.selection_size]
                     else:
                         result[-1][j:j+self.selection_size,x:x+self.selection_size] += error[i][j//self.selection_size,x//self.selection_size] / (self.selection_size**2)
+        return np.array(result)
+    
+class FlateningLayer(Layer):
+    def __init__(self,input_size : int,input_depth : int):
+        self.input_size = input_size
+        self.input_depth = input_depth
+
+    def forward(self,this_input : np.ndarray) -> np.ndarray:
+        result = []
+        for i in range(self.input_depth):
+            result.extend(np.append(this_input[i],[]))
+        return np.array(result)
+
+    def backward(self,this_error : np.ndarray) -> np.ndarray:
+        result = []
+        for i in range(self.input_depth):
+            temp = []
+            for j in range(self.input_size):
+                base = i*(self.input_size**2)
+                temp.append(this_error[base+j*self.input_size:base+(j+1)*self.input_size])
+            result.append(copy.deepcopy(temp))
+        result = np.array(result)
         return result
 
 class FNN(NN):
@@ -291,11 +313,4 @@ class CNN(NN):
                 previousResult = np.array(self.layers[i].backward(output_error))
                 first = False
             else:
-                if(type(self.layers[i]) != FullyConnectedLayer and type(self.layers[i+1]) == FullyConnectedLayer):
-                    temp = []
-                    for x in range(0,len(previousResult),self.layers[i].output_size**2):#for each depth
-                        temp.append([])
-                        for j in range(0,len(previousResult),self.layers[i].output_size):
-                            temp[-1].append(previousResult[j:j+self.layers[i].output_size])
-                    previousResult = np.array(temp)
                 previousResult = np.array(self.layers[i].backward(previousResult))
