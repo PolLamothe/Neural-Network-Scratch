@@ -60,7 +60,7 @@ if(not useTrainedModel or args.save):
         count += 1
         currentIndex = random.randint(0,len(numberDetectionTools.x_train)-1)
         right = numberDetectionTools.y_train[currentIndex]
-        lastLayerResult = network.forward([numberDetectionTools.x_train[currentIndex]])
+        lastLayerResult = network.forward(np.array([numberDetectionTools.x_train[currentIndex]]))
         if(checkAnswer(right,lastLayerResult)):
             previousAnswerRatio = max((previousAnswerRatio*previousAnswerCoeff+1)/(previousAnswerCoeff+1),0)
             previousAnswerCoeff = min(previousAnswerNumber,previousAnswerCoeff+1)

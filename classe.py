@@ -2,7 +2,6 @@ import math
 import numpy as np
 import scipy.signal
 import copy
-import skimage
 
 class ActivationFunction():
     def function(X):
@@ -125,37 +124,19 @@ class ConvolutionalLayer(Layer):
             
             somme = np.zeros((self.selection_size,self.selection_size))
             for j in range(self.depth):
-                somme += scipy.signal.convolve2d(
+                somme += scipy.signal.correlate2d(
                     self.X[j],
-                    np.rot90(self.K[i][j],2)
+                    self.K[i][j]
                 ,mode="valid")
-            somme /= self.depth
             somme += self.B[i]
             this_output.append(copy.deepcopy(somme))
 
         this_output = self.activation.function(this_output)
-        temp = []
-        for i in range(self.kernel_number):
-            temp.append(np.pad(copy.deepcopy(this_output[i]),((self.P//2+self.P%2,self.P//2),(self.P//2+self.P%2,self.P//2))))
-        this_output = np.array(temp)
 
         self.Y = copy.deepcopy(this_output)
         return self.Y
     
     def backward(self,error : np.ndarray) -> np.ndarray:
-
-        if(self.P != 0):
-            temp = []
-            for i in range(self.kernel_number):
-                temp.append(error[i][self.P//2:-self.P//2,self.P//2:-self.P//2])
-
-            error = np.array(temp)
-
-            temp = []
-            for i in range(self.kernel_number):
-                temp.append(self.Y[i][self.P//2:-self.P//2,self.P//2:-self.P//2])
-            self.Y = np.array(temp)
-
         error *= self.activation.derivative(self.Y)
 
         for j in range(self.kernel_number):
@@ -165,7 +146,7 @@ class ConvolutionalLayer(Layer):
                     error[j]
                 ,mode="valid") * self.learning_rate
 
-            self.B[j] += error[j] * self.learning_rate
+            self.B[j] += sum(error[j]) * self.learning_rate
 
         input_error = []
         for i in range(self.depth):
@@ -174,13 +155,13 @@ class ConvolutionalLayer(Layer):
                 if(temp is None):
                     temp = scipy.signal.convolve2d(
                         error[j],
-                        np.rot90(self.K[j][i],2))
+                        self.K[j][i],mode="full")
                 else:
                     temp += scipy.signal.convolve2d(
                         error[j],
-                        np.rot90(self.K[j][i],2))
+                        self.K[j][i],mode="full")
             input_error.append(copy.deepcopy(temp))
-        return input_error
+        return np.array(input_error)
 
 class PoolingLayer(Layer):
     def __init__(self,input_size : int,output_size : int, max_pooling : bool = True,depth : int = 1):
