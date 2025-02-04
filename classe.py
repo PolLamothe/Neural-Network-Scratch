@@ -6,10 +6,10 @@ import skimage
 
 class ActivationFunction():
     def function(X):
-        raise NotImplemented("")
+        return X
     
     def derivative(X):
-        raise NotImplemented("")
+        return X
     
 class Sigmoid(ActivationFunction):
     def function(X):
@@ -40,10 +40,11 @@ class Tanh(ActivationFunction):
     
 class Relu(ActivationFunction):
     def function(X):
+        X = np.clip(X, -600, 600)
         return np.maximum(X,0)
     
     def derivative(X):
-        return (X > 0).astype(float)
+        return np.maximum(X,0)
     
 class NN():
     def forward():
@@ -102,8 +103,7 @@ class ConvolutionalLayer(Layer):
         self.activation = activation
         self.output_size = output_size
 
-        if(self.selection_size != self.output_size):
-            self.P = self.output_size - self.selection_size
+        self.P = self.output_size - self.selection_size
 
         self.K = []
         self.B = []
@@ -113,6 +113,7 @@ class ConvolutionalLayer(Layer):
             self.B.append(np.random.randn(self.selection_size, self.selection_size) * np.sqrt(2. / (self.selection_size + self.selection_size)))
             for i in range(self.depth):    
                 self.K[-1].append(np.random.randn(kernel_size, kernel_size) * np.sqrt(2. / (kernel_size + kernel_size)))
+        self.K = np.array(self.K)
 
     def forward(self,this_input : np.ndarray) -> np.ndarray:
         result = []
@@ -132,33 +133,39 @@ class ConvolutionalLayer(Layer):
             somme += self.B[i]
             this_output.append(copy.deepcopy(somme))
 
+        this_output = self.activation.function(this_output)
         temp = []
         for i in range(self.kernel_number):
             temp.append(np.pad(copy.deepcopy(this_output[i]),((self.P//2+self.P%2,self.P//2),(self.P//2+self.P%2,self.P//2))))
         this_output = np.array(temp)
 
-        self.Y = self.activation.function(copy.deepcopy(this_output))
+        self.Y = copy.deepcopy(this_output)
         return self.Y
     
     def backward(self,error : np.ndarray) -> np.ndarray:
-
-        error *= self.activation.derivative(self.Y)
 
         if(self.P != 0):
             temp = []
             for i in range(self.kernel_number):
                 temp.append(error[i][self.P//2:-self.P//2,self.P//2:-self.P//2])
 
-        error = np.array(temp)
+            error = np.array(temp)
 
-        for i in range(self.depth):        
-            for j in range(self.kernel_number):
-                self.K[j][i] += scipy.signal.convolve2d(
+            temp = []
+            for i in range(self.kernel_number):
+                temp.append(self.Y[i][self.P//2:-self.P//2,self.P//2:-self.P//2])
+            self.Y = np.array(temp)
+
+        error *= self.activation.derivative(self.Y)
+
+        for j in range(self.kernel_number):
+            for i in range(self.depth):
+                self.K[j][i] += scipy.signal.correlate2d(
                     self.X[i],
-                    np.rot90(error[j])
+                    error[j]
                 ,mode="valid") * self.learning_rate
 
-                self.B += error[j] * self.learning_rate
+            self.B[j] += error[j] * self.learning_rate
 
         input_error = []
         for i in range(self.depth):
