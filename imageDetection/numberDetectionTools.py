@@ -14,6 +14,9 @@ y_train = y_train[0:7000]
 x_train = x_train.astype('float32')
 x_train /= 255
 
+x_test = x_test.astype('float32')
+x_test /= 255
+
 KERNELS_SIZE = [5]
 
 KERNELS_NUMBER = [8]

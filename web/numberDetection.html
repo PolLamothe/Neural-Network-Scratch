@@ -49,7 +49,7 @@
             for(let i = 0;i<28;i++){
                 for(let x = 0;x<28;x++){
                     let color = response["data"]["data"][i][x]
-                    document.getElementById("numberGlobalGrid").children[i].children[x].style.backgroundColor = `rgb(${color},${color},${color})`
+                    document.getElementById("numberGlobalGrid").children[i].children[x].style.backgroundColor = `rgb(${color*255},${color*255},${color*255})`
                 }
             }
             for(let i = 0;i<response["agentAnswer"].length;i++){
