@@ -3,6 +3,7 @@ from flask_cors import CORS
 import sys
 sys.path.append("../")
 import numberDetection.numberDetectionTools
+import imageDetection.numberDetectionTools
 import numpy as np
 import snake.trainSnakeEvoTools
 
@@ -15,15 +16,27 @@ BASE = "/IA/"
 def redirect_temporarily():
     return render_template("index.html")
 
-@app.route('/numberDetection', methods=['GET'])
-def serve_numberDetection_page():
-    return render_template("numberDetection.html")
+@app.route('/numberDetection/<method>', methods=['GET'])
+def serve_numberDetection_page(method):
+    if(method == "simple"):
+        return render_template("numberDetectionSimple.html")
+    elif(method == "convolution"):
+        return render_template("numberDetectionConvolution.html")
 
 # Endpoint GET
-@app.route('/numberDetection/getData', methods=['GET'])
-def post_numberDetection_data():
-    data = numberDetection.numberDetectionTools.getTestData()
-    return dict({"data":data,"agentAnswer":numberDetection.numberDetectionTools.getNetworkAnswer(np.append([],data["data"])).tolist()}), 200
+@app.route('/numberDetection/<method>/getData', methods=['GET'])
+def post_numberDetection_data(method):
+    if(method == "simple"):
+        data = numberDetection.numberDetectionTools.getTestData()
+        return dict({"data":data,"agentAnswer":numberDetection.numberDetectionTools.getNetworkAnswer(np.append([],data["data"])).tolist()}), 200
+    elif(method == "convolution"):
+        data = imageDetection.numberDetectionTools.getTestData()
+        answer = imageDetection.numberDetectionTools.getNetworkAnswer(np.array([data["data"]]))
+        return dict({
+            "data":data,
+            "agentAnswer":answer["answer"].tolist(),
+            "convolution":answer["convolution"].tolist()
+            }), 200
 
 @app.route('/snake', methods=['GET'])
 def serve_snake_page():

@@ -19,11 +19,11 @@ x_test /= 255
 
 KERNELS_SIZE = [5]
 
-KERNELS_NUMBER = [8]
+KERNELS_NUMBER = [4]
 
 LEARNING_RATE = 0.002
 
-def getNetwork():
+def getNetwork() -> CNN:
     return CNN([
         ConvolutionalLayer(28,24,KERNELS_SIZE[0],KERNELS_NUMBER[0],learning_rate=LEARNING_RATE,activation=Relu),
         PoolingLayer(24,12,depth=KERNELS_NUMBER[0]),
@@ -40,5 +40,9 @@ def getTestData() -> dict[np.array]:
     choice = random.randint(0,len(x_test)-1)
     return dict({"data":x_test[choice].tolist(),"rightAnswer":y_test[choice].tolist()})
 
-def getNetworkAnswer(input : np.array) -> list[float]:
-    return getTrainedNetwork().forward(input)
+def getNetworkAnswer(input : np.array) -> dict[list[float]]:
+    network = getTrainedNetwork()
+    return {
+        "answer":network.forward(input),
+        "convolution":network.layers[0].forward(input)
+        }

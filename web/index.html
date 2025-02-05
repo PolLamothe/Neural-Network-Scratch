@@ -10,12 +10,15 @@
         <div class="imgContainer">
             <h2>Number Detection</h2>
             <img id="numberDetectionPicture">
-            <button onclick="window.location += 'numberDetection'">See live demo</button>
+            <div id="numberDetectionButtonWrapper" class="reveal">
+                <button onclick="window.location += '/numberDetection/simple'" style="top: 25%;">Simple method</button>
+                <button onclick="window.location += '/numberDetection/convolution'" style="bottom: 25%;">Convolution method</button>
+            </div>
         </div>
         <div class="imgContainer">
             <h2>Snake</h2>
             <img id="snakePicture">
-            <button onclick="window.location += 'snake'">See live demo</button>
+            <button onclick="window.location += '/snake'" id="snakeButton" class="reveal">See live demo</button>
         </div>
     </div>
     <h2>A neural network with 3 neurones can guess this pattern, can you ?</h2>
@@ -120,11 +123,23 @@
 </script>
 
 <style>
-    #githubPicture:hover{
-        filter: none;
+    #numberDetectionButtonWrapper:hover{
+        opacity: 1 !important;
+    }
+    #numberDetectionButtonWrapper{
+        opacity: 0;
+        position: absolute;
+        top: 50%;
+        display: flex;
+        flex-direction: column;
+        margin-left: 50%;
+        transform: translate(-50%,-25%);
+        gap: 5vh;
+        height: fit-content;
     }
     #githubPicture{
         width: 5vw;
+        filter: invert(100%);
     }
     #githubWrapper{
         width: fit-content;
@@ -156,21 +171,23 @@
         position: relative;
         width: 30%;
     }
-    .imgContainer button{
+    #snakeButton{
         position: absolute;
-        top: 55%;
+        top: 50%;
         left: 50%;
-        transform: translate(-50%,-50%);
+        transform: translate(-50%);
         opacity: 0;
+    }
+    .imgContainer button:hover{
+        opacity: 1!important;
+    }
+    .imgContainer button{
         transition-duration: 0.4s;
         cursor: pointer;
         font-size: 18px;
         border: none;
         border-radius: 5px;
         padding: 0.5vw;
-    }
-    .imgContainer button:hover{
-        opacity: 1;
     }
     #mainContainer{
         width: 90vw;
@@ -189,8 +206,8 @@
         filter: blur(5px);
         transition-duration: 0.4s;
     }
-    .imgContainer img:hover + button{
-        opacity: 1;
+    .imgContainer img:hover + .reveal{
+        opacity: 1 !important;
     }
     body, html{
         overflow-x: hidden;
