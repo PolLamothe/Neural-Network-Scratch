@@ -15,6 +15,9 @@ x_train = x_train.reshape(x_train.shape[0], 1, 28*28)
 x_train = x_train.astype('float32')
 x_train /= 255
 
+x_test = x_test.astype('float32')
+x_test /= 255
+
 def getNetwork():
     return FNN([28*28,50,10],neuroneActivation=[Tanh,Sigmoid],learningRate=0.01)
 

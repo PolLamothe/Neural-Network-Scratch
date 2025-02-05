@@ -47,7 +47,7 @@ def changeFormat(data : np.ndarray):
 previousAnswerRatio = 0
 previousAnswerCoeff = 0
 
-previousAnswerNumber = len(numberDetectionTools.x_test)
+previousAnswerNumber = 1000
 
 if(not useTrainedModel or args.save):
     trainingState = True
@@ -56,7 +56,7 @@ if(not useTrainedModel or args.save):
     rightCount = dict({})
     for i in range(10):
         rightCount[i] = 0
-    while(previousAnswerRatio < 0.95 or previousAnswerCoeff < previousAnswerNumber):
+    while(previousAnswerRatio < 0.9 or previousAnswerCoeff < previousAnswerNumber):
         count += 1
         currentIndex = random.randint(0,len(numberDetectionTools.x_train)-1)
         right = numberDetectionTools.y_train[currentIndex]
@@ -74,7 +74,7 @@ if(not useTrainedModel or args.save):
             else:
                 err.append(-lastLayerResult[i])
         network.backward(np.array(err))
-        print("number of iterations : "+str(count)," success rate : ",round(previousAnswerRatio,2), end='\r')
+        print("number of iterations : "+str(count)," success rate : ",round(previousAnswerRatio,2),"   ", end='\r')
         sys.stdout.flush()
     print("\ntraining over")
     trainingState = False
@@ -88,7 +88,7 @@ if(not useTrainedModel or args.save):
 successCout = 0
 testCount = 0
 for i in range(len(numberDetectionTools.x_test)):
-    result = network.forward(np.append(numberDetectionTools.x_test[i],[]))
+    result = network.forward(np.array([numberDetectionTools.x_test[i]]))
     right = numberDetectionTools.y_test[i]
     if(checkAnswer(right,result)):
         successCout += 1

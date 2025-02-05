@@ -14,21 +14,19 @@ y_train = y_train[0:7000]
 x_train = x_train.astype('float32')
 x_train /= 255
 
-KERNELS_SIZE = [5,3]
+KERNELS_SIZE = [5]
 
-KERNELS_NUMBER = [32,64]
+KERNELS_NUMBER = [8]
 
-LEARNING_RATE = 0.01
+LEARNING_RATE = 0.002
 
 def getNetwork():
     return CNN([
         ConvolutionalLayer(28,24,KERNELS_SIZE[0],KERNELS_NUMBER[0],learning_rate=LEARNING_RATE,activation=Relu),
         PoolingLayer(24,12,depth=KERNELS_NUMBER[0]),
-        ConvolutionalLayer(12,10,KERNELS_SIZE[1],KERNELS_NUMBER[1],depth=KERNELS_NUMBER[0],learning_rate=LEARNING_RATE,activation=Relu),
-        PoolingLayer(10,5,depth=KERNELS_NUMBER[1]),
-        FlateningLayer(5,KERNELS_NUMBER[-1]),
-        FullyConnectedLayer(5*5*KERNELS_NUMBER[-1],128,Tanh,learningRate=LEARNING_RATE),
-        FullyConnectedLayer(128,10,Sigmoid,learningRate=LEARNING_RATE),
+        FlateningLayer(12,KERNELS_NUMBER[-1]),
+        FullyConnectedLayer(12*12*KERNELS_NUMBER[-1],512,Tanh,learningRate=LEARNING_RATE),
+        FullyConnectedLayer(512,10,Sigmoid,learningRate=LEARNING_RATE),
     ])
 
 def getTrainedNetwork() -> NN:

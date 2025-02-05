@@ -39,11 +39,10 @@ class Tanh(ActivationFunction):
     
 class Relu(ActivationFunction):
     def function(X):
-        X = np.clip(X, -600, 600)
         return np.maximum(X,0)
     
     def derivative(X):
-        return np.maximum(X,0)
+        return np.minimum(X,1)
     
 class NN():
     def forward():
@@ -146,22 +145,27 @@ class ConvolutionalLayer(Layer):
                     error[j]
                 ,mode="valid") * self.learning_rate
 
-            self.B[j] += sum(error[j]) * self.learning_rate
-
+            self.B[j] += error[j].sum(axis=(0,1)) * self.learning_rate
+        
         input_error = []
+        #print("output error",error.mean(),self.depth)
         for i in range(self.depth):
             temp = None
             for j in range(self.kernel_number):
                 if(temp is None):
                     temp = scipy.signal.convolve2d(
                         error[j],
-                        self.K[j][i],mode="full")
+                        np.flip(self.K[j][i], axis=(0, 1)),mode="full")
                 else:
                     temp += scipy.signal.convolve2d(
                         error[j],
-                        self.K[j][i],mode="full")
+                        np.flip(self.K[j][i], axis=(0, 1)),mode="full")
             input_error.append(copy.deepcopy(temp))
-        return np.array(input_error)
+        input_error = np.array(input_error)
+        
+        #print("input error",input_error.mean(),self.depth)
+        #print("kernel",self.K.mean(),self.depth)
+        return input_error
 
 class PoolingLayer(Layer):
     def __init__(self,input_size : int,output_size : int, max_pooling : bool = True,depth : int = 1):
