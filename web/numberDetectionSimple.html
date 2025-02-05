@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Detection IA</title>
+</head>
+<body>
+    <h1 style="text-align: center;text-decoration: underline;">Fully Connected Layers Method</h1>
+    <div id="numberGlobalGrid"></div>
+    <div id="answerGlobalDiv"></div>
+    <p id="answerText"></p>
+    <button onclick="getAgentData()" id="newPictureButton">New image</button>
+    <script defer>
+        for(let i = 0;i<28*28;i++){
+            if(i%28 == 0){
+                let temp = document.createElement("div")
+                temp.setAttribute("class","globalGridChild")
+                document.getElementById("numberGlobalGrid").appendChild(temp)
+            }
+            let temp = document.createElement("div")
+            document.getElementById("numberGlobalGrid").children[document.getElementById("numberGlobalGrid").children.length-1].appendChild(temp)
+        }
+
+        for(let i = 0;i<10;i++){
+            temp = document.createElement("p")
+            document.getElementById("answerGlobalDiv").appendChild(temp)
+        }
+
+        function indexOfMax(arr) {
+            if (arr.length === 0) {
+                return -1;
+            }
+
+            var max = arr[0];
+            var maxIndex = 0;
+
+            for (var i = 1; i < arr.length; i++) {
+                if (arr[i] > max) {
+                    maxIndex = i;
+                    max = arr[i];
+                }
+            }
+
+            return maxIndex;
+        }
+
+        async function getAgentData(){
+            const response = await (await fetch(`${window.location}/getData`,{method:"GET"})).json()
+            for(let i = 0;i<28;i++){
+                for(let x = 0;x<28;x++){
+                    let color = response["data"]["data"][i][x]
+                    document.getElementById("numberGlobalGrid").children[i].children[x].style.backgroundColor = `rgb(${color*255},${color*255},${color*255})`
+                }
+            }
+            for(let i = 0;i<response["agentAnswer"].length;i++){
+                document.getElementById("answerGlobalDiv").children[i].innerText=Math.round(response["agentAnswer"][i]*100)/100
+                if(i != response["data"]["rightAnswer"]){
+                    document.getElementById("answerGlobalDiv").children[i].style.color = "red"
+                }else{
+                    document.getElementById("answerGlobalDiv").children[i].style.color = "green"
+                }
+            }
+            document.getElementById("answerText").innerText = `The model predict the number ${indexOfMax(response["agentAnswer"])} | The right answer is : ${response["data"]["rightAnswer"]}`
+        }
+        getAgentData()
+    </script>
+    <style>
+        #newPictureButton{
+            margin-left: 50%;
+            transform: translateX(-50%);
+            font-size: 20px;
+            background-color: lightblue;
+            border:none;
+            padding: 0.5vw;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        #answerText{
+            text-align: center;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 24px;
+        }
+        #answerGlobalDiv p{
+            border: solid 4px black;
+            padding: 1vw;
+            text-align: center;
+            align-content: center;
+        }
+        #answerGlobalDiv{
+            display: flex;
+            width: 50vw;
+            justify-content: space-around;
+            margin-left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+        }
+        body{
+            overflow: hidden;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        #numberGlobalGrid{
+            margin-left: 50%;
+            transform: translateX(-50%);
+            width: fit-content;
+        }
+        .globalGridChild{
+            display: flex;
+            flex-direction: row;
+        }
+        .globalGridChild div {
+            background-color: black;
+            width: 2.5vh;
+            aspect-ratio: 1/1;
+        }
+        @media only screen and (max-width:700px) {
+            .globalGridChild div {
+                width: 3vw;
+            }
+            #answerGlobalDiv p{
+                font-size: 20px;
+            }
+        }
+    </style>
+</body>
+</html>
