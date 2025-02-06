@@ -105,10 +105,22 @@ $$\sigma Xj = \sum_{i=1}^{n} \sigma Yi \underset{full}{*} Kij $$
 ---
 # Sources :
 
-https://towardsdatascience.com/math-neural-network-from-scratch-in-python-d6da9f29ce65
+## Perceptron :
 
-https://medium.com/@sanjay_dutta/multi-layer-perceptron-and-backpropagation-a-deep-dive-8438cc8bcae6
+*Math behind a Perceptron* : https://www.youtube.com/watch?v=kft1AJ9WVDk&t=551s
 
-https://www.youtube.com/watch?v=9RN2Wr8xvro
+*Math behind a multilayer Perceptron* : https://towardsdatascience.com/math-neural-network-from-scratch-in-python-d6da9f29ce65
 
-https://www.youtube.com/watch?v=kft1AJ9WVDk&t=551s
+*List and explanation of activations functions* : https://medium.com/@sanjay_dutta/multi-layer-perceptron-and-backpropagation-a-deep-dive-8438cc8bcae6
+
+*Visualization of a multilayer Perceptron solving MNIST* : https://www.youtube.com/watch?v=9RN2Wr8xvro
+
+## CNN :
+
+*What's a CNN* : https://medium.com/latinxinai/convolutional-neural-network-from-scratch-6b1c856e1c07
+
+*What's a convolution* : https://www.youtube.com/watch?v=KuXjwB4LzSA
+
+*How does a convolutional layer work* : https://www.youtube.com/watch?v=Lakz2MoHy6o
+
+*Visualization of a CNN solving MNIST* : https://www.youtube.com/watch?v=pj9-rr1wDhM
