@@ -24,7 +24,7 @@ NEARHEAD = False
 
 ITERATION = 50
 
-LEARNINGRATE = 0.1
+LEARNINGRATE = 0.05
 
 class trainSnakeEvo():
     def __init__(self, gameSize: int, averageAim: int, hiddenLayers: list[int] = [], activationFunction: callable = None, neuroneActivation: list = None) -> None:
@@ -35,7 +35,7 @@ class trainSnakeEvo():
         self.gameSize = gameSize
         self.averageAim = averageAim
         self.childPerformance = []
-        self.child = [classe.FNN([self.firstNeurones]+hiddenLayers+[4],learningRate=LEARNINGRATE,neuroneActivation=neuroneActivation) for i in range(SELECTIONSIZE*MULTIPLIER)]
+        self.child = [classe.FNN([self.firstNeurones]+hiddenLayers+[4],learningRate=LEARNINGRATE,neuroneActivation=neuroneActivation,batch_size=1) for i in range(SELECTIONSIZE*MULTIPLIER)]
         self.parents = []
         self.hiddenLayers = hiddenLayers
         self.activationFunction = activationFunction
@@ -82,7 +82,7 @@ class trainSnakeEvo():
             tempNetworks = []
             for i in range(len(survivor)):#creating the next childs
                 for x in range(i+1,len(survivor)):
-                    tempNetworks.append(classe.FNN([self.firstNeurones]+self.hiddenLayers+[4],learningRate=LEARNINGRATE,neuroneActivation=self.neuroneActivation,parents=[survivor[i]["network"],survivor[x]["network"]]))
+                    tempNetworks.append(classe.FNN([self.firstNeurones]+self.hiddenLayers+[4],learningRate=LEARNINGRATE,neuroneActivation=self.neuroneActivation,parents=[survivor[i]["network"],survivor[x]["network"]],batch_size=1))
             
             self.child = copy.deepcopy(tempNetworks)
             self.iterationData.append({"generation":currentGeneration,"maxLength":survivor[0]["performance"],"averageLength":trainSnakeEvo.getAveragePerformance(survivor)})
@@ -108,8 +108,8 @@ class trainSnakeEvo():
             previousDataSinceLastFood = []
             while(state == None):
                 Networkinput = trainSnakeEvo.generateInput(game.getGrid(),True,game.snake)
-                result = network.forward(np.array(Networkinput))
-                supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,game.snake,result,dataSincelastFood,game)
+                result = network.forward(np.array([np.array(Networkinput)]))[0]
+                supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,game.snake,result.tolist(),dataSincelastFood,game)
                 errors = [0]*4
                 '''for i in range(4):
                     if(supervisedResult[i] < 0):
@@ -137,7 +137,7 @@ class trainSnakeEvo():
                 if(game.fruit != fruitSave):
                     if(modification):
                         errors[answerIndex] = 1-result[answerIndex]
-                        network.backward(errors)
+                        network.backward([errors])
                     previousDataSinceLastFood = copy.deepcopy(dataSincelastFood)
                     dataSincelastFood = []
                 else:
@@ -171,16 +171,16 @@ class trainSnakeEvo():
                             previousDistance = abs(headSave[0]-game.fruit[0])+abs(headSave[1]-game.fruit[1])
                             if(currentDistance < previousDistance):
                                 errors[answerIndex] = (1-result[answerIndex]) * 0.2
-                                network.backward(errors)
+                                network.backward([errors])
                             elif(currentDistance > previousDistance):
                                 errors[answerIndex] = -result[answerIndex] * 0.2
-                                network.backward(errors)
+                                network.backward([errors])
 
             currentPerformance.append(len(game.snake))
         return sum(currentPerformance)/len(currentPerformance)
     
     def superviseAnswer(gameSize : int,snake : list[list[int]],result : list[float],dataSinceLastFood : list[dict],game : snakeGame.Game) -> int:
-        modifiedResult = result.copy()
+        modifiedResult = copy.deepcopy(result)
         deadEnd = trainSnakeEvo.checkDeadEnd(game,snake)
         if(snake[-1][1]-1 < 0 or ([snake[-1][0],snake[-1][1]-1] in snake[1:])):
             modifiedResult[0] = -1
@@ -377,8 +377,8 @@ def getWholeGameData() -> list[dict]:
             "fruit":copy.deepcopy(game.fruit),
             "snake":copy.deepcopy(game.snake)
         })
-        result = network.forward(trainSnakeEvo.generateInput(game.getGrid(),True,game.snake))
-        answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(trainSnakeEvo.superviseAnswer(game.size,game.snake,result,copy.deepcopy(dataSinceLastFood),game)))
+        result = network.forward(np.array([trainSnakeEvo.generateInput(game.getGrid(),True,game.snake)]))[0]
+        answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(trainSnakeEvo.superviseAnswer(game.size,game.snake,result.tolist(),copy.deepcopy(dataSinceLastFood),game)))
 
         if(answerIndex == 0):
             game.directionY = -1

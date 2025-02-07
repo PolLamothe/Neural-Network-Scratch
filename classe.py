@@ -17,7 +17,8 @@ class Sigmoid(ActivationFunction):
     
     def derivative(X):
         X = np.clip(X,-600,600)
-        return Sigmoid.function(X)*(1-Sigmoid.function(X))
+        sigm = Sigmoid.function(X)
+        return sigm*(1-sigm)
 
 class Softmax(ActivationFunction):
     def function(X):
@@ -59,39 +60,43 @@ class Layer():
         pass
 
 class FullyConnectedLayer(Layer):
-    #input_size : the number of neurones of the previous layer
-    #output_size : the number of neurones in this layer
-    def __init__(self,input_size : int,output_size : int,activation : ActivationFunction,learningRate : float=1,parents : list=None):
-        #self.nerone : list = []
+    def __init__(self, input_size: int, output_size: int, activation, learningRate: float = 1, batch_size: int = 1, parents: list = None):
         self.input_size = input_size
         self.output_size = output_size
         self.activation = activation
         self.learningRate = learningRate
-        if(parents == None):
+        self.batch_size = batch_size
+
+        if parents is None:
             self.W = np.random.randn(output_size, input_size) * np.sqrt(2. / (input_size + output_size))
-            self.B = np.random.uniform(low=-1,high=1,size=(output_size))
+            self.B = np.random.uniform(low=-1, high=1, size=(output_size,))
         else:
-            self.W = (parents[0].W+parents[1].W)/2# * np.random.uniform(low=0.9,high=1.1,size=(output_size,input_size))
-            self.B = (parents[0].B+parents[1].B)/2# * np.random.uniform(low=0.9,high=1.1,size=(output_size))
-    
-    #this function return the result of each of the neurones of this layer
-    def forward(self,this_input : np.ndarray) -> np.ndarray:
+            self.W = (parents[0].W + parents[1].W) / 2
+            self.B = (parents[0].B + parents[1].B) / 2
+
+    def forward(self, this_input: np.ndarray) -> np.ndarray:
         self.X = this_input
-        self.Y = self.activation.function(np.dot(self.W,this_input)+self.B)
+        self.Y = self.activation.function(np.dot(this_input, self.W.T) + self.B)
         return self.Y
-    
-    #error : an array containing the error for each of the neurones of this layer
-    def backward(self,output_error : np.ndarray):
+
+    def backward(self, output_error: np.ndarray) -> np.ndarray:
+
         output_error *= self.activation.derivative(self.Y)
-    
-        batch_size = self.X.shape[0] if len(self.X.shape) > 1 else 1
-        self.W += (output_error[:, np.newaxis] * self.X) * (self.learningRate / batch_size)
-        self.B += output_error * (self.learningRate / batch_size)
-        
+
+        grad_W = np.zeros_like(self.W)
+        for i in range(self.X.shape[0]):
+            grad_W += (output_error[i][:, np.newaxis] * self.X[i]) / self.X.shape[0]
+        grad_B = np.zeros_like(self.B)
+        for i in range(self.X.shape[0]):
+            grad_B += output_error[i]/self.X.shape[0]
+
+        self.W += self.learningRate * grad_W
+        self.B += self.learningRate * grad_B
+
         return np.dot(output_error, self.W)
 
 class ConvolutionalLayer(Layer):
-    def __init__(self,input_size : int,output_size : int,kernel_size : int,kernel_number : int,activation : ActivationFunction,depth : int = 1,learning_rate = 1):
+    def __init__(self,input_size : int,output_size : int,kernel_size : int,kernel_number : int,activation : ActivationFunction,depth : int = 1,learning_rate : float = 1,batch_size :int = 1):
         self.input_size = input_size
         self.depth = depth
         self.kernel_size = kernel_size
@@ -100,6 +105,7 @@ class ConvolutionalLayer(Layer):
         self.learning_rate = learning_rate
         self.activation = activation
         self.output_size = output_size
+        self.batch_size = batch_size
 
         self.P = self.output_size - self.selection_size
 
@@ -114,21 +120,23 @@ class ConvolutionalLayer(Layer):
         self.K = np.array(self.K)
 
     def forward(self,this_input : np.ndarray) -> np.ndarray:
+        assert(len(this_input.shape) == 4)
         result = []
         self.X = this_input
 
         this_output = []
 
-        for i in range(self.kernel_number):
-            
-            somme = np.zeros((self.selection_size,self.selection_size))
-            for j in range(self.depth):
-                somme += scipy.signal.correlate2d(
-                    self.X[j],
-                    self.K[i][j]
-                ,mode="valid")
-            somme += self.B[i]
-            this_output.append(copy.deepcopy(somme))
+        for x in range(self.X.shape[0]):
+            this_output.append([])
+            for i in range(self.kernel_number):
+                somme = np.zeros((self.selection_size,self.selection_size))
+                for j in range(self.depth):
+                    somme += scipy.signal.correlate2d(
+                        self.X[x][j],
+                        self.K[i][j]
+                    ,mode="valid")
+                somme += self.B[i]
+                this_output[-1].append(copy.deepcopy(somme))
 
         this_output = self.activation.function(this_output)
 
@@ -136,116 +144,125 @@ class ConvolutionalLayer(Layer):
         return self.Y
     
     def backward(self,error : np.ndarray) -> np.ndarray:
+        assert(len(error.shape) == 4)
         error *= self.activation.derivative(self.Y)
 
-        for j in range(self.kernel_number):
-            for i in range(self.depth):
-                self.K[j][i] += scipy.signal.correlate2d(
-                    self.X[i],
-                    error[j]
-                ,mode="valid") * self.learning_rate
+        for x in range(self.X.shape[0]):
+            for j in range(self.kernel_number):
+                for i in range(self.depth):
+                    self.K[j][i] += scipy.signal.correlate2d(
+                        self.X[x][i],
+                        error[x][j]
+                    ,mode="valid") * self.learning_rate / self.X.shape[0]
 
-            self.B[j] += error[j].sum(axis=(0,1)) * self.learning_rate
+                self.B[j] += error[x][j].sum(axis=(0,1)) * self.learning_rate / self.X.shape[0]
         
         input_error = []
-        #print("output error",error.mean(),self.depth)
-        for i in range(self.depth):
-            temp = None
-            for j in range(self.kernel_number):
-                if(temp is None):
-                    temp = scipy.signal.convolve2d(
-                        error[j],
-                        np.flip(self.K[j][i], axis=(0, 1)),mode="full")
-                else:
+        for x in range(self.X.shape[0]):
+            input_error.append([])
+            for i in range(self.depth):
+                temp = np.zeros((self.input_size,self.input_size))
+                for j in range(self.kernel_number):
                     temp += scipy.signal.convolve2d(
-                        error[j],
+                        error[x][j],
                         np.flip(self.K[j][i], axis=(0, 1)),mode="full")
-            input_error.append(copy.deepcopy(temp))
+                input_error[-1].append(copy.deepcopy(temp))
         input_error = np.array(input_error)
-        
-        #print("input error",input_error.mean(),self.depth)
-        #print("kernel",self.K.mean(),self.depth)
         return input_error
 
 class PoolingLayer(Layer):
-    def __init__(self,input_size : int,output_size : int, max_pooling : bool = True,depth : int = 1):
+    def __init__(self,input_size : int,output_size : int, max_pooling : bool = True,depth : int = 1,batch_size : int = 1):
         self.input_size = input_size
         self.output_size = output_size
         self.max_pooling = max_pooling
         self.depth = depth
+        self.batch_size = batch_size
         if(self.input_size%self.output_size != 0):
             raise Exception("The size of the layer is not valid")
         self.selection_size = self.input_size//self.output_size
     
     def forward(self,this_input : np.ndarray) -> np.ndarray:
         self.X = copy.deepcopy(this_input)
+        assert(len(self.X.shape) == 4)
         self.Y = []
-        for i in range(self.depth):
-            temp = np.zeros((self.output_size,self.output_size))
-            for j in range(self.input_size//self.selection_size):
-                for x in range(self.input_size//self.selection_size):
-                    region = this_input[i][
-                        j*self.selection_size:(j+1)*self.selection_size,
-                        x*self.selection_size:(x+1)*self.selection_size,
-                        ]
-                    if(self.max_pooling):
-                        temp[j,x] = np.max(region)
-                    else:
-                        temp[j,x] = np.mean(region)
-            self.Y.append(copy.deepcopy(temp))
+        for batch in range(self.X.shape[0]):
+            self.Y.append([])
+            for i in range(self.depth):
+                temp = np.zeros((self.output_size,self.output_size))
+                for j in range(self.input_size//self.selection_size):
+                    for x in range(self.input_size//self.selection_size):
+                        region = this_input[batch][i][
+                            j*self.selection_size:(j+1)*self.selection_size,
+                            x*self.selection_size:(x+1)*self.selection_size,
+                            ]
+                        if(self.max_pooling):
+                            temp[j,x] = np.max(region)
+                        else:
+                            temp[j,x] = np.mean(region)
+                self.Y[-1].append(copy.deepcopy(temp))
         self.Y = np.array(self.Y)
 
         return self.Y
     
     def backward(self,error : np.ndarray) -> np.ndarray:
+        assert(len(error.shape) == 4)
         result = []
-
-        for i in range(self.depth):
-            result.append(np.zeros(self.X[i].shape))
-            for j in range(0,self.input_size,self.selection_size):
-                for x in range(0,self.input_size,self.selection_size):
-                    region = self.X[i][j:j+self.selection_size,x:x+self.selection_size]
-                    if(self.max_pooling):
-                        max_index = np.unravel_index(region.argmax(), region.shape)
-                        result[-1][j+max_index[0]][x+max_index[1]] = error[i][j//self.selection_size,x//self.selection_size]
-                    else:
-                        result[-1][j:j+self.selection_size,x:x+self.selection_size] += error[i][j//self.selection_size,x//self.selection_size] / (self.selection_size**2)
+        for batch in range(error.shape[0]):
+            result.append([])
+            for i in range(self.depth):
+                result[-1].append(np.zeros(self.X[batch][i].shape))
+                for j in range(0,self.input_size,self.selection_size):
+                    for x in range(0,self.input_size,self.selection_size):
+                        region = self.X[batch][i][j:j+self.selection_size,x:x+self.selection_size]
+                        if(self.max_pooling):
+                            max_index = np.unravel_index(region.argmax(), region.shape)
+                            result[-1][-1][j+max_index[0]][x+max_index[1]] = error[batch][i][j//self.selection_size,x//self.selection_size]
+                        else:
+                            result[-1][-1][j:j+self.selection_size,x:x+self.selection_size] += error[batch][i][j//self.selection_size,x//self.selection_size] / (self.selection_size**2)
         return np.array(result)
     
 class FlateningLayer(Layer):
-    def __init__(self,input_size : int,input_depth : int):
+    def __init__(self,input_size : int,input_depth : int,batch_size : int= 1):
         self.input_size = input_size
         self.input_depth = input_depth
+        self.batch_size = batch_size
 
     def forward(self,this_input : np.ndarray) -> np.ndarray:
+        assert(len(this_input.shape) >= 3)
         result = []
-        for i in range(self.input_depth):
-            result.extend(np.append(this_input[i],[]))
+        for j in range(this_input.shape[0]):
+            result.append([])
+            for i in range(self.input_depth):
+                result[-1].extend(np.append(this_input[j][i],[]))
         return np.array(result)
 
     def backward(self,this_error : np.ndarray) -> np.ndarray:
+        assert(len(this_error.shape) >= 2)
         result = []
-        for i in range(self.input_depth):
-            temp = []
-            for j in range(self.input_size):
-                base = i*(self.input_size**2)
-                temp.append(this_error[base+j*self.input_size:base+(j+1)*self.input_size])
-            result.append(copy.deepcopy(temp))
+        for x in range(this_error.shape[0]):
+            result.append([])
+            for i in range(self.input_depth):
+                temp = []
+                for j in range(self.input_size):
+                    base = i*(self.input_size**2)
+                    temp.append(this_error[x][base+j*self.input_size:base+(j+1)*self.input_size])
+                result[-1].append(copy.deepcopy(temp))
         result = np.array(result)
         return result
 
 class FNN(NN):
-    def __init__(self,neuroneNumber : list[int],learningRate : float=1,neuroneActivation : list[ActivationFunction]=None,parents : list=None) -> None:
+    def __init__(self,neuroneNumber : list[int],learningRate : float=1,neuroneActivation : list[ActivationFunction]=None,batch_size : int = 1,parents : list=None) -> None:
         self.layers : list[FullyConnectedLayer] = []
+        self.batch_size = batch_size
         activationList = []
         for i in range(len(neuroneActivation)):
             activationList.append(neuroneActivation[i])
         for i in range(1,len(neuroneNumber)):
             try:
                 if(parents != None):
-                    self.layers.append(FullyConnectedLayer(neuroneNumber[i-1],neuroneNumber[i],activationList[i-1],learningRate,parents=[parents[0].layers[i-1],parents[1].layers[i-1]]))
+                    self.layers.append(FullyConnectedLayer(neuroneNumber[i-1],neuroneNumber[i],activationList[i-1],learningRate,parents=[parents[0].layers[i-1],parents[1].layers[i-1]],batch_size=batch_size))
                 else:
-                    self.layers.append(FullyConnectedLayer(neuroneNumber[i-1],neuroneNumber[i],activationList[i-1],learningRate))
+                    self.layers.append(FullyConnectedLayer(neuroneNumber[i-1],neuroneNumber[i],activationList[i-1],learningRate,batch_size=batch_size))
             except IndexError:
                 raise Exception("You forgot to provide the activation function for a layer")
     
@@ -271,8 +288,9 @@ class FNN(NN):
                 previousResult = np.array(self.layers[i].backward(previousResult))
 
 class CNN(NN):
-    def __init__(self,layers : list[Layer]):
+    def __init__(self,layers : list[Layer],batch_size : int = 1):
         self.layers = layers
+        self.batch_size = batch_size
 
     def forward(self,this_input : np.ndarray) -> list[float]:
         first = True
@@ -282,11 +300,6 @@ class CNN(NN):
                 previousResult = layer.forward(this_input)
                 first = False
             else:
-                if(type(layer) == FullyConnectedLayer and previousResult.shape != (0,1)):
-                    temp = []
-                    for i in range(len(previousResult)):
-                        temp.append(np.append(previousResult[i],[]))
-                    previousResult = np.array(np.append(temp,[]))
                 previousResult = layer.forward(previousResult)
         return previousResult
 
@@ -299,3 +312,5 @@ class CNN(NN):
                 first = False
             else:
                 previousResult = np.array(self.layers[i].backward(previousResult))
+
+            if(np.max(previousResult) > 1):print("probleme : ",i)

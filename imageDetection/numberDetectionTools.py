@@ -23,16 +23,18 @@ KERNELS_NUMBER = [4]
 
 LEARNING_RATE = 0.002
 
+BATCH_SIZE = 1
+
 def getNetwork() -> CNN:
     return CNN([
-        ConvolutionalLayer(28,24,KERNELS_SIZE[0],KERNELS_NUMBER[0],learning_rate=LEARNING_RATE,activation=Relu),
-        PoolingLayer(24,12,depth=KERNELS_NUMBER[0]),
-        FlateningLayer(12,KERNELS_NUMBER[-1]),
-        FullyConnectedLayer(12*12*KERNELS_NUMBER[-1],512,Tanh,learningRate=LEARNING_RATE),
-        FullyConnectedLayer(512,10,Sigmoid,learningRate=LEARNING_RATE),
-    ])
+        ConvolutionalLayer(28,24,KERNELS_SIZE[0],KERNELS_NUMBER[0],learning_rate=LEARNING_RATE,activation=Relu,batch_size=BATCH_SIZE),
+        PoolingLayer(24,12,depth=KERNELS_NUMBER[0],batch_size=BATCH_SIZE),
+        FlateningLayer(12,KERNELS_NUMBER[-1],batch_size=BATCH_SIZE),
+        FullyConnectedLayer(12*12*KERNELS_NUMBER[-1],512,Tanh,learningRate=LEARNING_RATE,batch_size=BATCH_SIZE),
+        FullyConnectedLayer(512,10,Sigmoid,learningRate=LEARNING_RATE,batch_size=BATCH_SIZE),
+    ],batch_size=BATCH_SIZE)
 
-def getTrainedNetwork() -> NN:
+def getTrainedNetwork() -> CNN:
     with open(os.path.dirname(os.path.realpath(__file__))+"/numberDetection.pkl", "rb") as file:
         return pickle.load(file)
 
@@ -43,6 +45,6 @@ def getTestData() -> dict[np.array]:
 def getNetworkAnswer(input : np.array) -> dict[list[float]]:
     network = getTrainedNetwork()
     return {
-        "answer":network.forward(input),
-        "convolution":network.layers[0].forward(input)
+        "answer":network.forward(np.array([input]))[0],
+        "convolution":network.layers[0].forward(np.array([input]))[0]
         }
