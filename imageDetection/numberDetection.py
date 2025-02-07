@@ -53,28 +53,29 @@ if(not useTrainedModel or args.save):
     trainingState = True
 
     count = 0
-    rightCount = dict({})
-    for i in range(10):
-        rightCount[i] = 0
     while(previousAnswerRatio < 0.9 or previousAnswerCoeff < previousAnswerNumber):
         count += 1
-        currentIndex = random.randint(0,len(numberDetectionTools.x_train)-1)
-        right = numberDetectionTools.y_train[currentIndex]
-        lastLayerResult = network.forward(np.array([numberDetectionTools.x_train[currentIndex]]))
-        if(checkAnswer(right,lastLayerResult)):
-            previousAnswerRatio = max((previousAnswerRatio*previousAnswerCoeff+1)/(previousAnswerCoeff+1),0)
-            previousAnswerCoeff = min(previousAnswerNumber,previousAnswerCoeff+1)
-        else:
-            previousAnswerRatio = max((previousAnswerRatio*previousAnswerCoeff-1)/(previousAnswerCoeff+1),0)
-            previousAnswerCoeff = min(previousAnswerNumber,previousAnswerCoeff+1)
-        err = []
-        for i in range(10):
-            if(i == right):
-                err.append(1-lastLayerResult[i])
+        currentIndexs = [random.randint(0,len(numberDetectionTools.x_train)-1) for i in range(network.batch_size)]
+        rights = [numberDetectionTools.y_train[currentIndex] for currentIndex in currentIndexs]
+        lastLayerResult = network.forward(np.array([[numberDetectionTools.x_train[currentIndex]] for currentIndex in currentIndexs]))
+
+        output_errors = []
+        for index,answer in enumerate(lastLayerResult):
+            if(checkAnswer(rights[index],answer)):
+                previousAnswerRatio = max((previousAnswerRatio*previousAnswerCoeff+1)/(previousAnswerCoeff+1),0)
+                previousAnswerCoeff = min(previousAnswerNumber,previousAnswerCoeff+1)
             else:
-                err.append(-lastLayerResult[i])
-        network.backward(np.array(err))
-        print("number of iterations : "+str(count)," success rate : ",round(previousAnswerRatio,2),"   ", end='\r')
+                previousAnswerRatio = max((previousAnswerRatio*previousAnswerCoeff-1)/(previousAnswerCoeff+1),0)
+                previousAnswerCoeff = min(previousAnswerNumber,previousAnswerCoeff+1)
+            err = []
+            for i in range(10):
+                if(i == rights[index]):
+                    err.append(1-answer[i])
+                else:
+                    err.append(-answer[i])
+            output_errors.append(copy.deepcopy(err))
+        network.backward(np.array(output_errors))
+        print("number of iterations : "+str(count*network.batch_size)," success rate : ",round(previousAnswerRatio,2),"   ", end='\r')
         sys.stdout.flush()
     print("\ntraining over")
     trainingState = False
@@ -88,7 +89,7 @@ if(not useTrainedModel or args.save):
 successCout = 0
 testCount = 0
 for i in range(len(numberDetectionTools.x_test)):
-    result = network.forward(np.array([numberDetectionTools.x_test[i]]))
+    result = network.forward(np.array([[numberDetectionTools.x_test[i]]]))[0]
     right = numberDetectionTools.y_test[i]
     if(checkAnswer(right,result)):
         successCout += 1

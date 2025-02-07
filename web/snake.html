@@ -22,8 +22,7 @@
 
     let currentIndex = 0
 
-    console.log(window.location.pathname.replace("snake",""))
-    document.getElementById("loadingImage").setAttribute("src",`${window.location.pathname.replace("snake","")}static/images/loading.gif`)
+    document.getElementById("loadingImage").setAttribute("src",`${window.location.href.replace("snake","")}static/images/loading.gif`)
 
     for(let i = 0;i<gameSize;i++){
         let temp = document.createElement("div")
