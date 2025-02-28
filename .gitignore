@@ -1,4 +1,6 @@
 __pycache__
-*batch*
 *.DS_Store*
 tf_clean
+*/assets/*
+!*/assets/*.sh
+*CIFAR*

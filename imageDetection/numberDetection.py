@@ -60,22 +60,26 @@ if(not useTrainedModel or args.save):
         lastLayerResult = network.forward(np.array([[numberDetectionTools.x_train[currentIndex]] for currentIndex in currentIndexs]))
 
         output_errors = []
+        mse_sum = 0
         for index,answer in enumerate(lastLayerResult):
             if(checkAnswer(rights[index],answer)):
                 previousAnswerRatio = max((previousAnswerRatio*previousAnswerCoeff+1)/(previousAnswerCoeff+1),0)
                 previousAnswerCoeff = min(previousAnswerNumber,previousAnswerCoeff+1)
             else:
-                previousAnswerRatio = max((previousAnswerRatio*previousAnswerCoeff-1)/(previousAnswerCoeff+1),0)
+                previousAnswerRatio = max((previousAnswerRatio*previousAnswerCoeff)/(previousAnswerCoeff+1),0)
                 previousAnswerCoeff = min(previousAnswerNumber,previousAnswerCoeff+1)
             err = []
             for i in range(10):
                 if(i == rights[index]):
                     err.append(1-answer[i])
+                    mse_sum += ((1-answer[i])**2)/10/numberDetectionTools.BATCH_SIZE
                 else:
                     err.append(-answer[i])
+                    mse_sum += ((-answer[i])**2)/10/numberDetectionTools.BATCH_SIZE
             output_errors.append(copy.deepcopy(err))
         network.backward(np.array(output_errors))
-        print("number of iterations : "+str(count*network.batch_size)," success rate : ",round(previousAnswerRatio,2),"   ", end='\r')
+        #print(round(np.sum(network.layers[0].error)/numberDetectionTools.BATCH_SIZE,3))
+        print("nombre d'iterations : "+str(count*numberDetectionTools.BATCH_SIZE)," mse : ",round(mse_sum,2)," success rate : ",round(previousAnswerRatio,2),"    ")
         sys.stdout.flush()
     print("\ntraining over")
     trainingState = False

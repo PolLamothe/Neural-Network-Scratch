@@ -8,7 +8,7 @@ class ActivationFunction():
         return X
     
     def derivative(X):
-        return X
+        return 1
     
 class Sigmoid(ActivationFunction):
     def function(X):
@@ -80,7 +80,6 @@ class FullyConnectedLayer(Layer):
         return self.Y
 
     def backward(self, output_error: np.ndarray) -> np.ndarray:
-
         output_error *= self.activation.derivative(self.Y)
 
         grad_W = np.zeros_like(self.W)
@@ -88,7 +87,7 @@ class FullyConnectedLayer(Layer):
             grad_W += (output_error[i][:, np.newaxis] * self.X[i]) / self.X.shape[0]
         grad_B = np.zeros_like(self.B)
         for i in range(self.X.shape[0]):
-            grad_B += output_error[i]/self.X.shape[0]
+            grad_B += output_error[i] / self.X.shape[0]
 
         self.W += self.learningRate * grad_W
         self.B += self.learningRate * grad_B
@@ -114,13 +113,15 @@ class ConvolutionalLayer(Layer):
 
         for j in range(self.kernel_number):
             self.K.append([])
-            self.B.append(np.random.randn(self.selection_size, self.selection_size) * np.sqrt(2. / (self.selection_size + self.selection_size)))
+            #self.B.append(np.random.randn(self.selection_size, self.selection_size) * np.sqrt(2. / (self.selection_size + self.selection_size)))
+            self.B.append(np.full((self.output_size,self.output_size), 0.))
             for i in range(self.depth):    
-                self.K[-1].append(np.random.randn(kernel_size, kernel_size) * np.sqrt(2. / (kernel_size + kernel_size)))
+                #self.K[-1].append(np.random.randn(kernel_size, kernel_size) * np.sqrt(2. / (kernel_size + kernel_size)))
+                #Initialisation He
+                self.K[-1].append(np.random.normal(0, np.sqrt(2.0 / (self.kernel_size**2 * self.depth)), (self.kernel_size,self.kernel_size)))
         self.K = np.array(self.K)
 
     def forward(self,this_input : np.ndarray) -> np.ndarray:
-        assert(len(this_input.shape) == 4)
         result = []
         self.X = this_input
 
@@ -133,8 +134,7 @@ class ConvolutionalLayer(Layer):
                 for j in range(self.depth):
                     somme += scipy.signal.correlate2d(
                         self.X[x][j],
-                        self.K[i][j]
-                    ,mode="valid")
+                        self.K[i][j],mode="valid")
                 somme += self.B[i]
                 this_output[-1].append(copy.deepcopy(somme))
 
@@ -144,30 +144,35 @@ class ConvolutionalLayer(Layer):
         return self.Y
     
     def backward(self,error : np.ndarray) -> np.ndarray:
-        assert(len(error.shape) == 4)
+        self.error = error
         error *= self.activation.derivative(self.Y)
+
+        kernels_gradiant = np.zeros_like(self.K)
 
         for x in range(self.X.shape[0]):
             for j in range(self.kernel_number):
                 for i in range(self.depth):
-                    self.K[j][i] += scipy.signal.correlate2d(
+                    kernels_gradiant[j][i] += scipy.signal.correlate2d(
                         self.X[x][i],
                         error[x][j]
                     ,mode="valid") * self.learning_rate / self.X.shape[0]
 
-                self.B[j] += error[x][j].sum(axis=(0,1)) * self.learning_rate / self.X.shape[0]
+                self.B[j] += error[x][j] * self.learning_rate / self.X.shape[0]
         
-        input_error = []
+        input_error : list[np.ndarray] = []
         for x in range(self.X.shape[0]):
             input_error.append([])
             for i in range(self.depth):
                 temp = np.zeros((self.input_size,self.input_size))
                 for j in range(self.kernel_number):
-                    temp += scipy.signal.convolve2d(
+                    temp += scipy.signal.correlate2d(
                         error[x][j],
-                        np.flip(self.K[j][i], axis=(0, 1)),mode="full")
+                        self.K[j][i],mode="full")
                 input_error[-1].append(copy.deepcopy(temp))
         input_error = np.array(input_error)
+
+        self.K += kernels_gradiant
+
         return input_error
 
 class PoolingLayer(Layer):
@@ -183,7 +188,6 @@ class PoolingLayer(Layer):
     
     def forward(self,this_input : np.ndarray) -> np.ndarray:
         self.X = copy.deepcopy(this_input)
-        assert(len(self.X.shape) == 4)
         self.Y = []
         for batch in range(self.X.shape[0]):
             self.Y.append([])
@@ -205,7 +209,6 @@ class PoolingLayer(Layer):
         return self.Y
     
     def backward(self,error : np.ndarray) -> np.ndarray:
-        assert(len(error.shape) == 4)
         result = []
         for batch in range(error.shape[0]):
             result.append([])
@@ -228,7 +231,6 @@ class FlateningLayer(Layer):
         self.batch_size = batch_size
 
     def forward(self,this_input : np.ndarray) -> np.ndarray:
-        assert(len(this_input.shape) >= 3)
         result = []
         for j in range(this_input.shape[0]):
             result.append([])
@@ -237,7 +239,6 @@ class FlateningLayer(Layer):
         return np.array(result)
 
     def backward(self,this_error : np.ndarray) -> np.ndarray:
-        assert(len(this_error.shape) >= 2)
         result = []
         for x in range(this_error.shape[0]):
             result.append([])
@@ -313,4 +314,5 @@ class CNN(NN):
             else:
                 previousResult = np.array(self.layers[i].backward(previousResult))
 
-            if(np.max(previousResult) > 1):print("probleme : ",i)
+            if(np.max(previousResult) > 1):print("problem, layer index : ",i)#Detecting gradients exploding
+        return previousResult
