@@ -21,9 +21,9 @@ KERNELS_SIZE = [5]
 
 KERNELS_NUMBER = [4]
 
-LEARNING_RATE = 0.002
+LEARNING_RATE = 0.1
 
-BATCH_SIZE = 1
+BATCH_SIZE = 128
 
 def getNetwork() -> CNN:
     return CNN([
