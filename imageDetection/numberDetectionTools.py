@@ -17,21 +17,24 @@ x_train /= 255
 x_test = x_test.astype('float32')
 x_test /= 255
 
-KERNELS_SIZE = [5]
+KERNELS_SIZE = [3,3,3]
 
-KERNELS_NUMBER = [4]
+KERNELS_NUMBER = [8,16,32]
 
 LEARNING_RATE = 0.1
 
-BATCH_SIZE = 128
+BATCH_SIZE = 64
 
 def getNetwork() -> CNN:
     return CNN([
-        ConvolutionalLayer(28,24,KERNELS_SIZE[0],KERNELS_NUMBER[0],learning_rate=LEARNING_RATE,activation=Relu,batch_size=BATCH_SIZE),
-        PoolingLayer(24,12,depth=KERNELS_NUMBER[0],batch_size=BATCH_SIZE),
-        FlateningLayer(12,KERNELS_NUMBER[-1],batch_size=BATCH_SIZE),
-        FullyConnectedLayer(12*12*KERNELS_NUMBER[-1],512,Tanh,learningRate=LEARNING_RATE,batch_size=BATCH_SIZE),
-        FullyConnectedLayer(512,10,Sigmoid,learningRate=LEARNING_RATE,batch_size=BATCH_SIZE),
+        ConvolutionalLayer(28,28,KERNELS_SIZE[0],KERNELS_NUMBER[0],learning_rate=LEARNING_RATE,activation=Relu,batch_size=BATCH_SIZE),
+        PoolingLayer(28,14,depth=KERNELS_NUMBER[0],batch_size=BATCH_SIZE),
+        ConvolutionalLayer(14,14,KERNELS_SIZE[1],KERNELS_NUMBER[1],depth=KERNELS_NUMBER[0],learning_rate=LEARNING_RATE,activation=Relu,batch_size=BATCH_SIZE),
+        PoolingLayer(14,7,depth=KERNELS_NUMBER[1],batch_size=BATCH_SIZE),
+        ConvolutionalLayer(7,5,KERNELS_SIZE[2],KERNELS_NUMBER[2],depth=KERNELS_NUMBER[1],learning_rate=LEARNING_RATE,activation=Relu,batch_size=BATCH_SIZE),
+        FlateningLayer(5,KERNELS_NUMBER[-1],batch_size=BATCH_SIZE),
+        FullyConnectedLayer(5**2*KERNELS_NUMBER[-1],256,Tanh,learningRate=LEARNING_RATE,batch_size=BATCH_SIZE),
+        FullyConnectedLayer(256,10,Sigmoid,learningRate=LEARNING_RATE,batch_size=BATCH_SIZE),
     ],batch_size=BATCH_SIZE)
 
 def getTrainedNetwork() -> CNN:
