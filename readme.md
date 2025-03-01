@@ -51,35 +51,36 @@ Here is the list of the file in this project and what are they used for :
 # Math
 
 ## Variables :
-- $X$ is the input of the nerone
-- $W$ is the weight of the nerones connection
-- $b$ is the bias of the nerone
+- $X$ is the input of the layer
+- $W$ is the weight of the layer
+- $B$ is the bias of the layer
 - $f$ is the activation function
+- $f'$ is the derivative of the activation function
 - $l$ is the learning rate
-- $y$ is the output of the nerone
-- $\sigma y$ is the output error
-- $\sigma W$ is weight error of the nerone
-- $\sigma b$ is bias error of the nerone
-- $\sigma X$ is the input error of the nerone
+- $Y$ is the output of the layer
+- $dY$ is the output error
+- $dW$ is weight grandiant of the layer
+- $db$ is bias gradiant of the layer
+- $dX$ is the input error of the layer
 
 ## Fully Connected Layers :
 
 ### Forward Propagation :
-$$y = f(X*W+b)$$
+$$Y = f(X⋅W+b)$$
 
 ### Backward Propagation : 
 
 #### Error adjustment
-$$\sigma y = \sigma y * f'(y)$$
+$$dY' = dY * f'(Y)$$
 
-#### Weight adjustment :
-$$\sigma W = \sigma y * X * l$$
+#### Weight gradiant :
+$$dW = dY' ⋅ X * l$$
 
-#### Bias adjustment : 
-$$\sigma b = \sigma y * l$$
+#### Bias gradiant : 
+$$dB = dY * l$$
 
 #### Input error :
-$$\sigma X = \sigma y * W * X$$
+$$dX = dY ⋅ W$$
 
 ## Convolutional Layers :
 
@@ -93,14 +94,14 @@ $$ Yi = Bi + \sum_{j=1}^{n} Xj \bigstar Kij, i = 1..d$$
 
 ### Backward Propagation :
 
-#### Kernel adjustment :
-$$ \sigma K = X \bigstar \sigma Y $$
+#### Kernel gradiant :
+$$ dK = X \bigstar dY $$
 
-#### Bias adjustment :
-$$ \sigma B = \sigma Y $$
+#### Bias gradiant :
+$$ dB = dY $$
 
 #### Input error :
-$$\sigma Xj = \sum_{i=1}^{n} \sigma Yi \underset{full}{*} Kij $$
+$$dXj = \sum_{i=1}^{n} dYi \underset{full}{*} Kij $$
 
 ---
 # Sources :
