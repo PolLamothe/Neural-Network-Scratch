@@ -107,14 +107,14 @@ class ConvolutionalLayer(Layer):
         self.batch_size = batch_size
 
         self.P = self.output_size - self.selection_size
+        if(self.P%2 != 0):raise Exception("This padding isn't supported")
 
         self.K = []
-        self.B = []
+        self.B = np.random.randn(self.kernel_number) * np.sqrt(2 / self.kernel_number)
 
         for j in range(self.kernel_number):
             self.K.append([])
             #self.B.append(np.random.randn(self.selection_size, self.selection_size) * np.sqrt(2. / (self.selection_size + self.selection_size)))
-            self.B.append(np.full((self.output_size,self.output_size), 0.))
             for i in range(self.depth):    
                 #self.K[-1].append(np.random.randn(kernel_size, kernel_size) * np.sqrt(2. / (kernel_size + kernel_size)))
                 #Initialisation He
@@ -137,15 +137,34 @@ class ConvolutionalLayer(Layer):
                         self.K[i][j],mode="valid")
                 somme += self.B[i]
                 this_output[-1].append(copy.deepcopy(somme))
+        
+        if(self.P != 0):
+            for i in range(self.X.shape[0]):
+                for j in range(self.kernel_number):
+                    this_output[i][j] = np.pad(this_output[i][j], pad_width=int(self.P/2), mode='constant', constant_values=0)
 
         this_output = self.activation.function(this_output)
 
-        self.Y = copy.deepcopy(this_output)
+        self.Y = np.array(this_output)
         return self.Y
     
     def backward(self,error : np.ndarray) -> np.ndarray:
         self.error = error
-        error *= self.activation.derivative(self.Y)
+        inputWithoutPad = []
+        errorWithoutPad = []
+        if(self.P != 0):
+            for i in range(self.Y.shape[0]):
+                inputWithoutPad.append([])
+                errorWithoutPad.append([])
+                for j in range(self.kernel_number):
+                    inputWithoutPad[-1].append(self.Y[i][j][int(self.P/2) : -int(self.P/2), int(self.P/2) : -int(self.P/2)])
+                    errorWithoutPad[-1].append(self.error[i][j][int(self.P/2) : -int(self.P/2), int(self.P/2) : -int(self.P/2)])
+            inputWithoutPad = np.array(inputWithoutPad)
+            errorWithoutPad = np.array(errorWithoutPad)
+        else:
+            inputWithoutPad = self.Y
+            errorWithoutPad = error
+        errorWithoutPad *= self.activation.derivative(inputWithoutPad)
 
         kernels_gradiant = np.zeros_like(self.K)
 
@@ -154,10 +173,10 @@ class ConvolutionalLayer(Layer):
                 for i in range(self.depth):
                     kernels_gradiant[j][i] += scipy.signal.correlate2d(
                         self.X[x][i],
-                        error[x][j]
-                    ,mode="valid") * self.learning_rate / self.X.shape[0]
+                        errorWithoutPad[x][j]
+                    ,mode="valid")
 
-                self.B[j] += error[x][j] * self.learning_rate / self.X.shape[0]
+                self.B[j] += np.sum(errorWithoutPad[x][j]) * self.learning_rate / self.X.shape[0]
         
         input_error : list[np.ndarray] = []
         for x in range(self.X.shape[0]):
@@ -165,13 +184,13 @@ class ConvolutionalLayer(Layer):
             for i in range(self.depth):
                 temp = np.zeros((self.input_size,self.input_size))
                 for j in range(self.kernel_number):
-                    temp += scipy.signal.correlate2d(
-                        error[x][j],
+                    temp += scipy.signal.convolve2d(
+                        errorWithoutPad[x][j],
                         self.K[j][i],mode="full")
                 input_error[-1].append(copy.deepcopy(temp))
         input_error = np.array(input_error)
 
-        self.K += kernels_gradiant
+        self.K += kernels_gradiant * (self.learning_rate / self.X.shape[0])
 
         return input_error
 
@@ -250,6 +269,48 @@ class FlateningLayer(Layer):
                 result[-1].append(copy.deepcopy(temp))
         result = np.array(result)
         return result
+    
+class BatchNormalization(Layer):
+    def __init__(self):
+        self.gamma = 1
+        self.beta = 0
+
+    def forward(self,X : np.ndarray) -> np.ndarray:
+        self.X = X
+        result = []
+        means = []
+        vars = []
+        for i in range(X.shape[0]):
+            result.append([])
+            avg = np.mean(X[i])
+            means.append(avg)
+            var = np.var(X[i])
+            vars.append(var)
+            result[-1].append((X[i]-avg)/math.sqrt(var+1e-15))
+        self.means = means
+        self.vars = vars
+        self.x_hat = copy.deepcopy(result)
+        self.Y = self.gamma * result + self.beta
+        return self.Y
+            
+    def backward(self,error : np.ndarray) -> np.ndarray:
+        self.gamma += np.sum(error*self.X)/error.shape[0]
+        self.beta += np.sum(error)/error.shape[0]
+        result = []
+        for i in range(error.shape[0]):
+            result.append([])
+            m = error.shape[1]
+            
+            term1 = m * error[i]
+            
+            term2 = np.sum(error, axis=0)
+            
+            term3 = self.x_hat[i] * np.sum(error * self.x_hat[i], axis=0)
+            
+            dX = (self.gamma / (m * np.sqrt(self.vars[i] + 1e-15))) * (term1 - term2 - term3)
+            result.append(dX)
+        return result
+
 
 class FNN(NN):
     def __init__(self,neuroneNumber : list[int],learningRate : float=1,neuroneActivation : list[ActivationFunction]=None,batch_size : int = 1,parents : list=None) -> None:
