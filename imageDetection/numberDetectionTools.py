@@ -28,10 +28,13 @@ BATCH_SIZE = 64
 def getNetwork() -> CNN:
     return CNN([
         ConvolutionalLayer(28,28,KERNELS_SIZE[0],KERNELS_NUMBER[0],learning_rate=LEARNING_RATE,activation=Relu,batch_size=BATCH_SIZE),
+        BatchNormalization(learning_rate=LEARNING_RATE),
         PoolingLayer(28,14,depth=KERNELS_NUMBER[0],batch_size=BATCH_SIZE),
         ConvolutionalLayer(14,14,KERNELS_SIZE[1],KERNELS_NUMBER[1],depth=KERNELS_NUMBER[0],learning_rate=LEARNING_RATE,activation=Relu,batch_size=BATCH_SIZE),
+        BatchNormalization(learning_rate=LEARNING_RATE),
         PoolingLayer(14,7,depth=KERNELS_NUMBER[1],batch_size=BATCH_SIZE),
         ConvolutionalLayer(7,5,KERNELS_SIZE[2],KERNELS_NUMBER[2],depth=KERNELS_NUMBER[1],learning_rate=LEARNING_RATE,activation=Relu,batch_size=BATCH_SIZE),
+        BatchNormalization(learning_rate=LEARNING_RATE),
         FlateningLayer(5,KERNELS_NUMBER[-1],batch_size=BATCH_SIZE),
         FullyConnectedLayer(5**2*KERNELS_NUMBER[-1],256,Tanh,learningRate=LEARNING_RATE,batch_size=BATCH_SIZE),
         FullyConnectedLayer(256,10,Sigmoid,learningRate=LEARNING_RATE,batch_size=BATCH_SIZE),

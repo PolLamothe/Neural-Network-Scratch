@@ -66,7 +66,7 @@ Here is the list of the file in this project and what are they used for :
 ## Fully Connected Layers :
 
 ### Forward Propagation :
-$$Y = f(X⋅W+b)$$
+$$Y = f(X⋅W+B)$$
 
 ### Backward Propagation : 
 

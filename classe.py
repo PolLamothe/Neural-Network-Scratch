@@ -271,45 +271,43 @@ class FlateningLayer(Layer):
         return result
     
 class BatchNormalization(Layer):
-    def __init__(self):
+    def __init__(self,learning_rate : float):
         self.gamma = 1
         self.beta = 0
+        self.epsilon = 1e-15
+        self.learning_rate = learning_rate
 
     def forward(self,X : np.ndarray) -> np.ndarray:
         self.X = X
-        result = []
-        means = []
-        vars = []
-        for i in range(X.shape[0]):
-            result.append([])
-            avg = np.mean(X[i])
-            means.append(avg)
-            var = np.var(X[i])
-            vars.append(var)
-            result[-1].append((X[i]-avg)/math.sqrt(var+1e-15))
+        
+        means = np.mean(X, axis=(0, 2, 3), keepdims=True)
+        vars = np.var(X, axis=(0, 2, 3), keepdims=True)
+        
+        self.x_hat = (X - means) / np.sqrt(vars + self.epsilon)
+        
+        self.Y = self.gamma * self.x_hat + self.beta
+
         self.means = means
         self.vars = vars
-        self.x_hat = copy.deepcopy(result)
-        self.Y = self.gamma * result + self.beta
+        
         return self.Y
             
     def backward(self,error : np.ndarray) -> np.ndarray:
-        self.gamma += np.sum(error*self.X)/error.shape[0]
-        self.beta += np.sum(error)/error.shape[0]
-        result = []
-        for i in range(error.shape[0]):
-            result.append([])
-            m = error.shape[1]
-            
-            term1 = m * error[i]
-            
-            term2 = np.sum(error, axis=0)
-            
-            term3 = self.x_hat[i] * np.sum(error * self.x_hat[i], axis=0)
-            
-            dX = (self.gamma / (m * np.sqrt(self.vars[i] + 1e-15))) * (term1 - term2 - term3)
-            result.append(dX)
-        return result
+        N, C, H, W = error.shape
+        m = N * H * W
+
+        dGamma = np.sum(error * self.x_hat, axis=(0, 2, 3), keepdims=True)
+        dBeta = np.sum(error, axis=(0, 2, 3), keepdims=True)
+
+        self.gamma += self.learning_rate * dGamma
+        self.beta  += self.learning_rate * dBeta
+
+        error_mean = np.mean(error, axis=(0, 2, 3), keepdims=True)
+        error_xhat_mean = np.mean(error * self.x_hat, axis=(0, 2, 3), keepdims=True)
+        
+        dX = (self.gamma / np.sqrt(self.vars + self.epsilon)) * (error - error_mean - self.x_hat * error_xhat_mean)
+        
+        return dX
 
 
 class FNN(NN):
@@ -374,6 +372,4 @@ class CNN(NN):
                 first = False
             else:
                 previousResult = np.array(self.layers[i].backward(previousResult))
-
-            if(np.max(previousResult) > 1):print("problem, layer index : ",i)#Detecting gradients exploding
         return previousResult
