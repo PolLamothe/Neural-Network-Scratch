@@ -4,3 +4,4 @@ tf_clean
 */assets/*
 !*/assets/*.sh
 *CIFAR*
+*.pkl
