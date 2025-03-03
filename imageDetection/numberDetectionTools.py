@@ -19,7 +19,7 @@ x_test /= 255
 
 KERNELS_SIZE = [3,3,3]
 
-KERNELS_NUMBER = [8,16,32]
+KERNELS_NUMBER = [16,32,64]
 
 LEARNING_RATE = 0.1
 
@@ -36,8 +36,8 @@ def getNetwork() -> CNN:
         ConvolutionalLayer(7,5,KERNELS_SIZE[2],KERNELS_NUMBER[2],depth=KERNELS_NUMBER[1],learning_rate=LEARNING_RATE,activation=Relu,batch_size=BATCH_SIZE),
         BatchNormalization(learning_rate=LEARNING_RATE),
         FlateningLayer(5,KERNELS_NUMBER[-1],batch_size=BATCH_SIZE),
-        FullyConnectedLayer(5**2*KERNELS_NUMBER[-1],256,Tanh,learningRate=LEARNING_RATE,batch_size=BATCH_SIZE),
-        FullyConnectedLayer(256,10,Sigmoid,learningRate=LEARNING_RATE,batch_size=BATCH_SIZE),
+        FullyConnectedLayer(5**2*KERNELS_NUMBER[-1],128,Tanh,learningRate=LEARNING_RATE,batch_size=BATCH_SIZE),
+        FullyConnectedLayer(128,10,Sigmoid,learningRate=LEARNING_RATE,batch_size=BATCH_SIZE),
     ],batch_size=BATCH_SIZE)
 
 def getTrainedNetwork() -> CNN:

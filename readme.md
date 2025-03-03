@@ -66,7 +66,7 @@ Here is the list of the file in this project and what are they used for :
 ## Fully Connected Layers :
 
 ### Forward Propagation :
-$$Y = f(X⋅W+B)$$
+$$Y = f(X \cdot W+B)$$
 
 ### Backward Propagation : 
 
@@ -74,13 +74,13 @@ $$Y = f(X⋅W+B)$$
 $$dY' = dY * f'(Y)$$
 
 #### Weight gradiant :
-$$dW = dY' ⋅ X * l$$
+$$dW = dY' \cdot X * l$$
 
 #### Bias gradiant : 
 $$dB = dY * l$$
 
 #### Input error :
-$$dX = dY ⋅ W$$
+$$dX = dY \cdot W$$
 
 ## Convolutional Layers :
 
@@ -102,6 +102,51 @@ $$ dB = dY $$
 
 #### Input error :
 $$dXj = \sum_{i=1}^{n} dYi \underset{full}{*} Kij $$
+
+## Batch Normalization :
+
+### Variables :
+
+- $\gamma$ is the scale of the layer
+
+- $\beta$ is the gap of the layer
+
+- $\epsilon$ is epsilon (it's a really small number used to avoid division by 0)
+
+- $m$ is the number of sample in each batch
+
+
+### Forward Propagation :
+
+#### Mean :
+$$ \mu = \frac{1}{m} \sum_{i=1}^{m}x_i$$
+
+#### Variance :
+$$ \sigma^2 = \sum_{i=1}^{m}(x_i - \mu)^2$$
+
+**The mean $\mu$ and the variance $\sigma^2$ are distinct for each sample and common for every batch**
+
+#### Normalized value :
+
+$$ \^x_i = \frac{x_i - \mu}{\sqrt{\sigma^2 + \epsilon}} $$
+
+#### Value after applying scale and gap :
+
+$$ y_i = \gamma \^x_i + \beta $$
+
+### Backward Propagation :
+
+#### Scale gradiant :
+
+$$ d\gamma = \sum_{i=1}^{m}d y_i \cdot \^x_i$$
+
+#### Gap gradiant :
+
+$$ d\beta = \sum_{i=1}^{m}d y_i $$
+
+#### Input gradiant
+
+$$ dx_i = \frac{\gamma}{\sqrt{\sigma^2 + \epsilon}} * (dy - (\frac{1}{m} \sum_{i=1}^{m}dy[i]) * (\frac{1}{m} \sum_{i=1}^{m}dy[i] * \^x_i) )$$
 
 ---
 # Sources :
