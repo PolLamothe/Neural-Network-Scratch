@@ -1,4 +1,5 @@
 import math
+import random
 import numpy as np
 import scipy.signal
 import copy
@@ -46,6 +47,9 @@ class Relu(ActivationFunction):
         return np.minimum(X,1)
     
 class NN():
+    def __init__(self):
+        self.training = True
+    
     def forward():
         pass
 
@@ -309,9 +313,21 @@ class BatchNormalization(Layer):
         
         return dX
 
+class Dropout(Layer):
+    def __init__(self,p : float):
+        self.p = p
+
+    def forward(self,X : np.ndarray):
+        self.mask = np.array([1 if random.random() > self.p else 0 for i in range(X.shape[1])])
+        self.Y = X*self.mask
+        return self.Y
+    
+    def backward(self,error : np.ndarray):
+        return error*self.mask
 
 class FNN(NN):
     def __init__(self,neuroneNumber : list[int],learningRate : float=1,neuroneActivation : list[ActivationFunction]=None,batch_size : int = 1,parents : list=None) -> None:
+        super().__init__()
         self.layers : list[FullyConnectedLayer] = []
         self.batch_size = batch_size
         activationList = []
@@ -349,6 +365,7 @@ class FNN(NN):
 
 class CNN(NN):
     def __init__(self,layers : list[Layer],batch_size : int = 1):
+        super().__init__()
         self.layers = layers
         self.batch_size = batch_size
 
@@ -359,7 +376,7 @@ class CNN(NN):
             if(first):
                 previousResult = layer.forward(this_input)
                 first = False
-            else:
+            elif(self.training or layer is not Dropout):
                 previousResult = layer.forward(previousResult)
         return previousResult
 
@@ -370,6 +387,6 @@ class CNN(NN):
             if(first):
                 previousResult = np.array(self.layers[i].backward(output_error))
                 first = False
-            else:
+            elif(self.training or self.layers[i] is not Dropout):
                 previousResult = np.array(self.layers[i].backward(previousResult))
         return previousResult

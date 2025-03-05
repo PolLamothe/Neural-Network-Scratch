@@ -14,7 +14,7 @@ This project aim to help me understanding how IA works. That's why I choosed to 
 ---
 # File
 
-Here is the list of the file in this project and what are they used for :
+Here is the list of the file in this project and what they are used for :
 
 - **classe.py** (This file contain all of the class and function used for the IA specifically)
 
@@ -22,35 +22,12 @@ Here is the list of the file in this project and what are they used for :
 
 - **layerTest.py** (This file contain a program to train and test the IA using more than 1 layer of neurones for a more complex (XOR) problem)
 
-### Number Detection :
-- **numberDetection.py** : This file contain the code to train and test the IA in number detection. **use -c command to show help**
-
-- **numberDetectionTools.py** : This file contain function used in **numberDetection.py** and **UI.py**
-
-- **UI.py** : Use this file to see the number wich are given to the IA
-
-### Snake :
-
- - **displayData.py** : A script to see the preregistered game played by the IA (include a UI)
-
- - **liveDemo.py** : A script to see the IA play directly (include a UI)
-
- - **testGame.py** : A script to test the snake game by playing it yourself (include a UI)
-
- - **trainSnakeEvo.py** : The script that allow you to choose the parameter of the IA
-
- - **trainSnakeEvoTools.py** : The script that train the IA
-
- - **snakeGame.py** : The script that contain the code for the snake game and the different UI
-
- - **data (folder)** : This folder contain all of the preregistered game played by IA
-
- - **model (folder)** : This folder contain all of the trained IA
-
 ---
 # Math
 
-## Variables :
+## Fully Connected Layers :
+
+### Variables :
 - $X$ is the input of the layer
 - $W$ is the weight of the layer
 - $B$ is the bias of the layer
@@ -62,8 +39,6 @@ Here is the list of the file in this project and what are they used for :
 - $dW$ is weight grandiant of the layer
 - $db$ is bias gradiant of the layer
 - $dX$ is the input error of the layer
-
-## Fully Connected Layers :
 
 ### Forward Propagation :
 $$Y = f(X \cdot W+B)$$
@@ -122,7 +97,7 @@ $$dXj = \sum_{i=1}^{n} dYi \underset{full}{*} Kij $$
 $$ \mu = \frac{1}{m} \sum_{i=1}^{m}x_i$$
 
 #### Variance :
-$$ \sigma^2 = \sum_{i=1}^{m}(x_i - \mu)^2$$
+$$ \sigma^2 = \frac{1}{m}\sum_{i=1}^{m}(x_i - \mu)^2$$
 
 **The mean $\mu$ and the variance $\sigma^2$ are distinct for each sample and common for every batch**
 
