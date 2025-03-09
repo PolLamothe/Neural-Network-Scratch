@@ -280,19 +280,26 @@ class BatchNormalization(Layer):
         self.beta = 0
         self.epsilon = 1e-15
         self.learning_rate = learning_rate
+        self.momentum = 0.9
+        self.means = 0
+        self.vars = 0
 
     def forward(self,X : np.ndarray) -> np.ndarray:
         self.X = X
         
-        means = np.mean(X, axis=(0, 2, 3), keepdims=True)
-        vars = np.var(X, axis=(0, 2, 3), keepdims=True)
+        if(X.shape[0] > 1):
+            means = np.mean(X, axis=(0, 2, 3), keepdims=True)
+            vars = np.var(X, axis=(0, 2, 3), keepdims=True)
         
-        self.x_hat = (X - means) / np.sqrt(vars + self.epsilon)
+            self.x_hat = (X - means) / np.sqrt(vars + self.epsilon)
+        else:
+            self.x_hat = (X - self.means) / np.sqrt(self.vars + self.epsilon)
         
         self.Y = self.gamma * self.x_hat + self.beta
 
-        self.means = means
-        self.vars = vars
+        if(X.shape[0] > 1):
+            self.means = self.momentum*self.means+(1-self.momentum)*means
+            self.vars = self.momentum*self.vars+(1-self.momentum)*vars
         
         return self.Y
             

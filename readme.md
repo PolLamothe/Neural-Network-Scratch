@@ -14,13 +14,7 @@ This project aim to help me understanding how IA works. That's why I choosed to 
 ---
 # File
 
-Here is the list of the file in this project and what they are used for :
-
 - **classe.py** (This file contain all of the class and function used for the IA specifically)
-
-- **uniquePerceptron.py** (This file contain a program to train and test the IA using only 1 neurones for a linear problem)
-
-- **layerTest.py** (This file contain a program to train and test the IA using more than 1 layer of neurones for a more complex (XOR) problem)
 
 ---
 # Math
