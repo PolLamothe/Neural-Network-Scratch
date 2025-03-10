@@ -2,20 +2,46 @@
 
 # Presentation
 
-![demo](./demo.png)
+![demo](./assets/demo.png)
 
 This project aim to help me understanding how IA works. That's why I choosed to use only numpy and math.
 
 # List of the projects : 
- - An IA capable of detecting the number draw in a 28 x 28 square (data provided by [MNIST](https://en.wikipedia.org/wiki/MNIST_database)).
+ - An IA capable of detecting the number drawn in a 28 x 28 square (data provided by [MNIST](https://en.wikipedia.org/wiki/MNIST_database)).
 
- - A IA capable of doing a very good score in the snake game
+ - An IA capable of doing a good score in the snake game
 
+ - An IA capable of classifying pictures of planes,ships or cars
 ---
 # File
 
-- **classe.py** (This file contain all of the class and function used for the IA specifically)
+- **classe.py** (This file contain all of the class and function used to create IA)
 
+# Avaibles architectures :
+
+## Simple Neural Network :
+
+### Layers included in this architecture : 
+
+- **Fully Connected Layer** : This layer is responsible of predicting the expected ouput based on it's previous errors.
+
+- **Dropout Layer** : This layer is responsible of randomly disabling some neurones of the previous layer to prevent the network from overfiting to a specific pattern or the training data (This layer must be desactivate after training).
+
+![Illustration](./assets/FCL.webp)
+
+## Convolutional Neural Network :
+
+### Layers included in this architecture :
+
+- **Convolutional Layer** : This layer is reponsible of extracting features in an image.
+
+- **Batch Normalization Layer** : This layer is responsible of making the result of the **Convolutional Layers** more "smooth".
+
+- **Max Pooling Layer** : This layer is responsible of reducing the size of the result from the **Convolutional Layers**.
+
+- **All Simple Neural Network's Layers** : This part is responsible of treating the data extracted by the convolutional part.
+
+![Illustration](./assets/CNN.jpg)
 ---
 # Math
 
