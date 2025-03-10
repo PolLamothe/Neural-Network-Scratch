@@ -1,5 +1,7 @@
 # Number Detection :
 
+![illustation](../web/static/images/number.png)
+
 ## File
 
 Here is the list of the file in this project and what they are used for :

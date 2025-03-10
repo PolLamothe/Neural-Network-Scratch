@@ -1,3 +1,3 @@
 #!/bin/bash
-curl -L -o ~/Downloads/multiclassimagedatasetairplanecar.zip\
+curl -L -o multiclassimagedatasetairplanecar.zip\
   https://www.kaggle.com/api/v1/datasets/download/abtabm/multiclassimagedatasetairplanecar
