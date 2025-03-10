@@ -46,7 +46,7 @@ def changeFormat(data : np.ndarray):
 
 previousAnswers = []
 
-COEFF_SIZE = 64*4
+COEFF_SIZE = 1000
 
 if(not useTrainedModel or args.save):
     trainingState = True

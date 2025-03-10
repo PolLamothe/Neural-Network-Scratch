@@ -5,3 +5,4 @@ tf_clean
 !*/assets/*.sh
 *CIFAR*
 *.pkl
+*trainedData.json*

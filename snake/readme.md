@@ -15,6 +15,4 @@ Here is the list of the file in this project and what they are used for :
 
  - **snakeGame.py** : The script that contain the code for the snake game and the different UI
 
- - **data (folder)** : This folder contain all of the preregistered game played by IA
-
  - **model (folder)** : This folder contain all of the trained IA

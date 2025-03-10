@@ -19,7 +19,7 @@ x_test /= 255
 
 KERNELS_SIZE = [3,3,3]
 
-KERNELS_NUMBER = [16,32,64]
+KERNELS_NUMBER = [4,8,16]
 
 LEARNING_RATE = 0.1
 
@@ -37,6 +37,7 @@ def getNetwork() -> CNN:
         BatchNormalization(learning_rate=LEARNING_RATE),
         FlateningLayer(5,KERNELS_NUMBER[-1],batch_size=BATCH_SIZE),
         FullyConnectedLayer(5**2*KERNELS_NUMBER[-1],128,Tanh,learningRate=LEARNING_RATE,batch_size=BATCH_SIZE),
+        Dropout(0.2),
         FullyConnectedLayer(128,10,Sigmoid,learningRate=LEARNING_RATE,batch_size=BATCH_SIZE),
     ],batch_size=BATCH_SIZE)
 

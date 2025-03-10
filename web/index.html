@@ -20,6 +20,11 @@
             <img id="snakePicture">
             <button onclick="window.location += '/snake'" id="snakeButton" class="reveal">See live demo</button>
         </div>
+        <div class="imgContainer">
+            <h2>Vehicule detection</h2>
+            <img id="vehiculeDetectionPicture">
+            <button onclick="window.location += '/vehiculeDetection'" id="snakeButton" class="reveal">See live demo</button>
+        </div>
     </div>
     <h2>A neural network with 3 neurones can guess this pattern, can you ?</h2>
     <canvas id="perceptronCanvas" width="600" height="200"></canvas>
@@ -38,6 +43,7 @@
 
     document.getElementById("numberDetectionPicture").setAttribute("src",`${window.location.pathname}static/images/number.png`)
     document.getElementById("snakePicture").setAttribute("src",`${window.location.pathname}static/images/snake.png`)
+    document.getElementById("vehiculeDetectionPicture").setAttribute("src",`${window.location.pathname}static/images/vehiculeDetection.jpg`)
     document.getElementById("githubPicture").setAttribute("src",`${window.location.pathname}static/images/Github.png`)
 
     let trainedData = getTrainedData()

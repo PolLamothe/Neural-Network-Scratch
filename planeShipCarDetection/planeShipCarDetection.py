@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 import argparse
 
-PATH_TO_TEST = "./assets/plane-ship-car/test/"
+PATH_TO_TEST = "assets/plane-ship-car/test/"
 
 def checkAnswer(right, response):
     greater = None
@@ -38,13 +38,18 @@ def imageToMatrix(path : str) -> np.ndarray:
 
     return resized_matrix/255
 
-def getRandomImage() -> str:
+def getRandomImage(pathPrefix : str = "") -> tuple[str]:
     OBJECTS = ["airplanes","ships","cars"]
 
     object = random.choice(OBJECTS)
 
-    dossier = Path(PATH_TO_TEST+object)
-    return PATH_TO_TEST+object+"/"+random.choice([f.name for f in dossier.iterdir() if f.is_file()])
+    dossier = Path(pathPrefix+PATH_TO_TEST+object)
+    return (object,random.choice([f.name for f in dossier.iterdir() if f.is_file()]))
+
+def getNetWorkAnswer(path : str)->np.ndarray:
+    network = getTrainedNetwork()
+
+    return network.forward(np.array([imageToMatrix(path)]))[0]
     
 if(__name__ == "__main__"):
     parser = argparse.ArgumentParser()
@@ -59,7 +64,7 @@ if(__name__ == "__main__"):
         print("-s : Save the model once it has finish training")
         exit(0)
 
-    PATH_TO_TRAINING = "./assets/plane-ship-car/train/"
+    PATH_TO_TRAINING = "assets/plane-ship-car/train/"
 
     TRAINING_SIZE = 300
 

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicule Detection</title>
+</head>
+<body>
+    <img id="loadingImage">
+
+    <div id="contentWrapper">
+        <img id="mainImage">
+        <div id="answerGlobalGrid"></div>
+        <p id="answerText">
+            The model predict that the object is
+            <p id="answerObject"></p>
+        </p>
+    
+        <button id="refreshButton" onclick="updateData()">New Image</button>
+    </div>
+<script>
+    document.getElementById("loadingImage").setAttribute("src",`${window.location.href.replace("vehiculeDetection","")}static/images/loading.gif`)
+
+    const objects = ["airplanes","ships","cars"]
+
+    async function updateData(){
+        document.querySelector("#loadingImage").style.display = "initial"
+        document.querySelector("#contentWrapper").style.display = "none"
+
+        let imageData = (await (await fetch(window.location+"/getRandomImage")).json())
+        document.querySelector("#mainImage").setAttribute("src",window.location+"/img/"+imageData["object"]+"/"+imageData["file"])
+
+        let networkResult = (await (await fetch(window.location+"/getNetworkResult/"+imageData["object"]+"/"+imageData["file"])).json())
+
+        document.querySelector("#answerGlobalGrid").innerHTML = ""
+        for(let i = 0;i<networkResult.length;i++){
+            let temp = document.createElement("p")
+            temp.innerHTML = Math.round(networkResult[i]*100)/100
+
+            if(objects[i] == imageData["object"]){
+                temp.style.color = "green"
+            }else{
+                temp.style.color = "red"
+            }
+
+            document.querySelector("#answerGlobalGrid").appendChild(temp)
+        }
+        document.querySelector("#answerObject").textContent = objects[networkResult.indexOf(Math.max(...networkResult))]
+        document.querySelector("#answerObject").style.color = objects[networkResult.indexOf(Math.max(...networkResult))] == imageData["object"] ? "green" : "red"
+
+        document.querySelector("#loadingImage").style.display = "none"
+        document.querySelector("#contentWrapper").style.display = "initial"
+    }
+    
+    updateData()
+</script>
+
+<style>
+    #loadingImage{
+        display: none;
+    }
+    #refreshButton{
+        cursor: pointer;
+        font-size: 24px;
+        border: none;
+        background-color: lightblue;
+        padding: 1vw;
+        border-radius: 25px;
+    }
+    #answerObject{
+        font-size: 24px;
+    }
+    #answerText{
+        font-size: 24px;
+    }
+    #answerGlobalGrid p{
+        padding: 1vw;
+        border: 1px solid black;
+        width: 2vw;
+    }
+    #answerGlobalGrid{
+        display: flex;
+        flex-direction: row;
+        margin-left: 50%;
+        transform: translateX(-50%);
+        width: fit-content;
+    }
+    body,html{
+        overflow-x: hidden;
+        font-family: Arial, Helvetica, sans-serif;
+        text-align: center;
+    }
+    #mainImage{
+        width: 80vw;
+        height: 70vh;
+        object-fit:contain;
+        margin-left: 50vw;
+        transform: translateX(-50%);
+    }
+    @media only screen and (max-width:700px) {
+        #refreshButton{
+            padding: 3vw;
+        }
+        #answerGlobalGrid p{
+            width: 10vw;
+        }
+        #mainImage{
+            width: 90vw;
+            height: fit-content;
+        }
+    }
+</style>
+</body>
+</html>
