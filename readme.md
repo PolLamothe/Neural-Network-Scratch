@@ -165,3 +165,7 @@ $$ dx_i = \frac{\gamma}{\sqrt{\sigma^2 + \epsilon}} * (dy - (\frac{1}{m} \sum_{i
 *How does a convolutional layer work* : https://www.youtube.com/watch?v=Lakz2MoHy6o
 
 *Visualization of a CNN solving MNIST* : https://www.youtube.com/watch?v=pj9-rr1wDhM
+
+## Batch Normalization :
+
+*What is Batch Normalization and math for forward propagation* : https://medium.com/towards-data-science/batch-norm-explained-visually-how-it-works-and-why-neural-networks-need-it-b18919692739

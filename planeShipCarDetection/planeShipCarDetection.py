@@ -26,7 +26,6 @@ def checkAnswer(right, response):
     else:return False
 
 def getTrainedNetwork() -> classe.CNN:
-    print("i loaded the agent")
     with open(os.path.dirname(os.path.realpath(__file__))+"/planeShipCarDetection.pkl", "rb") as file:
         return pickle.load(file)
     
@@ -48,7 +47,6 @@ def getRandomImage(pathPrefix : str = "") -> tuple[str]:
     return (object,random.choice([f.name for f in dossier.iterdir() if f.is_file()]))
 
 if(__name__ == "planeShipCarDetection.planeShipCarDetection"):#If the script is executed by an import and not directly
-    print("ça marche !")
     network = getTrainedNetwork()
 
 def getNetWorkAnswer(path : str)->np.ndarray:
