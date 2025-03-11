@@ -26,6 +26,7 @@ def checkAnswer(right, response):
     else:return False
 
 def getTrainedNetwork() -> classe.CNN:
+    print("i loaded the agent")
     with open(os.path.dirname(os.path.realpath(__file__))+"/planeShipCarDetection.pkl", "rb") as file:
         return pickle.load(file)
     
@@ -46,12 +47,15 @@ def getRandomImage(pathPrefix : str = "") -> tuple[str]:
     dossier = Path(pathPrefix+PATH_TO_TEST+object)
     return (object,random.choice([f.name for f in dossier.iterdir() if f.is_file()]))
 
-def getNetWorkAnswer(path : str)->np.ndarray:
+if(__name__ == "planeShipCarDetection.planeShipCarDetection"):#If the script is executed by an import and not directly
+    print("ça marche !")
     network = getTrainedNetwork()
 
+def getNetWorkAnswer(path : str)->np.ndarray:
+    global network
     return network.forward(np.array([imageToMatrix(path)]))[0]
-    
-if(__name__ == "__main__"):
+
+if(__name__ == "__main__"):#If the script is executed directly
     parser = argparse.ArgumentParser()
     parser.add_argument("-l", dest="loadTrainedModel", action='store_true')
     parser.add_argument("-c", dest="help", action='store_true')
