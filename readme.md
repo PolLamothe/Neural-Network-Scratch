@@ -7,11 +7,11 @@
 This project aim to help me understanding how IA works. That's why I choosed to use only numpy and math.
 
 # List of the projects : 
- - An IA capable of detecting the number drawn in a 28 x 28 square (data provided by [MNIST](https://en.wikipedia.org/wiki/MNIST_database)).
+ - An `multilayer Perceptron` and a `CNN` capable of detecting the number drawn in a 28 x 28 square (data provided by [MNIST](https://en.wikipedia.org/wiki/MNIST_database)).
 
- - An IA capable of doing a good score in the snake game
+ - An `multilayer Perceptron` capable of doing a good score in the snake game
 
- - An IA capable of classifying pictures of planes,ships or cars
+ - An `CNN` capable of classifying pictures of planes,ships or cars
 ---
 # File
 
