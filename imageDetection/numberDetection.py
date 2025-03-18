@@ -31,8 +31,7 @@ def checkAnswer(right, response) -> bool:
     for i in range(10):
         if(greater == None):greater = (i,response[i])
         else:
-            if(response[i] == greater[1]):return False
-            elif(response[i] > greater[1]):greater = (i,response[i])
+            if(response[i] > greater[1]):greater = (i,response[i])
     if(greater[0] == right):return True
     else:return False
 

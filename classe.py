@@ -1,4 +1,3 @@
-import math
 import random
 import numpy as np
 import scipy.signal
@@ -45,26 +44,40 @@ class Relu(ActivationFunction):
     
     def derivative(X):
         return np.minimum(X,1)
-    
-class NN():
-    def __init__(self):
-        self.training = True
-    
-    def forward():
-        pass
-
-    def backward():
-        pass
 
 class Layer():
+    def __init__(self):
+        self.training = True
+
     def forward():
         pass
 
     def backward():
         pass
+
+    def turnOffTraining(self):
+        self.training = False
+
+class NN():
+    def __init__(self,layers : list[Layer],batch_size : int):
+        self.training = True
+        self.layers = layers
+        self.batch_size = batch_size
+    
+    def forward(self):
+        pass
+
+    def backward(self):
+        pass
+
+    def turnOffTraining(self):
+        for layer in self.layers:
+            layer.turnOffTraining()
+
 
 class FullyConnectedLayer(Layer):
     def __init__(self, input_size: int, output_size: int, activation, learningRate: float = 1, batch_size: int = 1, parents: list = None):
+        super().__init__()
         self.input_size = input_size
         self.output_size = output_size
         self.activation = activation
@@ -100,6 +113,7 @@ class FullyConnectedLayer(Layer):
 
 class ConvolutionalLayer(Layer):
     def __init__(self,input_size : int,output_size : int,kernel_size : int,kernel_number : int,activation : ActivationFunction,depth : int = 1,learning_rate : float = 1,batch_size :int = 1):
+        super().__init__()
         self.input_size = input_size
         self.depth = depth
         self.kernel_size = kernel_size
@@ -200,6 +214,7 @@ class ConvolutionalLayer(Layer):
 
 class PoolingLayer(Layer):
     def __init__(self,input_size : int,output_size : int, max_pooling : bool = True,depth : int = 1,batch_size : int = 1):
+        super().__init__()
         self.input_size = input_size
         self.output_size = output_size
         self.max_pooling = max_pooling
@@ -249,6 +264,7 @@ class PoolingLayer(Layer):
     
 class FlateningLayer(Layer):
     def __init__(self,input_size : int,input_depth : int,batch_size : int= 1):
+        super().__init__()
         self.input_size = input_size
         self.input_depth = input_depth
         self.batch_size = batch_size
@@ -276,9 +292,10 @@ class FlateningLayer(Layer):
     
 class BatchNormalization(Layer):
     def __init__(self,learning_rate : float):
+        super().__init__()
         self.gamma = 1
         self.beta = 0
-        self.epsilon = 1e-15
+        self.epsilon = 1e-9
         self.learning_rate = learning_rate
         self.momentum = 0.9
         self.means = 0
@@ -322,15 +339,39 @@ class BatchNormalization(Layer):
 
 class Dropout(Layer):
     def __init__(self,p : float):
+        super().__init__()
         self.p = p
 
     def forward(self,X : np.ndarray):
+        if(not self.training):
+            return X
         self.mask = np.array([1 if random.random() > self.p else 0 for i in range(X.shape[1])])
         self.Y = X*self.mask
         return self.Y
     
     def backward(self,error : np.ndarray):
+        if(not self.training):
+            return error
         return error*self.mask
+    
+class SplitLayer(Layer):
+    def __init__(self,network1 : NN | Layer,lambda1 : float,network2 : NN | Layer,lambda2 : float):
+        super().__init__()
+        self.network1 = network1
+        self.lambda1 = lambda1
+        self.network2 = network2
+        self.lambda2 = lambda2
+
+    def forward(self,X : np.array) -> list[np.ndarray]:
+        return [self.network1.forward(X),self.network2.forward(X)]
+    
+    def backward(self,error : list[np.ndarray]):
+        return self.network1.backward(error[0]) * self.lambda1 + self.network2.backward(error[1]) * self.lambda2
+    
+    def turnOffTraining(self):
+        super().turnOffTraining()
+        self.network1.turnOffTraining()
+        self.network2.turnOffTraining()
 
 class FNN(NN):
     def __init__(self,neuroneNumber : list[int],learningRate : float=1,neuroneActivation : list[ActivationFunction]=None,batch_size : int = 1,parents : list=None) -> None:
@@ -372,9 +413,33 @@ class FNN(NN):
 
 class CNN(NN):
     def __init__(self,layers : list[Layer],batch_size : int = 1):
-        super().__init__()
-        self.layers = layers
-        self.batch_size = batch_size
+        super().__init__(layers,batch_size)
+
+    def forward(self,this_input : np.ndarray) -> list[float]:
+        first = True
+        previousResult = None
+        for layer in self.layers:
+            if(first):
+                previousResult = layer.forward(this_input)
+                first = False
+            elif(self.training or layer is not Dropout):
+                previousResult = layer.forward(previousResult)
+        return previousResult
+
+    def backward(self,output_error):
+        first = True
+        previousResult = None
+        for i in range(len(self.layers)-1,-1,-1):
+            if(first):
+                previousResult = np.array(self.layers[i].backward(output_error))
+                first = False
+            elif(self.training or self.layers[i] is not Dropout):
+                previousResult = np.array(self.layers[i].backward(previousResult))
+        return previousResult
+    
+class Network(NN):
+    def __init__(self,layers : list[Layer | NN],batch_size : int = 1):
+        super().__init__(layers,batch_size)
 
     def forward(self,this_input : np.ndarray) -> list[float]:
         first = True

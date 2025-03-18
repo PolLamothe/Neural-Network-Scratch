@@ -20,8 +20,7 @@ def checkAnswer(right, response):
     for i in range(3):
         if(greater == None):greater = (i,response[i])
         else:
-            if(response[i] == greater[1]):return False
-            elif(response[i] > greater[1]):greater = (i,response[i])
+            if(response[i] > greater[1]):greater = (i,response[i])
     if(greater[0] == right):return True
     else:return False
 
@@ -68,7 +67,7 @@ if(__name__ == "__main__"):#If the script is executed directly
 
     PATH_TO_TRAINING = "assets/plane-ship-car/train/"
 
-    TRAINING_SIZE = 300
+    TRAINING_SIZE = 1000
 
     if(TRAINING_SIZE > 1000):
         raise Exception("The training size is too high")
@@ -121,11 +120,11 @@ if(__name__ == "__main__"):#If the script is executed directly
             classe.FullyConnectedLayer(4**2*KERNELS_NUMBER[-1],256,classe.Tanh,learningRate=LEARNING_RATE,batch_size=BATCH_SIZE),
             classe.Dropout(0.2),
             classe.FullyConnectedLayer(256,3,classe.Sigmoid,learningRate=LEARNING_RATE,batch_size=BATCH_SIZE),
-        ])
+        ],BATCH_SIZE)
 
     count = 0
 
-    COEFF_SIZE = 3000
+    COEFF_SIZE = 300
 
     previousAnswers = []
 
@@ -144,9 +143,6 @@ if(__name__ == "__main__"):#If the script is executed directly
             lastLayerResult = network.forward(np.array([trainingDataSet[rights[i]][currentIndexs[i]] for i in range(BATCH_SIZE)]))
             error = []
             mse_sum = 0
-
-            if(lastLayerResult[0][0] == 0):
-                exit(1)
 
             for index,value in enumerate(lastLayerResult):
                 right = rights[index]
