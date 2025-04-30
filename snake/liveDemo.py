@@ -23,7 +23,7 @@ ui = trainSnakeEvoTools.snakeGame.UI()
 game = None
 
 def handleModelChoice(name : str):
-    global dataSinceLastFood
+    global previousData
     global ui
     global game
     with open("./model/"+name, "rb") as file:
@@ -34,13 +34,13 @@ def handleModelChoice(name : str):
     gameSize = int(data[name.split("_")[1]]["gameSize"])
 
     game = trainSnakeEvoTools.snakeGame.Game(gameSize)
-    dataSinceLastFood = []
+    previousData = []
 
     def updateGrid():
-        global dataSinceLastFood
+        global previousData
         global game
-        result = network.forward(trainSnakeEvoTools.trainSnakeEvo.generateInput(game.getGrid(),True,game.snake))
-        answerIndex = random.choice(trainSnakeEvoTools.trainSnakeEvo.getAllMaxIndex(trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(game.size,game.snake,result,copy.deepcopy(dataSinceLastFood),game)))
+        result = network.forward(trainSnakeEvoTools.trainSnakeEvo.generateInput(game.getGrid(),game.snake))
+        answerIndex = random.choice(trainSnakeEvoTools.trainSnakeEvo.getAllMaxIndex(trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(game.size,game.snake,result,copy.deepcopy(previousData))))
         if(answerIndex == 0):
             game.directionY = -1
             game.directionX = 0
@@ -56,11 +56,14 @@ def handleModelChoice(name : str):
         snakeSave = copy.deepcopy(game.snake)
         fruitSave = game.fruit.copy()
         game.update()
-        if(fruitSave != game.fruit):
-            dataSinceLastFood = []
-        else:
-            dataSinceLastFood.append({"snake":copy.deepcopy(snakeSave),"index":answerIndex})
+        previousData.append({"snake":copy.deepcopy(snakeSave),"index":answerIndex,"fruit" : copy.deepcopy(game.fruit),"forbidden" : None,"original" : True})
         if(game.checkState() == False):
+            previousData.pop()
+            game.snake = previousData[-1]["snake"]
+            game.fruit = previousData[-1]["fruit"]
+            possibility = trainSnakeEvoTools.trainSnakeEvo.exploreEveryPossibility(game,previousData,len(previousData),True)
+            for data in possibility:
+                print(data)
             return "GameOver"
         ui.grid = game.getGrid()
         ui.head = game.snake[-1]

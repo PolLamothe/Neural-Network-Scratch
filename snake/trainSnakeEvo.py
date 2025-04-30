@@ -13,14 +13,12 @@ import copy
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", dest="help", action='store_true')
 parser.add_argument("-s", dest="save", action='store_true')
-parser.add_argument("-f",dest="fullMap", action="store_true")
 parser.add_argument("-a",dest="aim")
 
 args = parser.parse_args()
 if(args.help):
     print("-c : Get all command")
     print("-s : Save the model once it has finish training")
-    print("-f : Give all of the grid to the IA")
     print("-a : The average length you want the IA to reach")
     exit(0)
 
@@ -45,26 +43,29 @@ for Id in dataCopy.keys():#verifying that every data in trainedData.json is link
 with open("./model/trainedData.json","w") as file:
     json.dump(data,file,indent=2)
 
-gameSize = 5
-
-HIDDENLAYERS = [75,75]
+GAMESIZE = 5
 
 try:
-    if(int(args.aim) > gameSize**2 or int(args.aim) < 4):
+    if(int(args.aim) > GAMESIZE**2 or int(args.aim) < 4):
         print("the length you want to reach is incorrect")
 except TypeError:
     raise Exception("You forgot the parameter -a (press -c to see all comands)")
 
+LEARNING_RATE = 0.01
+
+network = classe.CNN([
+    classe.FullyConnectedLayer(GAMESIZE**2*3,75,classe.Tanh,LEARNING_RATE,1),
+    classe.FullyConnectedLayer(75,75,classe.Tanh,LEARNING_RATE,1),
+    classe.FullyConnectedLayer(75,75,classe.Tanh,LEARNING_RATE,1),
+    classe.FullyConnectedLayer(75,75,classe.Tanh,LEARNING_RATE,1),
+    classe.FullyConnectedLayer(75,4,classe.Sigmoid,LEARNING_RATE,1)
+])
+
 try:
     STARTINGTIME = time.time()
-    snakeTrain = trainSnakeEvoTools.trainSnakeEvo(gameSize,args.aim,HIDDENLAYERS,neuroneActivation=[classe.Tanh,classe.Tanh,classe.Sigmoid])
+    snakeTrain = trainSnakeEvoTools.trainSnakeEvo(GAMESIZE,float(args.aim),network)
 except TypeError:
     raise Exception("You forgot the parameter -a (press -c to see all comands)")
-
-SELECTIONSIZE = trainSnakeEvoTools.SELECTIONSIZE
-MULTIPLIER = trainSnakeEvoTools.MULTIPLIER
-ITERATION = trainSnakeEvoTools.ITERATION
-LEARNINGRATE = trainSnakeEvoTools.LEARNINGRATE
 
 network = snakeTrain.train()
 
@@ -77,16 +78,9 @@ if(args.save):
     with open("./model/trainedData.json","r") as file:
         data = json.load(file)
     data[ID] = dict({
-        "gameSize":gameSize,
+        "gameSize":GAMESIZE,
         "aim":args.aim,
-        "hiddenLayers":HIDDENLAYERS,
-        "activationFunction":str(snakeTrain.activationFunction),
-        "neuroneActivation":str(snakeTrain.neuroneActivation),
         "trainingTime":(time.time()-STARTINGTIME)/60,
-        "selectionSize" : SELECTIONSIZE,
-        "multiplier" : MULTIPLIER,
-        "iteration" : ITERATION,
-        "learningRate" : LEARNINGRATE
     })
     with open("./model/trainedData.json","w") as file:
         json.dump(data,file,indent=2)

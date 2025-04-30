@@ -25,8 +25,8 @@ class Game():
                 self.snake[len(self.snake)-1][0] += i
         for i in range(-1,2,2):
             if(self.directionY == i):
-                    self.snake.append(self.snake[len(self.snake)-1].copy())
-                    self.snake[len(self.snake)-1][1] += i
+                self.snake.append(self.snake[len(self.snake)-1].copy())
+                self.snake[len(self.snake)-1][1] += i
         if(self.fruit in self.snake):
             self.fruit = None
     
@@ -47,8 +47,8 @@ class Game():
     def update(self):
         self.moveHead()
         if(self.checkState() == True):return
-        if(self.snake[len(self.snake)-1][0] >= self.size or self.snake[len(self.snake)-1][1] >= self.size):return
-        if(self.snake[len(self.snake)-1][0] < 0 or self.snake[len(self.snake)-1][1] < 0):return
+        if(self.snake[-1][0] >= self.size or self.snake[-1][1] >= self.size):return
+        if(self.snake[-1][0] < 0 or self.snake[-1][1] < 0):return
         if(self.isFruitHere()):
             self.removeTail()
         else:

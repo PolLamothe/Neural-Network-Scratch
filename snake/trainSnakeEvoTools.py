@@ -1,4 +1,5 @@
 import json
+import math
 import os
 
 import numpy as np
@@ -10,110 +11,39 @@ import sys
 sys.path.append("../")
 import classe
 import random
-import operator
-import matplotlib.pyplot as plt
 import copy
 import pickle
 import time
 
-SELECTIONSIZE = 5 #The number of snake in survivor
-
-MULTIPLIER = 5 #The number of agent wich will be created at start for each place in the selection (totale agent generated = MULTIPLIER * SELECTIONSIZE)
-
-NEARHEAD = False
-
-ITERATION = 50
-
-LEARNINGRATE = 0.05
+MEAN_SIZE = 1000
 
 class trainSnakeEvo():
-    def __init__(self, gameSize: int, averageAim: int, hiddenLayers: list[int] = [], activationFunction: callable = None, neuroneActivation: list = None) -> None:
-        if(NEARHEAD):
-            self.firstNeurones = (((gameSize*2)-1)**2-1)*2
-        else:
-            self.firstNeurones =  gameSize**2*3
+    def __init__(self, gameSize: int, averageAim: int, network : classe.CNN) -> None:
         self.gameSize = gameSize
         self.averageAim = averageAim
         self.childPerformance = []
-        self.child = [classe.FNN([self.firstNeurones]+hiddenLayers+[4],learningRate=LEARNINGRATE,neuroneActivation=neuroneActivation,batch_size=1) for i in range(SELECTIONSIZE*MULTIPLIER)]
-        self.parents = []
-        self.hiddenLayers = hiddenLayers
-        self.activationFunction = activationFunction
-        self.neuroneActivation = neuroneActivation
+        self.network = network
         self.iterationData = []
     
     def train(self) -> classe.NN:
-        currentGeneration = 1
-        survivor = []
-
         startingTime = time.time()
-        while(True):
-            if(currentGeneration == 1):
-                print("currentGeneration : "+str(currentGeneration),end="\r")
-            else:
-                print("currentGeneration : "+str(currentGeneration)+" maxLength : "+str(round(survivor[0]["performance"],2))+" averageLength : "+str(trainSnakeEvo.getAveragePerformance(survivor))+" elapsed time : "+str(round((time.time()-startingTime)/60,2))+"m")
-            if(currentGeneration > 1):
-                security = False
-                for i in range(len(survivor)):
-                    if(survivor[i]["performance"] >= float(self.averageAim)):
-                        security = True
-                        verifiyPerformance = self.__runChild(survivor[i]["network"],modification=False)
-                        if(verifiyPerformance >= float(self.averageAim)):
-                            return survivor[i]["network"]
-                        else:
-                            survivor[i]["performance"] = verifiyPerformance
-                    else:
-                        break
-                if(security):
-                    print("The bests agents of the generation ",str(currentGeneration-1)+" failed the security test !")
-            self.childPerformance = []
-            
-            for i in range(len(self.child)):#benchmarking the childs
-                self.childPerformance.append({"number" : (currentGeneration-1)*SELECTIONSIZE*MULTIPLIER+i,"performance":self.__runChild(self.child[i]),"network":copy.deepcopy(self.child[i])})
-            
-            for i in range(len(survivor)):#re-benchmarking the survivor to reduce randomness
-                survivor[i]["performance"] = self.__runChild(survivor[i]["network"])
-            
-            self.childPerformance.sort(reverse=True,key=operator.itemgetter("performance"))
-            survivor += self.childPerformance[:SELECTIONSIZE]
-            survivor.sort(reverse=True,key=operator.itemgetter("performance"))
-            survivor = survivor[:SELECTIONSIZE]
-            
-            tempNetworks = []
-            for i in range(len(survivor)):#creating the next childs
-                for x in range(i+1,len(survivor)):
-                    tempNetworks.append(classe.FNN([self.firstNeurones]+self.hiddenLayers+[4],learningRate=LEARNINGRATE,neuroneActivation=self.neuroneActivation,parents=[survivor[i]["network"],survivor[x]["network"]],batch_size=1))
-            
-            self.child = copy.deepcopy(tempNetworks)
-            self.iterationData.append({"generation":currentGeneration,"maxLength":survivor[0]["performance"],"averageLength":trainSnakeEvo.getAveragePerformance(survivor)})
-            plt.plot([i+1 for i in range(len(self.iterationData))],[self.iterationData[i]["averageLength"] for i in range(len(self.iterationData))], label="AverageLength of the selected agent")
-            plt.plot([i+1 for i in range(len(self.iterationData))],[self.iterationData[i]["maxLength"] for i in range(len(self.iterationData))],label = "AverageLength of the best agent")
-            plt.xlabel("generation")
-            plt.ylabel("snake length")
-            #plt.savefig('evoData.png')
-            currentGeneration += 1
 
-    def getAveragePerformance(survivor : list) -> float:
-        somme = 0
-        for i in survivor:
-            somme += i["performance"]
-        return round(somme/len(survivor),2)
-
-    def __runChild(self,network : classe.NN,modification = True) -> float:#return the average length of the agent on a certain number of simulation
-        currentPerformance = []
-        for i in range(ITERATION):
+        lastPerformance = [0 for i in range(MEAN_SIZE)]
+        count = 0
+        while(sum(lastPerformance)/len(lastPerformance) < self.averageAim):
+            print(count,round(sum(lastPerformance)/len(lastPerformance),2),end="\r")
             state = None
             game = snakeGame.Game(self.gameSize)
-            dataSincelastFood = []
-            previousDataSinceLastFood = []
+            previousData = []
+            moveSinceLastFruit = 0
             while(state == None):
-                Networkinput = trainSnakeEvo.generateInput(game.getGrid(),True,game.snake)
-                result = network.forward(np.array([np.array(Networkinput)]))[0]
-                supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,game.snake,result.tolist(),dataSincelastFood,game)
+                Networkinput = trainSnakeEvo.generateInput(game.getGrid(),game.snake)
+                result = self.network.forward(np.array([np.array(Networkinput)]))[0]
+                supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,game.snake,result.tolist(),previousData)
                 errors = [0]*4
-                '''for i in range(4):
-                    if(supervisedResult[i] < 0):
-                        errors[i] = -result[i]'''
+                for i in range(4):
+                    if(supervisedResult[i] == -1):
+                        errors[i] = -result[i]
                 answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(supervisedResult))
 
                 if(answerIndex == 0):
@@ -131,153 +61,151 @@ class trainSnakeEvo():
                 
                 fruitSave = game.fruit.copy()
                 headSave = game.snake[-1].copy()
-                snakeSave = copy.deepcopy(game.snake)
                 game.update()
                 state = game.checkState()
+                previousData.append({"snake":copy.deepcopy(game.snake),"index":answerIndex,"fruit":copy.deepcopy(game.fruit),"original" : True,"forbidden" : None,"grid" : game.getGrid()})
                 if(game.fruit != fruitSave):
-                    if(modification):
-                        errors[answerIndex] = 1-result[answerIndex]
-                        network.backward([errors])
-                    previousDataSinceLastFood = copy.deepcopy(dataSincelastFood)
-                    dataSincelastFood = []
+                    errors[answerIndex] = 1-result[answerIndex]
+                    self.network.backward([errors])
+                    moveSinceLastFruit = 0
                 else:
-                    dataSincelastFood.append({"snake":copy.deepcopy(snakeSave),"index":answerIndex,"grid":game.getGrid()})
-                    if(len(dataSincelastFood) > game.size**2):
+                    moveSinceLastFruit += 1
+                    currentDistance = abs(game.snake[-1][0]-game.fruit[0])+abs(game.snake[-1][1]-game.fruit[1])
+                    previousDistance = abs(headSave[0]-game.fruit[0])+abs(headSave[1]-game.fruit[1])
+                    if(currentDistance < previousDistance):
+                        errors[answerIndex] = (1-result[answerIndex]) * max(0.5-(len(game.snake)/self.gameSize**2),0)
+                        self.network.backward(np.array([errors]))
+                    elif(currentDistance > previousDistance):
+                        errors[answerIndex] = -result[answerIndex] * max(0.5-(len(game.snake)/self.gameSize**2),0)
+                        self.network.backward(np.array([errors]))
+                    if(moveSinceLastFruit > game.size**2):
                         state = False
-                    if(modification):
-                        if(state == False and False):
-                            errors[answerIndex] = -result[answerIndex]
-                            network.backward(errors)
-                            for i in range(len(previousDataSinceLastFood)):
-                                Networkinput = trainSnakeEvo.generateInput(previousDataSinceLastFood[i]["grid"],True,previousDataSinceLastFood[i]["snake"])
-                                rawResult = network.forward(np.array(Networkinput))
-                                supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,previousDataSinceLastFood[i]["snake"],rawResult,previousDataSinceLastFood[:i],game)
-                                answerIndex = previousDataSinceLastFood[i]["index"]
-                                errors = [0]*4
-                                if(supervisedResult[answerIndex] > 0):
-                                    errors[answerIndex] = -rawResult[answerIndex] * (0.5+(i/(len(previousDataSinceLastFood)*2)))
-                                    network.backward(errors)
-                            for i in range(len(dataSincelastFood)):
-                                Networkinput = trainSnakeEvo.generateInput(dataSincelastFood[i]["grid"],True,dataSincelastFood[i]["snake"])
-                                rawResult = network.forward(np.array(Networkinput))
-                                supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,dataSincelastFood[i]["snake"],rawResult,dataSincelastFood[:i],game)
-                                answerIndex = dataSincelastFood[i]["index"]
-                                errors = [0]*4
-                                if(supervisedResult[answerIndex] > 0):
-                                    errors[answerIndex] = -rawResult[answerIndex] * (0.5+(i/(len(dataSincelastFood)*2)))
-                                    network.backward(errors)
-                        else:#Reward the snake when it get closer to the fruit
-                            currentDistance = abs(game.snake[-1][0]-game.fruit[0])+abs(game.snake[-1][1]-game.fruit[1])
-                            previousDistance = abs(headSave[0]-game.fruit[0])+abs(headSave[1]-game.fruit[1])
-                            if(currentDistance < previousDistance):
-                                errors[answerIndex] = (1-result[answerIndex]) * 0.2
-                                network.backward([errors])
-                            elif(currentDistance > previousDistance):
-                                errors[answerIndex] = -result[answerIndex] * 0.2
-                                network.backward([errors])
+                    elif(state == False):
+                        previousData.pop()
+                        game.snake = previousData[-1]["snake"]
+                        game.fruit = previousData[-1]["fruit"]
+                        possibility = trainSnakeEvo.exploreEveryPossibility(game,previousData,len(previousData),True)
+                        '''print(previousData)
+                        print("efnpzfnpznf")
+                        print(possibility)
+                        exit(1)'''
+                        filtred = list(filter(lambda data : data["original"] == True,possibility))
+                        
+                        index = (possibility.index(filtred[-1]))
+                        recommandedIndex = possibility[index+1]["index"]
+                        bannedIndex = previousData[index+1]["index"]
+                        
+                        tempGame = snakeGame.Game(self.gameSize)
+                        tempGame.snake = filtred[-1]["snake"]
+                        tempGame.fruit = filtred[-1]["fruit"]
+                        
+                        Networkinput = trainSnakeEvo.generateInput(tempGame.getGrid(),tempGame.snake)
+                        result = self.network.forward(np.array([np.array(Networkinput)]))[0]
+                        
+                        error = [0 for i in range(4)]
+                        error[recommandedIndex] = (1-result[recommandedIndex])
+                        error[bannedIndex] = -result[bannedIndex]
+                        self.network.backward(np.array([error]))
+                           
+                if(state == True or len(game.snake) == self.gameSize**2-1):
+                    averageError = 1
+                    inputs = []
 
-            currentPerformance.append(len(game.snake))
-        return sum(currentPerformance)/len(currentPerformance)
+                    indexAboveMean = None
+                    for (index,data) in enumerate(previousData):
+                        if(len(data["snake"]) > sum(lastPerformance)/len(lastPerformance)):
+                            indexAboveMean = index
+                            break
+
+                    for i in range(indexAboveMean,len(previousData)):
+                        game = snakeGame.Game(self.gameSize)
+                        game.snake = previousData[i-1]["snake"]
+                        game.fruit = previousData[i-1]["fruit"]
+
+                        Networkinput = trainSnakeEvo.generateInput(game.getGrid(),game.snake)
+                        inputs.append(copy.deepcopy(Networkinput))
+
+                    while averageError > 0.1:
+                        averageError = 0
+                        errors = []
+                            
+                        result = self.network.forward(np.array(inputs))
+                        for i in range(indexAboveMean,len(previousData)):
+                            error = [-result[i-indexAboveMean][j]*0.1 for j in range(4)]
+                            error[previousData[i]["index"]] = 1-result[i-indexAboveMean][previousData[i]["index"]]
+                            averageError += (1-result[i-indexAboveMean][previousData[i]["index"]])/len(result)
+                            errors.append(copy.deepcopy(error))
+                        self.network.backward(np.array(errors))
+                    state = True
+            count += 1
+            lastPerformance.append(len(game.snake))
+            lastPerformance.pop(0)
+        return self.network
     
-    def superviseAnswer(gameSize : int,snake : list[list[int]],result : list[float],dataSinceLastFood : list[dict],game : snakeGame.Game) -> int:
+    def exploreEveryPossibility(game : snakeGame.Game,previousData : list[dict],lengthToBeat : int,canRewind : bool) -> int:
+        
+        result = [1 for i in range(4)]
+        supervisedResult = trainSnakeEvo.superviseAnswer(len(game.getGrid()),game.snake,result,previousData)
+        
+        if(previousData[-1]["forbidden"] != None):
+            supervisedResult[previousData[-1]["forbidden"]] = -1
+        
+        if(len(previousData) > lengthToBeat):
+            return previousData
+
+        for i in range(4):
+            if(supervisedResult[i] > 0 ):
+                gameCopy = copy.deepcopy(game)
+                if(i == 0):
+                    gameCopy.directionY = -1
+                    gameCopy.directionX = 0
+                elif(i == 1):
+                    gameCopy.directionY = 1
+                    gameCopy.directionX = 0
+                elif(i == 2):
+                    gameCopy.directionX = -1
+                    gameCopy.directionY = 0
+                elif(i == 3):
+                    gameCopy.directionX = 1
+                    gameCopy.directionY = 0
+        
+                gameCopy.update()
+
+                previousDataCopy = copy.deepcopy(previousData)
+                previousDataCopy.append({"snake":gameCopy.snake,"index":i,"fruit":gameCopy.fruit,"forbidden" : None,"original" : False,"grid":game.getGrid()})
+                result = trainSnakeEvo.exploreEveryPossibility(gameCopy,previousDataCopy,lengthToBeat,False)
+                if(result != None):
+                    return copy.deepcopy(result)
+
+        if(canRewind):
+            gameCopy = copy.deepcopy(game)
+            previousDataCopy = copy.deepcopy(previousData)
+            previousDataCopy.pop()
+            previousDataCopy[-1]["forbidden"] = previousData[-1]["index"]
+            gameCopy.snake = previousDataCopy[-1]["snake"]
+            gameCopy.fruit = previousDataCopy[-1]["fruit"]
+            return trainSnakeEvo.exploreEveryPossibility(gameCopy,previousDataCopy,lengthToBeat,True)
+        else:
+            return None
+    
+    def superviseAnswer(gameSize : int,snake : list[list[int]],result : list[float],previousData : list[dict]) -> int:
         modifiedResult = copy.deepcopy(result)
-        deadEnd = trainSnakeEvo.checkDeadEnd(game,snake)
         if(snake[-1][1]-1 < 0 or ([snake[-1][0],snake[-1][1]-1] in snake[1:])):
             modifiedResult[0] = -1
-        elif (not deadEnd[2]):
-            modifiedResult[0] = -0.6
 
         if(snake[-1][1]+1 >= gameSize or ([snake[-1][0],snake[-1][1]+1] in snake[1:])):
             modifiedResult[1] = -1
-        elif(not deadEnd[3]):
-            modifiedResult[1] = -0.6
         
         if(snake[-1][0]-1 < 0 or ([snake[-1][0]-1,snake[-1][1]] in snake[1:])):
             modifiedResult[2] = -1
-        elif(not deadEnd[0]):
-            modifiedResult[2] = -0.6
         
         if(snake[-1][0]+1 >= gameSize or ([snake[-1][0]+1,snake[-1][1]] in snake[1:])):
             modifiedResult[3] = -1
-        elif(not deadEnd[1]):
-            modifiedResult[3] = -0.6
         
-        for i in range(len(dataSinceLastFood)):
-            if(dataSinceLastFood[i]["snake"] == snake):
-                modifiedResult[dataSinceLastFood[i]["index"]] = -0.5
+        for i in range(len(previousData)):
+            if(previousData[i]["snake"] == snake):
+                modifiedResult[previousData[i]["index"]] = -0.5
         return modifiedResult
-
-    def checkDeadEnd(game : snakeGame.Game,snake : list[list[int]]) -> list[bool]:
-        def getZoneSize(case : list[int],game : snakeGame.Game):
-            previous = []
-            current = [case]
-            grid = game.getGrid()
-            while(len(previous) != len(current)):
-                previous = copy.deepcopy(current)
-                for case in current:
-                    for i in range(-1,2,2):
-                        if(case[0]+i >= 0 and case[0]+i < len(grid)):
-                            if(grid[case[1]][case[0]+i] != -1):
-                                if([case[0]+i,case[1]] not in current):
-                                    current.append([case[0]+i,case[1]])
-                    for j in range(-1,2,2):
-                        if(case[1]+j >= 0 and case[1]+j < len(grid)):
-                            if(grid[case[1]+j][case[0]] != -1):
-                                if([case[0],case[1]+j] not in current):
-                                    current.append([case[0],case[1]+j])
-            size = len(current)
-            game = copy.deepcopy(game)
-            if(size >= len(game.snake)):
-                return size
-            else:
-                game.snake = game.snake[size:]
-                previous = []
-                current = [case]
-                grid = game.getGrid()
-                while(len(previous) != len(current)):
-                    previous = copy.deepcopy(current)
-                    for case in current:
-                        for i in range(-1,2,2):
-                            if(case[0]+i >= 0 and case[0]+i < len(grid)):
-                                if(grid[case[1]][case[0]+i] != -1):
-                                    if([case[0]+i,case[1]] not in current):
-                                        current.append([case[0]+i,case[1]])
-                        for j in range(-1,2,2):
-                            if(case[1]+j >= 0 and case[1]+j < len(grid)):
-                                if(grid[case[1]+j][case[0]] != -1):
-                                    if([case[0],case[1]+j] not in current):
-                                        current.append([case[0],case[1]+j])
-                    size = len(current)
-                    return size
-
-        data = []
-        result = [True]*4
-        game = copy.deepcopy(game)
-        game.snake = game.snake[1:]
-        head = game.snake[-1]
-        grid = game.getGrid()
-        for i in range(-1,2,2):
-            if(head[0]+i >= 0 and head[0]+i < len(grid)):
-                if(grid[head[1]][head[0]+i] != -1):
-                    data.append(getZoneSize([head[0]+i,head[1]],game))
-                else:
-                    data.append(-1)
-            else:
-                data.append(-1)
-        for j in range(-1,2,2):
-            if(head[1]+j >= 0 and head[1]+j < len(grid)):
-                if(grid[head[1]+j][head[0]] != -1):
-                    data.append(getZoneSize([head[0],head[1]+j],game))
-                else:
-                    data.append(-1)
-            else:
-                data.append(-1)
-        for i in range(4):
-            if(data[i] < len(snake)):
-                result[i] = False
-        if(result.count(False) == 4):
-            result[data.index(max(data))] = True
-        return result
 
     def getAllMaxIndex(answer : list[float]) -> list[int]:
         max = None
@@ -295,55 +223,30 @@ class trainSnakeEvo():
                     result.append(i)
         return result
     
-    def generateInput(grid : list[list[int]],seeAllMap : bool,snake : list[list[int]]) -> list[int]:
+    def generateInput(grid : list[list[int]],snake : list[list[int]]) -> list[int]:
         networkInput = []
-        snakeHead = snake[-1]
         gameSize = len(grid)
-        if(NEARHEAD):
-            radius = 1
-            if(seeAllMap):
-                radius = gameSize-1
-            for j in range(2):
-                #If j == 0 we are searching for food
-                #If j == 1 we are searching for danger
-                for i in range(-radius,radius+1):
-                    for x in range(-radius,radius+1):
-                        if(i != 0 or x != 0):
-                            if((snakeHead[1]+i >= 0 and snakeHead[0]+x >= 0 and snakeHead[1]+i < gameSize and snakeHead[0]+x < gameSize)):#if the case is in the grid
-                                if(j == 0):
-                                    if(grid[snakeHead[1]+i][snakeHead[0]+x] == 1):
-                                        networkInput.append(1)
-                                    else:
-                                        networkInput.append(0)
-                                elif(j == 1):
-                                    if(grid[snakeHead[1]+i][snakeHead[0]+x] == -1):
-                                        networkInput.append(1)
-                                    else:
-                                        networkInput.append(0)
-                            elif j == 1:networkInput.append(1)
-                            else:networkInput.append(0)
-        else:
-            for j in range(3):
-                #If j == 0 we are searching for the head
-                #If j == 1 we are searching for food
-                #If = -- 2 we are searching for snake body
-                for i in range(gameSize):
-                    for x in range(gameSize):
-                        if(j == 0):
-                            if([i,x] == snake[-1]):
-                                networkInput.append(1)
-                            else:
-                                networkInput.append(0)
-                        elif(j == 1):
-                            if(grid[i][x] == 1):
-                                networkInput.append(1)
-                            else:
-                                networkInput.append(0)
+        for j in range(3):
+            #If j == 0 we are searching for the head
+            #If j == 1 we are searching for food
+            #If j == 2 we are searching for snake body
+            for i in range(gameSize):
+                for x in range(gameSize):
+                    if(j == 0):
+                        if([i,x] == snake[-1]):
+                            networkInput.append(1)
                         else:
-                            if(grid[i][x] == -1):
-                                networkInput.append(1)
-                            else:
-                                networkInput.append(0)
+                            networkInput.append(0)
+                    elif(j == 1):
+                        if(grid[i][x] == 1):
+                            networkInput.append(1)
+                        else:
+                            networkInput.append(0)
+                    else:
+                        if(grid[i][x] == -1):
+                            networkInput.append(1)
+                        else:
+                            networkInput.append(0)
         return networkInput
 
 def getWholeGameData() -> list[dict]:
@@ -378,7 +281,7 @@ def getWholeGameData() -> list[dict]:
             "snake":copy.deepcopy(game.snake)
         })
         result = network.forward(np.array([trainSnakeEvo.generateInput(game.getGrid(),True,game.snake)]))[0]
-        answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(trainSnakeEvo.superviseAnswer(game.size,game.snake,result.tolist(),copy.deepcopy(dataSinceLastFood),game)))
+        answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(trainSnakeEvo.superviseAnswer(game.size,game.snake,result.tolist(),copy.deepcopy(dataSinceLastFood))))
 
         if(answerIndex == 0):
             game.directionY = -1
