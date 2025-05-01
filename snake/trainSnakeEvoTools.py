@@ -15,7 +15,7 @@ import copy
 import pickle
 import time
 
-MEAN_SIZE = 1000
+MEAN_SIZE = 500
 
 class trainSnakeEvo():
     def __init__(self, gameSize: int, averageAim: int, network : classe.CNN) -> None:
@@ -78,7 +78,7 @@ class trainSnakeEvo():
                     elif(currentDistance > previousDistance):
                         errors[answerIndex] = -result[answerIndex] * max(0.5-(len(game.snake)/self.gameSize**2),0)
                         self.network.backward(np.array([errors]))
-                    if(moveSinceLastFruit > game.size**2):
+                    if(moveSinceLastFruit > game.size**3):
                         state = False
                     elif(state == False):
                         previousData.pop()

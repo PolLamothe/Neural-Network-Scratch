@@ -54,11 +54,9 @@ except TypeError:
 LEARNING_RATE = 0.01
 
 network = classe.CNN([
-    classe.FullyConnectedLayer(GAMESIZE**2*3,75,classe.Tanh,LEARNING_RATE,1),
-    classe.FullyConnectedLayer(75,75,classe.Tanh,LEARNING_RATE,1),
-    classe.FullyConnectedLayer(75,75,classe.Tanh,LEARNING_RATE,1),
-    classe.FullyConnectedLayer(75,75,classe.Tanh,LEARNING_RATE,1),
-    classe.FullyConnectedLayer(75,4,classe.Sigmoid,LEARNING_RATE,1)
+    classe.FullyConnectedLayer(GAMESIZE**2*3,150,classe.Tanh,LEARNING_RATE,1),
+    classe.FullyConnectedLayer(150,150,classe.Tanh,LEARNING_RATE,1),
+    classe.FullyConnectedLayer(150,4,classe.Sigmoid,LEARNING_RATE,1)
 ])
 
 try:
