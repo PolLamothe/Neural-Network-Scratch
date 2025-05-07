@@ -39,6 +39,7 @@ def handleModelChoice(name : str):
     def updateGrid():
         global previousData
         global game
+        trainSnakeEvoTools.trainSnakeEvo.benchmarkModel(network,5)
         result = network.forward(trainSnakeEvoTools.trainSnakeEvo.generateInput(game.getGrid(),game.snake))
         answerIndex = random.choice(trainSnakeEvoTools.trainSnakeEvo.getAllMaxIndex(trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(game.size,game.snake,result,copy.deepcopy(previousData))))
         if(answerIndex == 0):

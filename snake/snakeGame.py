@@ -39,7 +39,10 @@ class Game():
             for x in range(self.size):
                 if([i,x] not in self.snake):
                     avaible.append([i,x])
-        self.fruit = random.choice(avaible)
+        if(len(avaible) == 0):
+            self.fruit = None
+        else:
+            self.fruit = random.choice(avaible)
 
     def isFruitHere(self) -> bool:
         return self.fruit != None

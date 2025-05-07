@@ -149,8 +149,6 @@ class TestExploreEveryPossibility(unittest.TestCase):
         TAIL  0    0 0 0
         0     0    0 0 1
         '''
-        '''for data in trainSnakeEvoTools.trainSnakeEvo.exploreEveryPossibility(game,previousData,len(previousData),True):
-            print(data)'''
 
     def test_seenCase(self):
         previousData = [
@@ -163,6 +161,23 @@ class TestExploreEveryPossibility(unittest.TestCase):
         game.fruit = previousData[-1]["fruit"]
         for data in trainSnakeEvoTools.trainSnakeEvo.exploreEveryPossibility(game,previousData,len(previousData),True):
             print(data)
+
+class TestSnakeGame(unittest.TestCase):
+    def test_winGame(self):
+        game : snakeGame.Game = snakeGame.Game(5)
+        game.snake = [
+            [0, 0], [1, 0], [2, 0], [3, 0], [4, 0],  # Ligne 0
+            [4, 1], [3, 1], [2, 1], [1, 1], [0, 1],  # Ligne 1
+            [0, 2], [1, 2], [2, 2], [3, 2], [4, 2],  # Ligne 2
+            [4, 3], [3, 3], [2, 3], [1, 3], [0, 3],  # Ligne 3
+            [0, 4], [1, 4], [2, 4], [3, 4]   # Ligne 4
+        ]
+        game.fruit = [4,4]
+        game.directionX = 1
+        game.directionY = 0
+        game.update()
+        assert(game.checkState())
+        assert(game.fruit == None)
 
 if __name__ == "__main__":
     unittest.main()
