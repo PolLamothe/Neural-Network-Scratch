@@ -56,7 +56,6 @@ LEARNING_RATE = 0.01
 network = classe.CNN([
     classe.FullyConnectedLayer(GAMESIZE**2*3,100,classe.Tanh,LEARNING_RATE,1),
     classe.FullyConnectedLayer(100,100,classe.Tanh,LEARNING_RATE,1),
-    classe.FullyConnectedLayer(100,100,classe.Tanh,LEARNING_RATE,1),
     classe.FullyConnectedLayer(100,4,classe.Sigmoid,LEARNING_RATE,1)
 ])
 
@@ -83,5 +82,7 @@ if(args.save):
     })
     with open("./model/trainedData.json","w") as file:
         json.dump(data,file,indent=2)
+
+trainSnakeEvoTools.trainSnakeEvo.benchmarkModel(network,GAMESIZE)
 
 os._exit(0)

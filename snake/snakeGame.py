@@ -8,7 +8,7 @@ except ModuleNotFoundError:
 class Game():
     def __init__(self,size : int) -> None:
         self.size = size
-        if(size < 5):
+        if(size < 4):
             raise Exception("Map size must be at least 5")
         self.directionX = 1
         self.directionY = 0
