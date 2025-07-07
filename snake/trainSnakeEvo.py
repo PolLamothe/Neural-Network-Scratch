@@ -46,17 +46,19 @@ with open("./model/trainedData.json","w") as file:
 GAMESIZE = 5
 
 try:
-    if(int(args.aim) > GAMESIZE**2 or int(args.aim) < 4):
+    if(float(args.aim) > GAMESIZE**2 or float(args.aim) < 4):
         print("the length you want to reach is incorrect")
 except TypeError:
     raise Exception("You forgot the parameter -a (press -c to see all comands)")
 
-LEARNING_RATE = 0.01
+LEARNING_RATE = 0.005
 
 network = classe.CNN([
-    classe.FullyConnectedLayer(GAMESIZE**2*3,100,classe.Tanh,LEARNING_RATE,1),
-    classe.FullyConnectedLayer(100,100,classe.Tanh,LEARNING_RATE,1),
-    classe.FullyConnectedLayer(100,4,classe.Sigmoid,LEARNING_RATE,1)
+    classe.FullyConnectedLayer(GAMESIZE**2*4,50,classe.Tanh,LEARNING_RATE,1),
+    classe.FullyConnectedLayer(50,50,classe.Tanh,LEARNING_RATE,1),
+    classe.FullyConnectedLayer(50,50,classe.Tanh,LEARNING_RATE,1),
+    classe.FullyConnectedLayer(50,50,classe.Tanh,LEARNING_RATE,1),
+    classe.FullyConnectedLayer(50,4,classe.Sigmoid,LEARNING_RATE,1)
 ])
 
 try:
