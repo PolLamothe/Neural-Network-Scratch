@@ -14,7 +14,7 @@ import copy
 import pickle
 import time
 
-MEAN_SIZE = 500
+MEAN_SIZE = 600
 
 WIN_SIZE = 5
 
@@ -112,8 +112,12 @@ class trainSnakeEvo():
 
                             Networkinput = trainSnakeEvo.generateInput(tempGame.getGrid(),tempGame.snake)
                             result = self.network.forward(np.array([np.array(Networkinput)]))[0]
+                            supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,tempGame.snake,result,[])
 
                             error = [0 for i in range(4)]
+                            for i in range(4):
+                                if(supervisedResult[i] == -1):
+                                    error[i] = -result[i]
                             error[self.get_aligned_answer(index,recommandedIndex)] = (1-result[self.get_aligned_answer(index,recommandedIndex)])
                             error[self.get_aligned_answer(index,bannedIndex)] = -result[self.get_aligned_answer(index,bannedIndex)]
                             self.network.backward(np.array([error]))
@@ -125,8 +129,12 @@ class trainSnakeEvo():
 
                             Networkinput = trainSnakeEvo.generateInput(tempGame.getGrid(),tempGame.snake)
                             result = self.network.forward(np.array([np.array(Networkinput)]))[0]
+                            supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,tempGame.snake,result,[])
 
                             error = [0 for i in range(4)]
+                            for i in range(4):
+                                if(supervisedResult[i] == -1):
+                                    error[i] = -result[i]
                             error[self.get_aligned_answer(index,recommandedIndex)] = (1-result[self.get_aligned_answer(index,recommandedIndex)])
                             error[self.get_aligned_answer(index,bannedIndex)] = -result[self.get_aligned_answer(index,bannedIndex)]
                             self.network.backward(np.array([error]))
@@ -170,9 +178,17 @@ class trainSnakeEvo():
                                 result = self.network.forward(np.array(inputs[x]))
 
                                 for i in range(indexAboveMean,len(winnedGame)):
+                                    tempGame = snakeGame.Game(self.gameSize)
+                                    tempGame.snake = winnedGame[i]["snake"]
+                                    tempGame.fruit = winnedGame[i]["fruit"]
+                                    
                                     index = self.get_aligned_answer(winnedGame[i]["index"],x)
+                                    supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,tempGame.snake,result[i-indexAboveMean],[])
 
                                     error = [0 for j in range(4)]
+                                    for j in range(4):
+                                        if(supervisedResult[j] == -1):
+                                            error[j] = -result[i-indexAboveMean][j]
                                     error[index] = 1-result[i-indexAboveMean][index]
                                     errors.append(copy.deepcopy(error))
                                     
