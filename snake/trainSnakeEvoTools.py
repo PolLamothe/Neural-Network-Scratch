@@ -14,9 +14,10 @@ import copy
 import pickle
 import time
 
-MEAN_SIZE = 600
+MEAN_SIZE = 500
 
 WIN_SIZE = 5
+ERROR_SIZE = 0
 
 class trainSnakeEvo():
     def __init__(self, gameSize: int, averageAim: int, network : classe.CNN) -> None:
@@ -36,10 +37,10 @@ class trainSnakeEvo():
         maxAverage = 0
         winnedCountDown = 0
 
-        while(self.wheightedSum(lastPerformance) < self.averageAim):
-            if(self.wheightedSum(lastPerformance) > maxAverage):
-                maxAverage = round(self.wheightedSum(lastPerformance),2)
-            print(count,round(self.wheightedSum(lastPerformance),2),"max average reached : ",maxAverage," winned games : ",len(winnedGames)," time elapsed : ",int((time.time()-startingTime)/60)," min ","  ",end="\r")
+        while(self.sum(lastPerformance) < self.averageAim):
+            if(self.sum(lastPerformance) > maxAverage):
+                maxAverage = round(self.sum(lastPerformance),2)
+            print(count,round(self.sum(lastPerformance),2),"max average reached : ",maxAverage," winned games : ",len(winnedGames)," time elapsed : ",int((time.time()-startingTime)/60)," min ","  ",end="\r")
             state = None
             game = snakeGame.Game(self.gameSize)
             previousData = []
@@ -121,23 +122,26 @@ class trainSnakeEvo():
                             error[self.get_aligned_answer(index,recommandedIndex)] = (1-result[self.get_aligned_answer(index,recommandedIndex)])
                             error[self.get_aligned_answer(index,bannedIndex)] = -result[self.get_aligned_answer(index,bannedIndex)]
                             self.network.backward(np.array([error]))
-                        rotatedGames = random.choice(correctedSituations)
-                        for index,rotatedGame in enumerate(rotatedGames):
-                            tempGame = snakeGame.Game(self.gameSize)
-                            tempGame.snake = copy.deepcopy(rotatedGame[0])
-                            tempGame.fruit = copy.deepcopy(rotatedGame[1])
+                        correctedSituationsSelected = []
+                        while(len(correctedSituations) > 0 and len(correctedSituationsSelected) < ERROR_SIZE):
+                            correctedSituationsSelected.append(random.choice(correctedSituations))
+                        for rotatedGames in correctedSituationsSelected:
+                            for index,rotatedGame in enumerate(rotatedGames):
+                                tempGame = snakeGame.Game(self.gameSize)
+                                tempGame.snake = copy.deepcopy(rotatedGame[0])
+                                tempGame.fruit = copy.deepcopy(rotatedGame[1])
 
-                            Networkinput = trainSnakeEvo.generateInput(tempGame.getGrid(),tempGame.snake)
-                            result = self.network.forward(np.array([np.array(Networkinput)]))[0]
-                            supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,tempGame.snake,result,[])
+                                Networkinput = trainSnakeEvo.generateInput(tempGame.getGrid(),tempGame.snake)
+                                result = self.network.forward(np.array([np.array(Networkinput)]))[0]
+                                supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,tempGame.snake,result,[])
 
-                            error = [0 for i in range(4)]
-                            for i in range(4):
-                                if(supervisedResult[i] == -1):
-                                    error[i] = -result[i]
-                            error[self.get_aligned_answer(index,recommandedIndex)] = (1-result[self.get_aligned_answer(index,recommandedIndex)])
-                            error[self.get_aligned_answer(index,bannedIndex)] = -result[self.get_aligned_answer(index,bannedIndex)]
-                            self.network.backward(np.array([error]))
+                                error = [0 for i in range(4)]
+                                for i in range(4):
+                                    if(supervisedResult[i] == -1):
+                                        error[i] = -result[i]
+                                error[self.get_aligned_answer(index,recommandedIndex)] = (1-result[self.get_aligned_answer(index,recommandedIndex)])
+                                error[self.get_aligned_answer(index,bannedIndex)] = -result[self.get_aligned_answer(index,bannedIndex)]
+                                self.network.backward(np.array([error]))
                            
                 if(state == True or len(game.snake) == self.gameSize**2-1):
                     winnedGames.append(copy.deepcopy(previousData))
@@ -229,12 +233,12 @@ class trainSnakeEvo():
                     game.directionX = 1
                     game.directionY = 0
                                 
-                fruitSave = game.fruit.copy()
+                fruitSave = copy.deepcopy(game.fruit)
                 game.update()
                 state = game.checkState()
                 previousData.append({"snake":copy.deepcopy(game.snake),"index":answerIndex,"fruit":copy.deepcopy(game.fruit),"original" : True,"forbidden" : None})
 
-                if(len(game.snake) == gameSize**2-1):
+                if(len(game.snake) >= gameSize**2):
                     state = True
                 
                 if(game.fruit != fruitSave):
@@ -405,7 +409,38 @@ class trainSnakeEvo():
                             networkInput.append(1)
                         else:
                             networkInput.append(0)
+        networkInput += available_spaces(snake,len(grid))
+        networkInput.append(len(snake)/(len(grid)**2-4))
         return networkInput
+
+def available_spaces(snake : list[list[int]], size : int) -> list[int]:
+    if not snake:
+        return [0, 0, 0, 0]
+    
+    # Directions dans l'ordre: haut, bas, gauche, droite
+    directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+    head = snake[-1]
+    
+    # Créer un set des obstacles (toutes les parties du corps sauf la queue)
+    obstacles = set(tuple(part) for part in snake[1:])
+    
+    result = []
+    
+    for dx, dy in directions:
+        count = 0
+        x, y = head[0] + dx, head[1] + dy  # Position après déplacement
+        
+        # Tant qu'on est dans le terrain et que la case n'est pas occupée
+        while 0 <= x < size and 0 <= y < size:
+            if (x, y) in obstacles:
+                break
+            count += 1
+            # Passer à la prochaine case dans cette direction
+            x += dx
+            y += dy
+        result.append((count)/(size**2-4))
+    
+    return result
 
 def getWholeGameData() -> list[dict]:
     allModel = []
