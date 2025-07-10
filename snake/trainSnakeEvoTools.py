@@ -14,7 +14,7 @@ import copy
 import pickle
 import time
 
-MEAN_SIZE = 500
+MEAN_SIZE = 600
 
 WIN_SIZE = 5
 ERROR_SIZE = 0
@@ -37,10 +37,10 @@ class trainSnakeEvo():
         maxAverage = 0
         winnedCountDown = 0
 
-        while(self.sum(lastPerformance) < self.averageAim):
-            if(self.sum(lastPerformance) > maxAverage):
-                maxAverage = round(self.sum(lastPerformance),2)
-            print(count,round(self.sum(lastPerformance),2),"max average reached : ",maxAverage," winned games : ",len(winnedGames)," time elapsed : ",int((time.time()-startingTime)/60)," min ","  ",end="\r")
+        while(self.wheightedAverage(lastPerformance) < self.averageAim):
+            if(self.wheightedAverage(lastPerformance) > maxAverage):
+                maxAverage = round(self.wheightedAverage(lastPerformance),2)
+            print(count,round(self.wheightedAverage(lastPerformance),2),"max average reached : ",maxAverage," winned games : ",len(winnedGames)," time elapsed : ",int((time.time()-startingTime)/60)," min ","  ",end="\r")
             state = None
             game = snakeGame.Game(self.gameSize)
             previousData = []
@@ -82,12 +82,12 @@ class trainSnakeEvo():
                     currentDistance = abs(game.snake[-1][0]-game.fruit[0])+abs(game.snake[-1][1]-game.fruit[1])
                     previousDistance = abs(headSave[0]-game.fruit[0])+abs(headSave[1]-game.fruit[1])
                     if(currentDistance < previousDistance):
-                        errors[answerIndex] = (1-result[answerIndex]) * max(0.5-(len(game.snake)/(self.gameSize**2+self.gameSize)),0)
+                        errors[answerIndex] = (1-result[answerIndex]) * max(0.5-(len(game.snake)/(self.gameSize**2)),0)
                         self.network.backward(np.array([errors]))
                     elif(currentDistance > previousDistance):
-                        errors[answerIndex] = -result[answerIndex] * max(0.5-(len(game.snake)/(self.gameSize**2 + self.gameSize)),0)
+                        errors[answerIndex] = -result[answerIndex] * max(0.5-(len(game.snake)/(self.gameSize**2)),0)
                         self.network.backward(np.array([errors]))
-                    if(moveSinceLastFruit > game.size**3):
+                    if(moveSinceLastFruit > game.size**2*2):
                         state = False
                     elif(state == False):
                         saveIndex = copy.deepcopy(previousData[-1]["index"])
@@ -298,16 +298,16 @@ class trainSnakeEvo():
         else:
             return None
     
-    def wheightedSum(self,performances : list[int]) -> float:
+    def wheightedAverage(self,performances : list[int]) -> float:
         result = 0
         totalCoeff = 0
         for index,performance in enumerate(performances):
-            coeff = index/(len(performances)-1)+0.5*((len(performances)-1-index)/(len(performances)-1))
+            coeff = index/(len(performances)-1)+0.75*((len(performances)-1-index)/(len(performances)-1))
             totalCoeff += coeff
             result += performance * coeff
         return result/totalCoeff
     
-    def sum(self,performances : list[int ]) -> float:
+    def average(self,performances : list[int ]) -> float:
         return sum(performances)/len(performances)
 
     def __rotate_point(self,x: int, y: int, alignment: int) -> list[int, int]:
@@ -358,7 +358,7 @@ class trainSnakeEvo():
         if(snake[-1][0]+1 >= gameSize or ([snake[-1][0]+1,snake[-1][1]] in snake[1:])):
             modifiedResult[3] = -1
         
-        for i in range(len(previousData)):
+        for i in range(len(previousData)-1):
             if(previousData[i]["snake"] == snake):
                 modifiedResult[previousData[i]["index"]] = -0.5
         return modifiedResult
@@ -409,38 +409,32 @@ class trainSnakeEvo():
                             networkInput.append(1)
                         else:
                             networkInput.append(0)
-        networkInput += available_spaces(snake,len(grid))
-        networkInput.append(len(snake)/(len(grid)**2-4))
+        networkInput += getAvailableSpaces(snake,snake[-1])
+        networkInput.append(len(snake)/(len(grid)**2))
         return networkInput
 
-def available_spaces(snake : list[list[int]], size : int) -> list[int]:
-    if not snake:
-        return [0, 0, 0, 0]
-    
-    # Directions dans l'ordre: haut, bas, gauche, droite
-    directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
-    head = snake[-1]
-    
-    # Créer un set des obstacles (toutes les parties du corps sauf la queue)
-    obstacles = set(tuple(part) for part in snake[1:])
-    
-    result = []
-    
-    for dx, dy in directions:
-        count = 0
-        x, y = head[0] + dx, head[1] + dy  # Position après déplacement
-        
-        # Tant qu'on est dans le terrain et que la case n'est pas occupée
-        while 0 <= x < size and 0 <= y < size:
-            if (x, y) in obstacles:
-                break
-            count += 1
-            # Passer à la prochaine case dans cette direction
-            x += dx
-            y += dy
-        result.append((count)/(size**2-4))
-    
-    return result
+def getAvailableSpaces(snake : list[list[int]],head : list[int]) -> list[int]:
+    return [
+        len(getFreeCases(snake,[],[head[0],head[1]-1])),
+        len(getFreeCases(snake,[],[head[0],head[1]+1])),
+        len(getFreeCases(snake,[],[head[0]-1,head[1]])),
+        len(getFreeCases(snake,[],[head[0]+1,head[1]])),
+        ]
+
+def getFreeCases(snake : list[list[int]],seenCases : list[list[int]],currentCase : list[int]) -> list[list[int]]:
+    if(currentCase[0] >= 5 or currentCase[0] < 0 or currentCase[1] >= 5 or currentCase[1] < 0):
+        return seenCases
+    if(currentCase in snake):
+        return seenCases
+    if(currentCase in seenCases):
+        return seenCases
+    copySeenCases = copy.deepcopy(seenCases)
+    copySeenCases.append(copy.deepcopy(currentCase))
+    copySeenCases = getFreeCases(snake,copySeenCases,[currentCase[0]+1,currentCase[1]])
+    copySeenCases = getFreeCases(snake,copySeenCases,[currentCase[0]-1,currentCase[1]])
+    copySeenCases = getFreeCases(snake,copySeenCases,[currentCase[0],currentCase[1]+1])
+    copySeenCases = getFreeCases(snake,copySeenCases,[currentCase[0],currentCase[1]-1])
+    return copySeenCases
 
 def getWholeGameData() -> list[dict]:
     allModel = []
