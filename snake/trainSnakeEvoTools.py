@@ -70,9 +70,21 @@ class trainSnakeEvo():
                 
                 fruitSave = game.fruit.copy()
                 headSave = game.snake[-1].copy()
+                snakeSave = copy.deepcopy(game.snake)
+                zonesNumberSave = getSeparatedZones(game.snake,self.gameSize)
                 game.update()
+                
+                zonesNumber = getSeparatedZones(game.snake,self.gameSize)
+                zoneChange = 0
+                if(zonesNumberSave < zonesNumber):
+                    zoneChange = 1
+                    errors[answerIndex] = -result[answerIndex]
+                elif(zonesNumberSave > zonesNumber):
+                    errors[answerIndex] = 1-result[answerIndex]
+                    zoneChange = -1
+                
                 state = game.checkState()
-                previousData.append({"snake":copy.deepcopy(game.snake),"index":answerIndex,"fruit":copy.deepcopy(game.fruit),"original" : True,"forbidden" : None})
+                previousData.append({"snake":copy.deepcopy(game.snake),"index":answerIndex,"fruit":copy.deepcopy(game.fruit),"original" : True,"forbidden" : None,"zoneChange" : zoneChange})
                 if(game.fruit != fruitSave):
                     errors[answerIndex] = 1-result[answerIndex]
                     self.network.backward([errors])
@@ -83,10 +95,10 @@ class trainSnakeEvo():
                     previousDistance = abs(headSave[0]-game.fruit[0])+abs(headSave[1]-game.fruit[1])
                     if(currentDistance < previousDistance):
                         errors[answerIndex] = (1-result[answerIndex]) * max(0.5-(len(game.snake)/(self.gameSize**2)),0)
-                        self.network.backward(np.array([errors]))
                     elif(currentDistance > previousDistance):
                         errors[answerIndex] = -result[answerIndex] * max(0.5-(len(game.snake)/(self.gameSize**2)),0)
-                        self.network.backward(np.array([errors]))
+                    self.network.backward(np.array([errors]))
+
                     if(moveSinceLastFruit > game.size**2*2):
                         state = False
                     elif(state == False):
@@ -194,6 +206,8 @@ class trainSnakeEvo():
                                         if(supervisedResult[j] == -1):
                                             error[j] = -result[i-indexAboveMean][j]
                                     error[index] = 1-result[i-indexAboveMean][index]
+                                    if(winnedGame[i]["zoneChange"] == 1):
+                                        error[index] = -result[i-indexAboveMean][index]
                                     errors.append(copy.deepcopy(error))
                                     
                                 self.network.backward(np.array(errors))
@@ -409,20 +423,30 @@ class trainSnakeEvo():
                             networkInput.append(1)
                         else:
                             networkInput.append(0)
-        networkInput += getAvailableSpaces(snake,snake[-1])
+        networkInput += getAvailableSpaces(snake,snake[-1],len(grid))
         networkInput.append(len(snake)/(len(grid)**2))
         return networkInput
 
-def getAvailableSpaces(snake : list[list[int]],head : list[int]) -> list[int]:
-    return [
-        len(getFreeCases(snake,[],[head[0],head[1]-1])),
-        len(getFreeCases(snake,[],[head[0],head[1]+1])),
-        len(getFreeCases(snake,[],[head[0]-1,head[1]])),
-        len(getFreeCases(snake,[],[head[0]+1,head[1]])),
-        ]
+def getSeparatedZones(snake : list[list[int]],gameSize : int) -> int:
+    zones = []
+    flatzones = []
+    for i in range(gameSize):
+        for j in range(gameSize):
+            if([i,j] in snake):
+                continue
+            if(len(flatzones) == gameSize**2-len(snake)):
+                return len(zones)
+            if([i,j] in flatzones):
+                continue
+            zone = getZone(snake,flatzones,[i,j],gameSize)
+            zones.append(copy.deepcopy(zone))
+            for case in zone:
+                flatzones.append(copy.deepcopy(case))
+    return len(zones)
 
-def getFreeCases(snake : list[list[int]],seenCases : list[list[int]],currentCase : list[int]) -> list[list[int]]:
-    if(currentCase[0] >= 5 or currentCase[0] < 0 or currentCase[1] >= 5 or currentCase[1] < 0):
+
+def getZone(snake : list[list[int]],seenCases : list[list[int]],currentCase : list[int],gameSize : int) -> list[list[int]]:
+    if(currentCase[0] >= gameSize or currentCase[0] < 0 or currentCase[1] >= gameSize or currentCase[1] < 0):
         return seenCases
     if(currentCase in snake):
         return seenCases
@@ -430,10 +454,33 @@ def getFreeCases(snake : list[list[int]],seenCases : list[list[int]],currentCase
         return seenCases
     copySeenCases = copy.deepcopy(seenCases)
     copySeenCases.append(copy.deepcopy(currentCase))
-    copySeenCases = getFreeCases(snake,copySeenCases,[currentCase[0]+1,currentCase[1]])
-    copySeenCases = getFreeCases(snake,copySeenCases,[currentCase[0]-1,currentCase[1]])
-    copySeenCases = getFreeCases(snake,copySeenCases,[currentCase[0],currentCase[1]+1])
-    copySeenCases = getFreeCases(snake,copySeenCases,[currentCase[0],currentCase[1]-1])
+    copySeenCases = getZone(snake,copySeenCases,[currentCase[0]+1,currentCase[1]],gameSize)
+    copySeenCases = getZone(snake,copySeenCases,[currentCase[0]-1,currentCase[1]],gameSize)
+    copySeenCases = getZone(snake,copySeenCases,[currentCase[0],currentCase[1]+1],gameSize)
+    copySeenCases = getZone(snake,copySeenCases,[currentCase[0],currentCase[1]-1],gameSize)
+    return copySeenCases
+
+def getAvailableSpaces(snake : list[list[int]],head : list[int],gameSize : int) -> list[int]:
+    return [
+        len(getFreeCases(snake,[],[head[0],head[1]-1],gameSize))/(gameSize**2-4),
+        len(getFreeCases(snake,[],[head[0],head[1]+1],gameSize))/(gameSize**2-4),
+        len(getFreeCases(snake,[],[head[0]-1,head[1]],gameSize))/(gameSize**2-4),
+        len(getFreeCases(snake,[],[head[0]+1,head[1]],gameSize))/(gameSize**2-4),
+        ]
+
+def getFreeCases(snake : list[list[int]],seenCases : list[list[int]],currentCase : list[int],gameSize : int) -> list[list[int]]:
+    if(currentCase[0] >= gameSize or currentCase[0] < 0 or currentCase[1] >= gameSize or currentCase[1] < 0):
+        return seenCases
+    if(currentCase in snake):
+        return seenCases
+    if(currentCase in seenCases):
+        return seenCases
+    copySeenCases = copy.deepcopy(seenCases)
+    copySeenCases.append(copy.deepcopy(currentCase))
+    copySeenCases = getFreeCases(snake,copySeenCases,[currentCase[0]+1,currentCase[1]],gameSize)
+    copySeenCases = getFreeCases(snake,copySeenCases,[currentCase[0]-1,currentCase[1]],gameSize)
+    copySeenCases = getFreeCases(snake,copySeenCases,[currentCase[0],currentCase[1]+1],gameSize)
+    copySeenCases = getFreeCases(snake,copySeenCases,[currentCase[0],currentCase[1]-1],gameSize)
     return copySeenCases
 
 def getWholeGameData() -> list[dict]:

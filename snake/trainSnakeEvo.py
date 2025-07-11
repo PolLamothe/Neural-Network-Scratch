@@ -51,7 +51,7 @@ try:
 except TypeError:
     raise Exception("You forgot the parameter -a (press -c to see all comands)")
 
-LEARNING_RATE = 0.01
+LEARNING_RATE = 0.005
 
 network = classe.CNN([
     classe.FullyConnectedLayer(GAMESIZE**2*4+5,50,classe.Tanh,LEARNING_RATE,1),
