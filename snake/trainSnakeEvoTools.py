@@ -17,7 +17,7 @@ import time
 MEAN_SIZE = 600
 
 WIN_SIZE = 5
-ERROR_SIZE = 0
+ERROR_SIZE = 5*4
 
 class trainSnakeEvo():
     def __init__(self, gameSize: int, averageAim: int, network : classe.CNN) -> None:
@@ -117,7 +117,6 @@ class trainSnakeEvo():
                             bannedIndex = saveIndex
 
                         rotatedGames = self.rotateGame(filtred[-1]["snake"],filtred[-1]["fruit"])
-                        correctedSituations.append(copy.deepcopy(rotatedGames))
                         for index,rotatedGame in enumerate(rotatedGames):
                             tempGame = snakeGame.Game(self.gameSize)
                             tempGame.snake = copy.deepcopy(rotatedGame[0])
@@ -131,29 +130,33 @@ class trainSnakeEvo():
                             for i in range(4):
                                 if(supervisedResult[i] == -1):
                                     error[i] = -result[i]
+                            correctedSituations.append({
+                                "rotation" : index,
+                                "rotatedGame" : copy.deepcopy(rotatedGame),
+                                "bannedIndex" : self.get_aligned_answer(index,bannedIndex),
+                                "recommandedIndex" : self.get_aligned_answer(index,recommandedIndex)})
                             error[self.get_aligned_answer(index,recommandedIndex)] = (1-result[self.get_aligned_answer(index,recommandedIndex)])
                             error[self.get_aligned_answer(index,bannedIndex)] = -result[self.get_aligned_answer(index,bannedIndex)]
                             self.network.backward(np.array([error]))
                         correctedSituationsSelected = []
                         while(len(correctedSituations) > 0 and len(correctedSituationsSelected) < ERROR_SIZE):
                             correctedSituationsSelected.append(random.choice(correctedSituations))
-                        for rotatedGames in correctedSituationsSelected:
-                            for index,rotatedGame in enumerate(rotatedGames):
-                                tempGame = snakeGame.Game(self.gameSize)
-                                tempGame.snake = copy.deepcopy(rotatedGame[0])
-                                tempGame.fruit = copy.deepcopy(rotatedGame[1])
+                        for rotatedGame in correctedSituationsSelected:
+                            tempGame = snakeGame.Game(self.gameSize)
+                            tempGame.snake = copy.deepcopy(rotatedGame["rotatedGame"][0])
+                            tempGame.fruit = copy.deepcopy(rotatedGame["rotatedGame"][1])
 
-                                Networkinput = trainSnakeEvo.generateInput(tempGame.getGrid(),tempGame.snake)
-                                result = self.network.forward(np.array([np.array(Networkinput)]))[0]
-                                supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,tempGame.snake,result,[])
+                            Networkinput = trainSnakeEvo.generateInput(tempGame.getGrid(),tempGame.snake)
+                            result = self.network.forward(np.array([np.array(Networkinput)]))[0]
+                            supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,tempGame.snake,result,[])
 
-                                error = [0 for i in range(4)]
-                                for i in range(4):
-                                    if(supervisedResult[i] == -1):
-                                        error[i] = -result[i]
-                                error[self.get_aligned_answer(index,recommandedIndex)] = (1-result[self.get_aligned_answer(index,recommandedIndex)])
-                                error[self.get_aligned_answer(index,bannedIndex)] = -result[self.get_aligned_answer(index,bannedIndex)]
-                                self.network.backward(np.array([error]))
+                            error = [0 for i in range(4)]
+                            for i in range(4):
+                                if(supervisedResult[i] == -1):
+                                    error[i] = -result[i]
+                            error[rotatedGame["recommandedIndex"]] = (1-result[rotatedGame["recommandedIndex"]])
+                            error[rotatedGame["bannedIndex"]] = -result[rotatedGame["bannedIndex"]]
+                            self.network.backward(np.array([error]))
                            
                 if(state == True or len(game.snake) == self.gameSize**2-1):
                     winnedGames.append(copy.deepcopy(previousData))
