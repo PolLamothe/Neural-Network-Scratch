@@ -18,7 +18,7 @@ from typing import Callable
 
 MEAN_SIZE = 600
 
-ERROR_SIZE = 5*4
+ERROR_SIZE = 0
 
 class trainSnakeEvo():
     def __init__(self, gameSize: int, averageAim: int, network : classe.CNN) -> None:
@@ -36,6 +36,7 @@ class trainSnakeEvo():
         lastPerformance = [0 for i in range(MEAN_SIZE)]
         count = 0
         maxAverage = 0
+        winnedGameReviewCount = 0
 
         while(self.wheightedAverage(lastPerformance) < self.averageAim):
             if(self.wheightedAverage(lastPerformance) > maxAverage):
@@ -144,7 +145,9 @@ class trainSnakeEvo():
             lastPerformance.append(len(game.snake))
             lastPerformance.pop(0)
 
-            if(random.random() > (1-len(winnedGames)/count)**2 and len(winnedGames) > 0):
+            #if(random.random() > (1-len(winnedGames)/count)**3 and len(winnedGames) > 0):
+            if(winnedGameReviewCount >= 10 and len(winnedGames) > 0):
+                winnedGameReviewCount = 0
 
                 selectedGame = random.choice(winnedGames)
 
@@ -160,23 +163,7 @@ class trainSnakeEvo():
                     rotatedGame = self.rotateGame(selectedGame[i]["snake"],selectedGame[i]["fruit"])
 
                     for index,rotatedGame in enumerate(rotatedGame):
-                        rotatedIndex = selectedGame[i+1]["index"]
-
-                        if index == 1:
-                            if rotatedIndex == 0:rotatedIndex = 2
-                            elif rotatedIndex == 1: rotatedIndex = 3
-                            elif rotatedIndex == 2:rotatedIndex = 1
-                            elif rotatedIndex == 3:rotatedIndex = 0
-                        elif index == 2:
-                            if rotatedIndex == 0:rotatedIndex = 1
-                            elif rotatedIndex == 1:rotatedIndex = 0
-                            elif rotatedIndex == 2: rotatedIndex = 3
-                            elif rotatedIndex == 3: rotatedIndex = 2
-                        elif index == 3:
-                            if rotatedIndex == 0:rotatedIndex = 3
-                            elif rotatedIndex == 1:rotatedIndex = 2
-                            elif rotatedIndex == 2:rotatedIndex = 0
-                            elif rotatedIndex == 3:rotatedIndex = 1
+                        rotatedIndex = self.get_aligned_answer(index,selectedGame[i+1]["index"])
 
                         rotatedGames[index].append(rotatedGame+[rotatedIndex])
 
@@ -207,6 +194,8 @@ class trainSnakeEvo():
                             error[rotatedGames[x][i][2]] = 1-result[rotatedGames[x][i][2]]
 
                         self.network.backward(np.array([error]))
+            else:
+                winnedGameReviewCount += 1
         print("\nThe training is over !")
         return copy.deepcopy(self.network)
     
@@ -250,7 +239,7 @@ class trainSnakeEvo():
                 else:
                     moveSinceLastFruit += 1
                 
-                if(moveSinceLastFruit > gameSize**3):
+                if(moveSinceLastFruit > gameSize**2*3):
                     state = False
 
             lengthHistory.append(len(copy.deepcopy(game.snake)))
@@ -375,7 +364,7 @@ class trainSnakeEvo():
             alignedFruit = self.__rotate_point(fruit[0],fruit[1],j)
             result.append([copy.deepcopy(alignedSnake),copy.deepcopy(alignedFruit)])
         return result
-    
+
     def get_aligned_answer(self,alignment, answerIndex):
         if alignment == 0:
             return answerIndex
