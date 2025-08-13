@@ -96,7 +96,7 @@ class trainSnakeEvo():
                         else:
                             bannedIndex = saveIndex
 
-                        rotatedGames = self.rotateGame(filtred[-1]["snake"],filtred[-1]["fruit"])
+                        rotatedGames = trainSnakeEvo.rotateGame(filtred[-1]["snake"],filtred[-1]["fruit"],self.gameSize)
                         for index,rotatedGame in enumerate(rotatedGames):
                             tempGame = snakeGame.Game(self.gameSize)
                             tempGame.snake = copy.deepcopy(rotatedGame[0])
@@ -160,7 +160,7 @@ class trainSnakeEvo():
                 rotatedGames = [[],[],[],[]]
 
                 for i in range(indexAboveMean,len(selectedGame)-1):
-                    rotatedGame = self.rotateGame(selectedGame[i]["snake"],selectedGame[i]["fruit"])
+                    rotatedGame = trainSnakeEvo.rotateGame(selectedGame[i]["snake"],selectedGame[i]["fruit"],self.gameSize)
 
                     for index,rotatedGame in enumerate(rotatedGame):
                         rotatedIndex = self.get_aligned_answer(index,selectedGame[i+1]["index"])
@@ -208,9 +208,16 @@ class trainSnakeEvo():
             moveSinceLastFruit = 0
             previousData = []
             while(state == None):
-                Networkinput = trainSnakeEvo.generateInput(game.getGrid(),game.snake)
-                result = network.forward(np.array([np.array(Networkinput)]))[0]
-                supervisedResult = trainSnakeEvo.superviseAnswer(gameSize,game.snake,result.tolist(),previousData)
+                Networkinput = []
+                rotatedGames = trainSnakeEvo.rotateGame(game.snake,game.fruit,game.size)
+                for games in rotatedGames:
+                    tempGame = snakeGame.Game(gameSize)
+                    tempGame.snake = games[0]
+                    tempGame.fruit = games[1]
+                    Networkinput.append(trainSnakeEvo.generateInput(tempGame.getGrid(),tempGame.snake))
+                result = network.forward(np.array(Networkinput))
+                averageResult = np.mean([trainSnakeEvo.rotate_agent_result(_result,index) for index,_result in enumerate(result)],axis=0)
+                supervisedResult = trainSnakeEvo.superviseAnswer(gameSize,game.snake,averageResult.tolist(),previousData)
                 answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(supervisedResult))
 
                 if(answerIndex == 0):
@@ -341,17 +348,27 @@ class trainSnakeEvo():
     def average(self,performances : list[int ]) -> float:
         return sum(performances)/len(performances)
 
-    def __rotate_point(self,x: int, y: int, alignment: int) -> list[int, int]:
+    def rotate_point(x: int, y: int, alignment: int,gameSize : int) -> list[int, int]:
         if alignment == 0:
             return [x, y]
         elif alignment == 1:  # 90°
-            return [y, self.gameSize - 1 - x]
+            return [y, gameSize - 1 - x]
         elif alignment == 2:  # 180°
-            return [self.gameSize - 1 - x, self.gameSize - 1 - y]
+            return [gameSize - 1 - x, gameSize - 1 - y]
         elif alignment == 3:  # 270°
-            return [self.gameSize - 1 - y, x]
+            return [gameSize - 1 - y, x]
+    
+    def rotate_agent_result(result : list[float],alignment : int) -> list[float]:
+        if(alignment == 0):
+            return result
+        elif(alignment == 1):
+            return [result[2],result[3],result[1],result[0]]
+        elif(alignment == 2):
+            return [result[1],result[0],result[3],result[2]]
+        elif(alignment == 3):
+            return [result[3],result[2],result[0],result[1]]
 
-    def rotateGame(self,snake : list[list[int]],fruit : list[int]) -> list[list[list[int]]]:
+    def rotateGame(snake : list[list[int]],fruit : list[int],gameSize : int) -> list[list[list[int]]]:
         result = []
 
         for j in range(4):
@@ -359,9 +376,9 @@ class trainSnakeEvo():
             alignedSnake = copy.deepcopy(snake)
 
             for i in range(len(alignedSnake)):
-                alignedSnake[i] = self.__rotate_point(alignedSnake[i][0],alignedSnake[i][1],j)
+                alignedSnake[i] = trainSnakeEvo.rotate_point(alignedSnake[i][0],alignedSnake[i][1],j,gameSize)
             
-            alignedFruit = self.__rotate_point(fruit[0],fruit[1],j)
+            alignedFruit = trainSnakeEvo.rotate_point(fruit[0],fruit[1],j,gameSize)
             result.append([copy.deepcopy(alignedSnake),copy.deepcopy(alignedFruit)])
         return result
 
@@ -529,12 +546,15 @@ def getWholeGameData() -> list[dict]:
         for i in range(len(allModel)):
             if(bestModel == None or jsonData[bestModel]["aim"] < jsonData[allModel[i].split("_")[1]]["aim"]):
                 bestModel = allModel[i].split("_")[1]
+    
+    gameSize = jsonData[bestModel]["gameSize"]
 
     with open("../snake/model/snake_"+bestModel+"_.pkl", "rb") as file:
         network : classe.NN = pickle.load(file)
     
-    game = snakeGame.Game(5)
-    dataSinceLastFood = []
+    game = snakeGame.Game(gameSize)
+    moveSinceLastFood = 0
+    previousData = []
     data = []
 
     while(game.checkState() == None):
@@ -542,8 +562,18 @@ def getWholeGameData() -> list[dict]:
             "fruit":copy.deepcopy(game.fruit),
             "snake":copy.deepcopy(game.snake)
         })
-        result = network.forward(np.array([trainSnakeEvo.generateInput(game.getGrid(),True,game.snake)]))[0]
-        answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(trainSnakeEvo.superviseAnswer(game.size,game.snake,result.tolist(),copy.deepcopy(dataSinceLastFood))))
+
+        Networkinput = []
+        rotatedGames = trainSnakeEvo.rotateGame(game.snake,game.fruit,game.size)
+        for games in rotatedGames:
+            tempGame = snakeGame.Game(gameSize)
+            tempGame.snake = games[0]
+            tempGame.fruit = games[1]
+            Networkinput.append(trainSnakeEvo.generateInput(tempGame.getGrid(),tempGame.snake))
+        result = network.forward(np.array(Networkinput))
+        averageResult = np.mean([trainSnakeEvo.rotate_agent_result(_result,index) for index,_result in enumerate(result)],axis=0)
+        supervisedResult = trainSnakeEvo.superviseAnswer(gameSize,game.snake,averageResult.tolist(),previousData)
+        answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(supervisedResult))
 
         if(answerIndex == 0):
             game.directionY = -1
@@ -557,11 +587,14 @@ def getWholeGameData() -> list[dict]:
         elif(answerIndex == 3):
             game.directionX = 1
             game.directionY = 0
-        snakeSave = copy.deepcopy(game.snake)
-        fruitSave = game.fruit.copy()
+        fruitSave = copy.deepcopy(game.fruit)
         game.update()
+        previousData.append({"snake":copy.deepcopy(game.snake),"fruit":copy.deepcopy(game.fruit),"index":answerIndex})
         if(fruitSave != game.fruit):
-            dataSinceLastFood = []
-        else:
-            dataSinceLastFood.append({"snake":copy.deepcopy(snakeSave),"index":answerIndex})
+            moveSinceLastFood = 0
+
+        moveSinceLastFood += 1
+        
+        if moveSinceLastFood > gameSize**2*3:
+            break
     return data

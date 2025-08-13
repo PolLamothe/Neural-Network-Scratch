@@ -7,6 +7,7 @@ sys.path.append("../")
 import classe
 import copy
 import json
+import numpy as np
 
 allModel = []
 for (dirpath, dirnames, filenames) in os.walk("./model"):
@@ -39,8 +40,17 @@ def handleModelChoice(name : str):
     def updateGrid():
         global previousData
         global game
-        result = network.forward(trainSnakeEvoTools.trainSnakeEvo.generateInput(game.getGrid(),game.snake))
-        answerIndex = random.choice(trainSnakeEvoTools.trainSnakeEvo.getAllMaxIndex(trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(game.size,game.snake,result,copy.deepcopy(previousData))))
+        Networkinput = []
+        rotatedGames = trainSnakeEvoTools.trainSnakeEvo.rotateGame(game.snake,game.fruit,game.size)
+        for games in rotatedGames:
+            tempGame = trainSnakeEvoTools.snakeGame.Game(gameSize)
+            tempGame.snake = games[0]
+            tempGame.fruit = games[1]
+            Networkinput.append(trainSnakeEvoTools.trainSnakeEvo.generateInput(tempGame.getGrid(),tempGame.snake))
+        result = network.forward(np.array(Networkinput))
+        averageResult = np.mean([trainSnakeEvoTools.trainSnakeEvo.rotate_agent_result(_result,index) for index,_result in enumerate(result)],axis=0)
+        answerIndex = random.choice(trainSnakeEvoTools.trainSnakeEvo.getAllMaxIndex(trainSnakeEvoTools.trainSnakeEvo.superviseAnswer(game.size,game.snake,averageResult,copy.deepcopy(previousData))))
+        
         if(answerIndex == 0):
             game.directionY = -1
             game.directionX = 0
