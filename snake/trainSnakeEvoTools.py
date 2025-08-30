@@ -37,6 +37,7 @@ class trainSnakeEvo():
         count = 0
         maxAverage = 0
         winnedGameReviewCount = 0
+        errorReviewCount = 0
 
         while(self.wheightedAverage(lastPerformance) < self.averageAim):
             if(self.wheightedAverage(lastPerformance) > maxAverage):
@@ -118,34 +119,13 @@ class trainSnakeEvo():
                             error[self.get_aligned_answer(index,recommandedIndex)] = (1-result[self.get_aligned_answer(index,recommandedIndex)])
                             error[self.get_aligned_answer(index,bannedIndex)] = -result[self.get_aligned_answer(index,bannedIndex)]
                             self.network.backward(np.array([error]))
-                        correctedSituationsSelected = []
-                        while(len(correctedSituations) > 0 and len(correctedSituationsSelected) < ERROR_SIZE):
-                            correctedSituationsSelected.append(random.choice(correctedSituations))
-                        for rotatedGame in correctedSituationsSelected:
-                            tempGame = snakeGame.Game(self.gameSize)
-                            tempGame.snake = copy.deepcopy(rotatedGame["rotatedGame"][0])
-                            tempGame.fruit = copy.deepcopy(rotatedGame["rotatedGame"][1])
-
-                            Networkinput = trainSnakeEvo.generateInput(tempGame.getGrid(),tempGame.snake)
-                            result = self.network.forward(np.array([np.array(Networkinput)]))[0]
-                            supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,tempGame.snake,result,[])
-
-                            error = [0 for i in range(4)]
-                            for i in range(4):
-                                if(supervisedResult[i] == -1):
-                                    error[i] = -result[i]
-                            error[rotatedGame["recommandedIndex"]] = (1-result[rotatedGame["recommandedIndex"]])
-                            error[rotatedGame["bannedIndex"]] = -result[rotatedGame["bannedIndex"]]
-                            self.network.backward(np.array([error]))
-                           
-                if(state == True or len(game.snake) == self.gameSize**2-1):
+                if(state == True):
                     winnedGames.append(copy.deepcopy(previousData))
                     state = True
             count += 1
             lastPerformance.append(len(game.snake))
             lastPerformance.pop(0)
 
-            #if(random.random() > (1-len(winnedGames)/count)**3 and len(winnedGames) > 0):
             if(winnedGameReviewCount >= 10 and len(winnedGames) > 0):
                 winnedGameReviewCount = 0
 
