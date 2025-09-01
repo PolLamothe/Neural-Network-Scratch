@@ -537,12 +537,12 @@ def getWholeGameData() -> list[dict]:
     previousData = []
     data = []
 
-    while(game.checkState() == None):
-        data.append({
-            "fruit":copy.deepcopy(game.fruit),
-            "snake":copy.deepcopy(game.snake)
-        })
+    data.append({
+        "fruit":copy.deepcopy(game.fruit),
+        "snake":copy.deepcopy(game.snake)
+    })
 
+    while(game.checkState() == None):
         Networkinput = []
         rotatedGames = trainSnakeEvo.rotateGame(game.snake,game.fruit,game.size)
         for games in rotatedGames:
@@ -569,6 +569,10 @@ def getWholeGameData() -> list[dict]:
             game.directionY = 0
         fruitSave = copy.deepcopy(game.fruit)
         game.update()
+        data.append({
+            "fruit":copy.deepcopy(game.fruit),
+            "snake":copy.deepcopy(game.snake)
+        })
         previousData.append({"snake":copy.deepcopy(game.snake),"fruit":copy.deepcopy(game.fruit),"index":answerIndex})
         if(fruitSave != game.fruit):
             moveSinceLastFood = 0
