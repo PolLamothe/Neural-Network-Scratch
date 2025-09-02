@@ -14,12 +14,14 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-c", dest="help", action='store_true')
 parser.add_argument("-s", dest="save", action='store_true')
 parser.add_argument("-a",dest="aim")
+parser.add_argument("-b", dest="benchmark")
 
 args = parser.parse_args()
 if(args.help):
     print("-c : Get all command")
     print("-s : Save the model once it has finish training")
-    print("-a : The average length you want the IA to reach")
+    print("-a LENGTH : The average length you want the IA to reach")
+    print("-b ID : Benchmarking the agent stored in the file corresponding to the ID provided")
     exit(0)
 
 allModel = []
@@ -44,6 +46,12 @@ with open("./model/trainedData.json","w") as file:
     json.dump(data,file,indent=2)
 
 GAMESIZE = 5
+
+if(args.benchmark != None):
+    with open("./model/snake_"+args.benchmark+"_.pkl", "rb") as file:
+        network = pickle.load(file)
+        trainSnakeEvoTools.trainSnakeEvo.benchmarkModel(network,data[args.benchmark]["gameSize"])
+        exit(0)
 
 try:
     if(float(args.aim) > GAMESIZE**2 or float(args.aim) < 4):
