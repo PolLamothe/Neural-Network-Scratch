@@ -64,10 +64,16 @@ LEARNING_RATE = 0.005
 network = classe.CNN([
     classe.FullyConnectedLayer(GAMESIZE**2*4+9,50,classe.Tanh,LEARNING_RATE,1),
     classe.FullyConnectedLayer(50,50,classe.Tanh,LEARNING_RATE,1),
-    classe.FullyConnectedLayer(50,50,classe.Tanh,LEARNING_RATE,1),
-    classe.FullyConnectedLayer(50,50,classe.Tanh,LEARNING_RATE,1),
     classe.FullyConnectedLayer(50,4,classe.Sigmoid,LEARNING_RATE,1)
 ])
+
+MEAN_SIZE = trainSnakeEvoTools.MEAN_SIZE
+
+ERROR_REVIEW_SIZE = trainSnakeEvoTools.ERROR_REVIEW_SIZE
+
+WINNED_GAME_REVIEW_SIZE = trainSnakeEvoTools.WINNED_GAME_REVIEW_SIZE
+
+PACKED_BODY_COEFF = trainSnakeEvoTools.PACKED_BODY_COEFF
 
 try:
     STARTINGTIME = time.time()
@@ -76,6 +82,8 @@ except TypeError:
     raise Exception("You forgot the parameter -a (press -c to see all comands)")
 
 network = snakeTrain.train()
+
+benchmarkResult = trainSnakeEvoTools.trainSnakeEvo.benchmarkModel(network,GAMESIZE)
 
 if(args.save):
     print("saving your model")
@@ -89,10 +97,16 @@ if(args.save):
         "gameSize":GAMESIZE,
         "aim":args.aim,
         "trainingTime":(time.time()-STARTINGTIME)/60,
+        "LEARNING_RATE" : LEARNING_RATE,
+        "MEAN_SIZE" : MEAN_SIZE,
+        "ERROR_REVIEW_SIZE" : ERROR_REVIEW_SIZE,
+        "WINNED_GAME_REVIEW_SIZE" : WINNED_GAME_REVIEW_SIZE,
+        "PACKED_BODY_COEFF" : PACKED_BODY_COEFF,
+        "HIDDEN_LAYER" : len(network.layers)-1,
+        "BENCHMARK" : benchmarkResult
     })
     with open("./model/trainedData.json","w") as file:
         json.dump(data,file,indent=2)
 
-trainSnakeEvoTools.trainSnakeEvo.benchmarkModel(network,GAMESIZE)
 
 os._exit(0)
