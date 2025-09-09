@@ -14,7 +14,6 @@ import random
 import copy
 import pickle
 import time
-from typing import Callable
 
 MEAN_SIZE = 600
 
@@ -43,7 +42,7 @@ class trainSnakeEvo():
         count = 0
         maxAverage = 0
         winnedGameReviewCount = 0
-        winReviewIndex = 0
+        winnedGameMostSeen = 0
 
         while(self.wheightedAverage(lastPerformance) < self.averageAim):
             if(self.wheightedAverage(lastPerformance) > maxAverage):
@@ -153,10 +152,19 @@ class trainSnakeEvo():
                             error[self.get_aligned_answer(index,bannedIndex)] = -result[self.get_aligned_answer(index,bannedIndex)]
                             self.network.backward(np.array([error]))
                 if(state == True):
-                    winnedGames.append(copy.deepcopy(previousData))
-                    if(len(winnedGames) > WINNED_GAME_SIZE):
-                        winnedGames.pop(0)
-                    state = True
+                    winnedGames.append({"seen":0,"data":copy.deepcopy(previousData)})
+                    '''if(len(winnedGames) > WINNED_GAME_SIZE):
+                        mostViewIndex = -1
+                        mostViewSeen = -1
+                        for index,game2 in enumerate(winnedGames):
+                            if game2["seen"] > mostViewSeen:
+                                mostViewIndex = index
+                                mostViewSeen = game2["seen"]
+                                secondMostViewSeen = mostViewSeen
+                            elif game2["seen"] == mostViewSeen:
+                                secondMostViewSeen = mostViewSeen
+                        winnedGames.pop(mostViewIndex)
+                        winnedGameMostSeen = secondMostViewSeen'''
             count += 1
             lastPerformance.append(len(game.snake))
             lastPerformance.pop(0)
@@ -190,10 +198,18 @@ class trainSnakeEvo():
             if(winnedGameReviewCount >= WINNED_GAME_REVIEW_SIZE and len(winnedGames) > 0):
                 winnedGameReviewCount = 0
 
-                '''winReviewIndex %= len(winnedGames)
-                selectedGame = winnedGames[winReviewIndex]
-                winReviewIndex += 1'''
-                selectedGame = random.choice(winnedGames)
+                winnedGamesProb = []
+
+                for game in winnedGames:
+                    if(game["seen"] > winnedGameMostSeen):
+                        print("ERREUR DAOBOZABFA : ",winnedGameMostSeen,game["seen"])
+                    winnedGamesProb.append(winnedGameMostSeen-game["seen"]+1)
+
+                selectedGameIndex = random.choices(range(len(winnedGames)),weights=winnedGamesProb,k=1)[0]
+                selectedGame = winnedGames[selectedGameIndex]["data"]
+                winnedGames[selectedGameIndex]["seen"] += len(winnedGames)
+                if winnedGames[selectedGameIndex]["seen"] > winnedGameMostSeen:
+                    winnedGameMostSeen = winnedGames[selectedGameIndex]["seen"]
 
                 indexAboveMean = None
                 for (index,data) in enumerate(selectedGame):
