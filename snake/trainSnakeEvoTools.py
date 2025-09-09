@@ -98,6 +98,25 @@ class trainSnakeEvo():
                 else:
                     moveSinceLastFruit += 1
                     if(moveSinceLastFruit > game.size**2*2):
+                        '''for index,data in enumerate(previousData):
+                            if(len(data["snake"]) != len(game.snake)):
+                                break
+
+                            tempGame = snakeGame.Game(self.gameSize)
+                            tempGame.snake = data["snake"]
+                            tempGame.fruit = data["fruit"]
+
+                            Networkinput = trainSnakeEvo.generateInput(tempGame.getGrid(),tempGame.snake)
+                            result = self.network.forward(np.array([np.array(Networkinput)]))[0]
+                            supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,tempGame.snake,result.tolist(),previousData[:index])
+                            answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(supervisedResult))
+
+                            error = self.getError(
+                                previousData[index-1]["snake"],previousData[index-1]["fruit"],tempGame.snake,tempGame.fruit,result,supervisedResult,answerIndex,True
+                            )
+
+                            error[data["index"]] = -result[data["index"]]/self.gameSize
+                            self.network.backward(np.array([error]))'''
                         state = False
                     elif(state == False):
                         saveIndex = copy.deepcopy(previousData[-1]["index"])
@@ -152,7 +171,18 @@ class trainSnakeEvo():
                             error[self.get_aligned_answer(index,bannedIndex)] = -result[self.get_aligned_answer(index,bannedIndex)]
                             self.network.backward(np.array([error]))
                 if(state == True):
-                    winnedGames.append({"seen":0,"data":copy.deepcopy(previousData)})
+                    moveSinceLastFruit = 0
+                    verified = True
+                    for index,data in enumerate(previousData):
+                        if(index == 0):continue
+                        if(data["fruit"] != previousData[index-1]["fruit"]):
+                            moveSinceLastFruit = 0
+                        else :
+                            moveSinceLastFruit += 1
+                        if(moveSinceLastFruit > self.gameSize**2+self.gameSize):
+                            verified = False
+                    if(verified):
+                        winnedGames.append({"seen":0,"data":copy.deepcopy(previousData)})
                     '''if(len(winnedGames) > WINNED_GAME_SIZE):
                         mostViewIndex = -1
                         mostViewSeen = -1
