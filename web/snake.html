@@ -3,118 +3,1140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Snake</title>
+    <title>Snake AI Visualizer with Victory Effects</title>
 </head>
 <body>
-    <div id="globalMap">
-
-    </div>
     <div id="loadingWrapper">
-        <img id="loadingImage">
-        <p>Receiving the game data..</p>
+        <div class="loading-spinner"></div>
+        <p>Loading game data...</p>
     </div>
-</body>
 
-<script defer>
-    const gameSize = 5
+    <div id="gameInterface" style="display: none;">
+        <div class="header">
+            <h1>🐍 Snake AI Visualizer</h1>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-label">Turn:</span>
+                    <span id="currentMove">1</span>/<span id="totalMoves">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Length:</span>
+                    <span id="snakeLength">0</span>
+                </div>
+                <div class="stat-item" id="gameStatusStat" style="display: none;">
+                    <span class="stat-label">Status:</span>
+                    <span id="gameStatus">Playing</span>
+                </div>
+            </div>
+        </div>
 
-    let data = null
+        <div class="game-container">
+            <div id="globalMap"></div>
+            
+            <div class="controls-panel">
+                <div class="controls-row">
+                    <button id="startBtn" class="control-btn primary">
+                        <span class="btn-icon">▶️</span>
+                        Start
+                    </button>
+                    <button id="pauseBtn" class="control-btn" disabled>
+                        <span class="btn-icon">⏸️</span>
+                        Pause
+                    </button>
+                    <button id="resetBtn" class="control-btn">
+                        <span class="btn-icon">⏮️</span>
+                        Reset
+                    </button>
+                </div>
+                
+                <div class="controls-row">
+                    <button id="prevBtn" class="control-btn">
+                        <span class="btn-icon">⏪</span>
+                        Previous
+                    </button>
+                    <button id="nextBtn" class="control-btn">
+                        <span class="btn-icon">⏩</span>
+                        Next
+                    </button>
+                    <button id="endBtn" class="control-btn">
+                        <span class="btn-icon">⏭️</span>
+                        End
+                    </button>
+                </div>
 
-    let currentIndex = 0
+                <!-- New Replay Button -->
+                <div class="controls-row" id="replayControls" style="display: none;">
+                    <button id="replayBtn" class="control-btn replay">
+                        <span class="btn-icon">🔄</span>
+                        New Game
+                    </button>
+                </div>
 
-    document.getElementById("loadingImage").setAttribute("src",`${window.location.href.replace("snake","")}static/images/loading.gif`)
+                <div class="speed-control">
+                    <label for="speedSlider">Playback Speed:</label>
+                    <input type="range" id="speedSlider" min="50" max="1000" value="250" step="50">
+                    <span id="speedValue">250ms</span>
+                </div>
 
-    for(let i = 0;i<gameSize;i++){
-        let temp = document.createElement("div")
-        temp.setAttribute("class","row")
-        document.getElementById("globalMap").appendChild(temp)
-        for(let x = 0;x<gameSize;x++){
-            let temp2 = document.createElement("div")
-            temp2.setAttribute("id","box_"+i+"_"+x)
-            temp2.setAttribute("class","box")
-            temp.appendChild(temp2)
+                <div class="progress-container">
+                    <input type="range" id="progressSlider" min="0" max="100" value="0" class="progress-slider">
+                </div>
+
+                <div id="collisionInfo" class="collision-info" style="display: none;">
+                    <h3>🚫 Collision Detected!</h3>
+                    <p id="collisionDetails"></p>
+                </div>
+
+                <div id="victoryInfo" class="victory-info" style="display: none;">
+                    <h3>🎉 Victory!</h3>
+                    <p>The snake has filled the entire grid!</p>
+                </div>
+
+                <!-- Loading indicator for new game -->
+                <div id="replayLoading" class="replay-loading" style="display: none;">
+                    <div class="loading-spinner-small"></div>
+                    <p>Loading a new game...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Victory overlay -->
+    <div id="victoryOverlay" class="victory-overlay" style="display: none;">
+        <div class="victory-particles"></div>
+    </div>
+
+    <script defer>
+        const gameSize = 5;
+        let data = null;
+        let currentIndex = 0;
+        let isPlaying = false;
+        let playInterval = null;
+        let speed = 250;
+        let gameEnded = false;
+        let gameWon = false;
+        let collisionPosition = null;
+
+        // DOM Elements
+        const elements = {
+            loading: document.getElementById("loadingWrapper"),
+            gameInterface: document.getElementById("gameInterface"),
+            globalMap: document.getElementById("globalMap"),
+            currentMove: document.getElementById("currentMove"),
+            totalMoves: document.getElementById("totalMoves"),
+            snakeLength: document.getElementById("snakeLength"),
+            gameStatus: document.getElementById("gameStatus"),
+            gameStatusStat: document.getElementById("gameStatusStat"),
+            startBtn: document.getElementById("startBtn"),
+            pauseBtn: document.getElementById("pauseBtn"),
+            resetBtn: document.getElementById("resetBtn"),
+            prevBtn: document.getElementById("prevBtn"),
+            nextBtn: document.getElementById("nextBtn"),
+            endBtn: document.getElementById("endBtn"),
+            replayBtn: document.getElementById("replayBtn"),
+            replayControls: document.getElementById("replayControls"),
+            replayLoading: document.getElementById("replayLoading"),
+            speedSlider: document.getElementById("speedSlider"),
+            speedValue: document.getElementById("speedValue"),
+            progressSlider: document.getElementById("progressSlider"),
+            collisionInfo: document.getElementById("collisionInfo"),
+            collisionDetails: document.getElementById("collisionDetails"),
+            victoryInfo: document.getElementById("victoryInfo"),
+            victoryOverlay: document.getElementById("victoryOverlay"),
+        };
+
+        // Show/hide replay button
+        function toggleReplayButton(show) {
+            elements.replayControls.style.display = show ? 'flex' : 'none';
         }
-    }
 
-    const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay))
-
-    async function getAgentData() {
-        data = await (await fetch(`${window.location}/getData`,{method:"GET"})).json()
-        document.getElementById("loadingWrapper").style.display = "none"
-        document.getElementById("globalMap").style.display = "flex"
-        for(let i = 0;i<data.length;i++){
-            updateGrid()
-            currentIndex++
-            await sleep(250)
-        }
-    }
-
-    function updateGrid(){
-        for(let i = 0;i<gameSize;i++){
-            for(let x = 0;x<gameSize;x++){
-                document.getElementById("box_"+i+"_"+x).classList = ["box"]
+        // Load new game
+        async function loadNewGame() {
+            try {
+                elements.replayLoading.style.display = 'block';
+                elements.replayBtn.disabled = true;
+                
+                // Call your server to get a new game
+                const response = await fetch(`${window.location}/getData`, {
+                    method: "GET",
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status}`);
+                }
+                
+                const newData = await response.json();
+                
+                if (!newData || !Array.isArray(newData) || newData.length === 0) {
+                    throw new Error("Invalid data received from server");
+                }
+                
+                // Reset game state
+                data = newData;
+                currentIndex = 0;
+                gameEnded = false;
+                gameWon = false;
+                collisionPosition = null;
+                isPlaying = false;
+                
+                if (playInterval) {
+                    clearInterval(playInterval);
+                    playInterval = null;
+                }
+                
+                // Hide end game information
+                elements.collisionInfo.style.display = 'none';
+                elements.victoryInfo.style.display = 'none';
+                elements.victoryOverlay.style.display = 'none';
+                elements.gameStatusStat.style.display = 'none';
+                
+                // Hide replay button
+                toggleReplayButton(false);
+                
+                // Reset buttons
+                elements.startBtn.disabled = false;
+                elements.pauseBtn.disabled = true;
+                
+                // Update display
+                updateGrid();
+                
+                elements.replayLoading.style.display = 'none';
+                elements.replayBtn.disabled = false;
+                
+            } catch (error) {
+                console.error("Error loading new game:", error);
+                elements.replayLoading.style.display = 'none';
+                elements.replayBtn.disabled = false;
+                
+                // Show error to user
+                alert(`Error loading new game: ${error.message}`);
             }
         }
-        let currentSnake = data[currentIndex]["snake"]
-        for(let i = 0;i<currentSnake.length-1;i++){
-            document.getElementById("box_"+currentSnake[i][1]+"_"+currentSnake[i][0]).classList.add("body")
+
+        // Victory detection
+        function checkVictory(snake) {
+            return snake.length === gameSize * gameSize;
         }
 
-        let currentFruit = data[currentIndex]["fruit"]
-
-        document.getElementById("box_"+currentSnake[currentSnake.length-1][1]+"_"+currentSnake[currentSnake.length-1][0]).classList.add("head")
-
-        document.getElementById("box_"+currentFruit[1]+"_"+currentFruit[0]).classList.add("food")
-    }
-
-    getAgentData()
-</script>
-<style>
-    #loadingWrapper p{
-        font-size: 30px;
-        font-family: Arial, Helvetica, sans-serif;
-    }
-    #loadingWrapper{
-        margin-top: 50vh;
-        margin-left: 50vw;
-        transform: translate(-50%,-50%);
-        width: fit-content;
-        height: fit-content;
-        text-align: center;
-    }
-    #loadingImage{
-        width: 10vw;
-    }
-    .food{
-        background-color: green!important;
-    }
-    .head{
-        background-color: red!important;
-    }
-    .body{
-        background-color: black !important;
-    }
-    #globalMap{
-        display: none;
-        flex-direction: column;
-        width: fit-content;
-        margin-left: 50vw;
-        margin-top: 50vh;
-        transform: translate(-50%,-50%);
-    }
-    .row{
-        display: flex;
-        flex-direction: row;
-    }
-    .box{
-        width: 5vw;
-        aspect-ratio: 1/1;
-        background-color: lightgreen;
-    }
-    @media only screen and (max-width : 600px) {
-        .box{
-            width: 15vw;
+        // Collision detection
+        function detectCollision(snake) {
+            if (snake.length < 2) return null;
+            
+            const head = snake[snake.length - 1];
+            const [headX, headY] = head;
+            
+            // Check wall collision
+            if (headX < 0 || headX >= gameSize || headY < 0 || headY >= gameSize) {
+                return {
+                    type: 'wall',
+                    position: [headX, headY],
+                    message: `Wall collision at position (${headX}, ${headY})`
+                };
+            }
+            
+            // Check self collision
+            const body = snake.slice(0, -1);
+            for (let i = 0; i < body.length; i++) {
+                const [bodyX, bodyY] = body[i];
+                if (headX === bodyX && headY === bodyY) {
+                    return {
+                        type: 'self',
+                        position: [headX, headY],
+                        message: `Self collision at position (${headX}, ${headY}) - segment ${i + 1}`
+                    };
+                }
+            }
+            
+            return null;
         }
-    }
-</style>
+
+        // Grid initialization
+        function initializeGrid() {
+            elements.globalMap.innerHTML = '';
+            for(let i = 0; i < gameSize; i++){
+                let row = document.createElement("div");
+                row.setAttribute("class", "row");
+                elements.globalMap.appendChild(row);
+                for(let x = 0; x < gameSize; x++){
+                    let cell = document.createElement("div");
+                    cell.setAttribute("id", `box_${i}_${x}`);
+                    cell.setAttribute("class", "box");
+                    row.appendChild(cell);
+                }
+            }
+        }
+
+        // Create victory particles
+        function createVictoryParticles() {
+            const particles = document.querySelector('.victory-particles');
+            particles.innerHTML = '';
+            
+            const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'];
+            const symbols = ['⭐', '✨', '💎', '🎉', '🏆', '👑'];
+            
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'victory-particle';
+                particle.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.color = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.animationDelay = Math.random() * 3 + 's';
+                particle.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                particles.appendChild(particle);
+            }
+        }
+
+        // Victory grid animation
+        function animateVictoryGrid() {
+            const cells = document.querySelectorAll('.victory-body, .victory-head');
+            let delay = 0;
+            
+            cells.forEach((cell, index) => {
+                setTimeout(() => {
+                    cell.classList.add('victory-pulse');
+                }, delay);
+                delay += 80;
+            });
+
+            // Wave animation
+            setTimeout(() => {
+                cells.forEach((cell, index) => {
+                    setTimeout(() => {
+                        cell.style.background = `hsl(${(index * 20) % 360}, 70%, 60%)`;
+                        cell.classList.add('victory-rainbow');
+                    }, (index % 5) * 100);
+                });
+            }, 1000);
+        }
+
+        // Complete victory animation
+        function animateVictory() {
+            // Animate grid
+            animateVictoryGrid();
+
+            // Create particles
+            createVictoryParticles();
+            
+            // Show overlay after delay
+            elements.victoryOverlay.style.display = 'flex';
+        }
+
+        // Grid update
+        function updateGrid(){
+            // Reset all cells
+            for(let i = 0; i < gameSize; i++){
+                for(let x = 0; x < gameSize; x++){
+                    const cell = document.getElementById(`box_${i}_${x}`);
+                    cell.className = "box";
+                    cell.innerHTML = '';
+                    cell.style.background = '';
+                }
+            }
+
+            if (!data || currentIndex >= data.length) return;
+
+            const currentState = data[currentIndex];
+            const currentSnake = currentState.snake;
+            const currentFruit = currentState.fruit;
+
+            // Check victory first
+            const victory = checkVictory(currentSnake);
+            if (victory && !gameWon) {
+                gameWon = true;
+                gameEnded = true;
+                elements.victoryInfo.style.display = 'block';
+                elements.gameStatusStat.style.display = 'block';
+                elements.gameStatus.textContent = 'Victory!';
+                elements.gameStatus.style.color = '#f39c12';
+                
+                // Show replay button
+                toggleReplayButton(true);
+                
+                // Draw complete snake with victory style
+                for(let i = 0; i < currentSnake.length; i++){
+                    const [x, y] = currentSnake[i];
+                    if (y >= 0 && y < gameSize && x >= 0 && x < gameSize) {
+                        if (i === currentSnake.length - 1) {
+                            document.getElementById(`box_${y}_${x}`).classList.add("victory-head");
+                        } else {
+                            document.getElementById(`box_${y}_${x}`).classList.add("victory-body");
+                        }
+                    }
+                }
+                
+                pause();
+                animateVictory();
+                updateStats();
+                return;
+            }
+
+            // Detect collisions if no victory
+            const collision = !victory ? detectCollision(currentSnake) : null;
+            collisionPosition = collision;
+            
+            // Draw snake body
+            for(let i = 0; i < currentSnake.length - 1; i++){
+                const [x, y] = currentSnake[i];
+                if (y >= 0 && y < gameSize && x >= 0 && x < gameSize) {
+                    document.getElementById(`box_${y}_${x}`).classList.add("body");
+                }
+            }
+
+            // Draw snake head
+            if (currentSnake.length > 0) {
+                const [headX, headY] = currentSnake[currentSnake.length - 1];
+                if (headY >= 0 && headY < gameSize && headX >= 0 && headX < gameSize) {
+                    document.getElementById(`box_${headY}_${headX}`).classList.add("head");
+                }
+            }
+
+            // Draw fruit only if no victory
+            if (!victory && currentFruit) {
+                const [fruitX, fruitY] = currentFruit;
+                if (fruitY >= 0 && fruitY < gameSize && fruitX >= 0 && fruitX < gameSize) {
+                    document.getElementById(`box_${fruitY}_${fruitX}`).classList.add("food");
+                }
+            }
+
+            // Show collision if detected
+            if (collision) {
+                const [collisionX, collisionY] = collision.position;
+                if (collisionY >= 0 && collisionY < gameSize && collisionX >= 0 && collisionX < gameSize) {
+                    const collisionCell = document.getElementById(`box_${collisionY}_${collisionX}`);
+                    collisionCell.classList.add("collision");
+                    collisionCell.innerHTML = '<div class="collision-cross">✗</div>';
+                }
+                
+                elements.collisionInfo.style.display = 'block';
+                elements.collisionDetails.textContent = collision.message;
+                elements.gameStatusStat.style.display = 'block';
+                elements.gameStatus.textContent = 'Game Over';
+                elements.gameStatus.style.color = '#e74c3c';
+                
+                // Show replay button
+                toggleReplayButton(true);
+                
+                gameEnded = true;
+                pause();
+            } else if (!victory) {
+                elements.collisionInfo.style.display = 'none';
+                if (!gameEnded) {
+                    elements.gameStatusStat.style.display = 'block';
+                    elements.gameStatus.textContent = 'Playing';
+                    elements.gameStatus.style.color = '#27ae60';
+                }
+            }
+
+            updateStats();
+        }
+
+        // Update statistics
+        function updateStats() {
+            if (!data || currentIndex >= data.length) return;
+            
+            elements.currentMove.textContent = currentIndex + 1;
+            elements.totalMoves.textContent = data.length;
+            elements.snakeLength.textContent = data[currentIndex].snake.length;
+            elements.progressSlider.value = (currentIndex / (data.length - 1)) * 100;
+        }
+
+        // Playback controls
+        function play() {
+            if (isPlaying) return;
+            isPlaying = true;
+            elements.startBtn.disabled = true;
+            elements.pauseBtn.disabled = false;
+            
+            playInterval = setInterval(() => {
+                if (currentIndex < data.length - 1) {
+                    nextMove();
+                } else {
+                    pause();
+                }
+            }, speed);
+        }
+
+        function pause() {
+            isPlaying = false;
+            elements.startBtn.disabled = false;
+            elements.pauseBtn.disabled = true;
+            if (playInterval) {
+                clearInterval(playInterval);
+                playInterval = null;
+            }
+        }
+
+        function reset() {
+            pause();
+            currentIndex = 0;
+            gameEnded = false;
+            gameWon = false;
+            collisionPosition = null;
+            elements.collisionInfo.style.display = 'none';
+            elements.victoryInfo.style.display = 'none';
+            elements.victoryOverlay.style.display = 'none';
+            toggleReplayButton(false);
+            updateGrid();
+        }
+
+        function nextMove() {
+            if (currentIndex < data.length - 1) {
+                currentIndex++;
+                updateGrid();
+            }
+        }
+
+        function prevMove() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                if (gameWon && data[currentIndex].snake.length < gameSize * gameSize) {
+                    gameWon = false;
+                    gameEnded = false;
+                    elements.victoryInfo.style.display = 'none';
+                    elements.victoryOverlay.style.display = 'none';
+                    toggleReplayButton(false);
+                }
+                updateGrid();
+            }
+        }
+
+        function goToEnd() {
+            pause();
+            currentIndex = data.length - 1;
+            updateGrid();
+        }
+
+        function goToMove(moveIndex) {
+            pause();
+            currentIndex = Math.max(0, Math.min(moveIndex, data.length - 1));
+            
+            if (gameWon && data[currentIndex].snake.length < gameSize * gameSize) {
+                gameWon = false;
+                gameEnded = false;
+                elements.victoryInfo.style.display = 'none';
+                elements.victoryOverlay.style.display = 'none';
+                toggleReplayButton(false);
+            }
+            
+            updateGrid();
+        }
+
+        // Event listeners
+        elements.startBtn.addEventListener('click', play);
+        elements.pauseBtn.addEventListener('click', pause);
+        elements.resetBtn.addEventListener('click', reset);
+        elements.prevBtn.addEventListener('click', prevMove);
+        elements.nextBtn.addEventListener('click', nextMove);
+        elements.endBtn.addEventListener('click', goToEnd);
+        elements.replayBtn.addEventListener('click', loadNewGame);
+
+        // Close victory overlay
+        elements.victoryOverlay.addEventListener('click', () => {
+            elements.victoryOverlay.style.display = 'none';
+        });
+
+        elements.speedSlider.addEventListener('input', (e) => {
+            speed = parseInt(e.target.value);
+            elements.speedValue.textContent = `${speed}ms`;
+            if (isPlaying) {
+                pause();
+                play();
+            }
+        });
+
+        elements.progressSlider.addEventListener('input', (e) => {
+            const progress = parseFloat(e.target.value);
+            const moveIndex = Math.floor((progress / 100) * (data.length - 1));
+            goToMove(moveIndex);
+        });
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            switch(e.code) {
+                case 'Space':
+                    e.preventDefault();
+                    isPlaying ? pause() : play();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    prevMove();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    nextMove();
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    reset();
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    goToEnd();
+                    break;
+                case 'Escape':
+                    e.preventDefault();
+                    elements.victoryOverlay.style.display = 'none';
+                    break;
+                case 'KeyR':
+                    e.preventDefault();
+                    if (gameEnded && !elements.replayBtn.disabled) {
+                        loadNewGame();
+                    }
+                    break;
+            }
+        });
+
+        // Initial data loading
+        async function getAgentData() {
+            try {
+                const response = await fetch(`${window.location}/getData`, {method:"GET"});
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status}`);
+                }
+                
+                data = await response.json();
+                
+                if (!data || !Array.isArray(data) || data.length === 0) {
+                    throw new Error("Invalid data received from server");
+                }
+                
+                elements.loading.style.display = "none";
+                elements.gameInterface.style.display = "block";
+                
+                initializeGrid();
+                updateGrid();
+                
+            } catch (error) {
+                console.error("Error loading data:", error);
+                elements.loading.innerHTML = `<p style="color: red;">Error loading data: ${error.message}</p>`;
+            }
+        }
+
+        // Start
+        getAgentData();
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* Loading Screen */
+        #loadingWrapper {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        .loading-spinner-small {
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(52, 152, 219, 0.3);
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #loadingWrapper p {
+            font-size: 18px;
+            font-weight: 300;
+        }
+
+        /* Replay Loading */
+        .replay-loading {
+            text-align: center;
+            padding: 15px;
+            background: rgba(52, 152, 219, 0.1);
+            border: 2px solid rgba(52, 152, 219, 0.2);
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .replay-loading p {
+            color: #3498db;
+            font-size: 14px;
+            font-weight: 500;
+            margin-top: 5px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .stats {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(52, 152, 219, 0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 2px solid rgba(52, 152, 219, 0.2);
+        }
+
+        .stat-label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .stat-item span:last-child {
+            font-weight: 700;
+            color: #3498db;
+        }
+
+        /* Game Container */
+        .game-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 40px;
+            padding: 40px 20px;
+            min-height: calc(100vh - 100px);
+            flex-wrap: wrap;
+        }
+
+        /* Game Grid */
+        #globalMap {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .row {
+            display: flex;
+        }
+
+        .box {
+            width: 60px;
+            height: 60px;
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            background: #f8f9fa;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .food {
+            background: #e74c3c !important;
+            border-radius: 50%;
+            border: 2px solid #c0392b;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .head {
+            background: #2c3e50 !important;
+            border-radius: 20%;
+            border: 2px solid #34495e;
+        }
+
+        .body {
+            background: #27ae60 !important;
+            border: 1px solid #229954;
+        }
+
+        /* Victory Styles */
+        .victory-head {
+            background: linear-gradient(45deg, #FFD700, #FFA500) !important;
+            border: 3px solid #FF8C00 !important;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            animation: victoryHeadGlow 2s infinite alternate;
+        }
+
+        .victory-body {
+            background: linear-gradient(45deg, #32CD32, #228B22) !important;
+            border: 2px solid #006400 !important;
+            box-shadow: 0 0 15px rgba(50, 205, 50, 0.6);
+        }
+
+        .victory-pulse {
+            animation: victoryPulse 0.6s ease-out;
+        }
+
+        .victory-rainbow {
+            animation: victoryRainbow 3s infinite;
+        }
+
+        @keyframes victoryHeadGlow {
+            0% { 
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+                transform: scale(1);
+            }
+            100% { 
+                box-shadow: 0 0 30px rgba(255, 215, 0, 1), 0 0 40px rgba(255, 215, 0, 0.6);
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes victoryPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes victoryRainbow {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+
+        .collision {
+            background: #e74c3c !important;
+            border: 3px solid #c0392b !important;
+            animation: collisionFlash 0.5s infinite alternate;
+        }
+
+        .collision-cross {
+            font-size: 36px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            animation: crossPulse 1s infinite;
+        }
+
+        @keyframes collisionFlash {
+            0% { background: #e74c3c !important; }
+            100% { background: #ff6b6b !important; }
+        }
+
+        @keyframes crossPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        /* Controls Panel */
+        .controls-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            min-width: 300px;
+            height: fit-content;
+        }
+
+        .collision-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(231, 76, 60, 0.1);
+            border: 2px solid rgba(231, 76, 60, 0.3);
+            border-radius: 10px;
+        }
+
+        .collision-info h3 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .collision-info p {
+            color: #2c3e50;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        /* Victory Info Panel */
+        .victory-info {
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2));
+            border: 3px solid rgba(255, 215, 0, 0.5);
+            border-radius: 15px;
+            text-align: center;
+            animation: victoryInfoGlow 2s infinite alternate;
+        }
+
+        .victory-info h3 {
+            color: #FF8C00;
+            margin-bottom: 10px;
+            font-size: 18px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .victory-info p {
+            color: #2c3e50;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .victory-stars {
+            font-size: 24px;
+            animation: starTwinkle 1s infinite alternate;
+        }
+
+        @keyframes victoryInfoGlow {
+            0% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+            100% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.6); }
+        }
+
+        @keyframes starTwinkle {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+
+        /* Victory Overlay */
+        .victory-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        @keyframes victoryOverlayFadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        .victory-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .victory-particle {
+            position: absolute;
+            font-size: 24px;
+            animation: particleFall linear infinite;
+        }
+
+        @keyframes particleFall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #ecf0f1;
+            color: #2c3e50;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .control-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .control-btn.primary {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .control-btn.primary:hover:not(:disabled) {
+            background: linear-gradient(45deg, #2980b9, #21618c);
+        }
+
+        .control-btn.replay {
+            background: linear-gradient(45deg, #e67e22, #d35400);
+            color: white;
+            animation: replayPulse 2s infinite;
+        }
+
+        .control-btn.replay:hover:not(:disabled) {
+            background: linear-gradient(45deg, #d35400, #c0392b);
+        }
+
+        @keyframes replayPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .btn-icon {
+            font-size: 16px;
+        }
+
+        .speed-control {
+            margin-bottom: 25px;
+        }
+
+        .speed-control label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .speed-control input[type="range"] {
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        #speedValue {
+            font-size: 14px;
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+
+        .progress-container {
+            margin-top: 20px;
+        }
+
+        .progress-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #ecf0f1;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .progress-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3498db;
+            cursor: pointer;
+        }
+
+        .progress-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3498db;
+            cursor: pointer;
+            border: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .game-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .header {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .stats {
+                gap: 15px;
+            }
+
+            .box {
+                width: 50px;
+                height: 50px;
+            }
+
+            .controls-panel {
+                min-width: 280px;
+            }
+        }
+    </style>
+</body>
 </html>
