@@ -17,9 +17,9 @@ import time
 
 MEAN_SIZE = 600
 
-ERROR_REVIEW_SIZE = 6
+ERROR_REVIEW_SIZE = 7
 
-WINNED_GAME_REVIEW_SIZE = 6
+WINNED_GAME_REVIEW_SIZE = 5
 
 PACKED_BODY_COEFF = 0.1
 
@@ -43,6 +43,7 @@ class trainSnakeEvo():
         maxAverage = 0
         winnedGameReviewCount = 0
         winnedGameMostSeen = 0
+        shortestWinnedGame = -1
 
         while(self.wheightedAverage(lastPerformance) < self.averageAim):
             if(self.wheightedAverage(lastPerformance) > maxAverage):
@@ -94,29 +95,28 @@ class trainSnakeEvo():
                     "result" : copy.deepcopy(supervisedResult)
                 })
                 if(game.fruit != fruitSave):
+                    '''moveSinceLastFruit += 1
+                    for index in range(moveSinceLastFruit,len(previousData)-2):
+                        tempGame = snakeGame.Game(self.gameSize)
+                        tempGame.snake = previousData[index]["snake"]
+                        tempGame.fruit = previousData[index]["fruit"]
+
+                        Networkinput = trainSnakeEvo.generateInput(tempGame.getGrid(),tempGame.snake)
+                        result = self.network.forward(np.array([np.array(Networkinput)]))[0]
+                        supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,tempGame.snake,result.tolist(),previousData[:index])
+                        answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(supervisedResult))
+
+                        error = self.getError(
+                            previousData[index-1]["snake"],previousData[index-1]["fruit"],tempGame.snake,tempGame.fruit,result,supervisedResult,answerIndex,True
+                        )
+
+                        error[previousData[index+1]["index"]] = (1-result[previousData[index+1]["index"]]) * (1/moveSinceLastFruit)
+                        self.network.backward(np.array([error]))'''
+                    
                     moveSinceLastFruit = 0
                 else:
                     moveSinceLastFruit += 1
                     if(moveSinceLastFruit > game.size**2*2):
-                        '''for index,data in enumerate(previousData):
-                            if(len(data["snake"]) != len(game.snake)):
-                                break
-
-                            tempGame = snakeGame.Game(self.gameSize)
-                            tempGame.snake = data["snake"]
-                            tempGame.fruit = data["fruit"]
-
-                            Networkinput = trainSnakeEvo.generateInput(tempGame.getGrid(),tempGame.snake)
-                            result = self.network.forward(np.array([np.array(Networkinput)]))[0]
-                            supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,tempGame.snake,result.tolist(),previousData[:index])
-                            answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(supervisedResult))
-
-                            error = self.getError(
-                                previousData[index-1]["snake"],previousData[index-1]["fruit"],tempGame.snake,tempGame.fruit,result,supervisedResult,answerIndex,True
-                            )
-
-                            error[data["index"]] = -result[data["index"]]/self.gameSize
-                            self.network.backward(np.array([error]))'''
                         state = False
                     elif(state == False):
                         saveIndex = copy.deepcopy(previousData[-1]["index"])
@@ -172,7 +172,7 @@ class trainSnakeEvo():
                             self.network.backward(np.array([error]))
                 if(state == True):
                     moveSinceLastFruit = 0
-                    verified = True
+                    '''verified = True
                     for index,data in enumerate(previousData):
                         if(index == 0):continue
                         if(data["fruit"] != previousData[index-1]["fruit"]):
@@ -181,8 +181,10 @@ class trainSnakeEvo():
                             moveSinceLastFruit += 1
                         if(moveSinceLastFruit > self.gameSize**2+self.gameSize):
                             verified = False
-                    if(verified):
-                        winnedGames.append({"seen":0,"data":copy.deepcopy(previousData)})
+                    if(verified):'''
+                    if(shortestWinnedGame == -1 or shortestWinnedGame > len(previousData)):
+                        shortestWinnedGame = len(previousData)
+                    winnedGames.append({"seen":len(winnedGames),"data":copy.deepcopy(previousData)})
                     '''if(len(winnedGames) > WINNED_GAME_SIZE):
                         mostViewIndex = -1
                         mostViewSeen = -1
@@ -281,7 +283,7 @@ class trainSnakeEvo():
                         )
 
                         if(error[rotatedGames[x][i][2]] == 0):
-                            error[rotatedGames[x][i][2]] = (1-result[rotatedGames[x][i][2]])
+                            error[rotatedGames[x][i][2]] = (1-result[rotatedGames[x][i][2]]) * (shortestWinnedGame/len(selectedGame))
 
                         self.network.backward(np.array([error]))
             else:
@@ -676,15 +678,14 @@ def getFreeCases(snake : list[list[int]],seenCases : list[list[int]],currentCase
 def getWholeGameData() -> list[dict]:
     allModel = []
     for (dirpath, dirnames, filenames) in os.walk("../snake/model"):
-        allModel.extend(filenames)
-
-    for model in allModel:
-        if(model.split(".")[1] != "pkl"): #keeping only the model files
-            allModel.remove(model)
-        else:
-            model = model.split("_")[2]
+        print(filenames)
+        for filename in filenames:
+            if(filename.split(".")[1] == "pkl"):
+                allModel.append("".join(filename))
 
     bestModel = None
+
+    print(allModel)
 
     with open("../snake/model/trainedData.json","r") as file:
         jsonData = json.loads(file.read())
@@ -749,6 +750,6 @@ def getWholeGameData() -> list[dict]:
 
         moveSinceLastFood += 1
         
-        if moveSinceLastFood > gameSize**2*3:
-            break
+        '''if moveSinceLastFood > gameSize**2*3:
+            break'''
     return data
