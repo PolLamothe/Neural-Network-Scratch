@@ -17,7 +17,7 @@ import time
 
 MEAN_SIZE = 600
 
-ERROR_REVIEW_SIZE = 7
+ERROR_REVIEW_SIZE = 6
 
 WINNED_GAME_REVIEW_SIZE = 5
 
@@ -29,9 +29,7 @@ class trainSnakeEvo():
     def __init__(self, gameSize: int, averageAim: int, network : classe.CNN) -> None:
         self.gameSize = gameSize
         self.averageAim = averageAim
-        self.childPerformance = []
         self.network = network
-        self.iterationData = []
     
     def train(self) -> classe.NN:
         startingTime = time.time()
@@ -44,6 +42,7 @@ class trainSnakeEvo():
         winnedGameReviewCount = 0
         winnedGameMostSeen = 0
         shortestWinnedGame = -1
+        explorationCount = 0
 
         while(self.wheightedAverage(lastPerformance) < self.averageAim):
             if(self.wheightedAverage(lastPerformance) > maxAverage):
@@ -53,16 +52,32 @@ class trainSnakeEvo():
             game = snakeGame.Game(self.gameSize)
             previousData = []
             moveSinceLastFruit = 0
-            '''if(self.wheightedAverage(lastPerformance) < maxAverage * .85 and learningRateDecayCount > 100):
-                learningRateDecayCount = 0
-                for layer in self.network.layers:
-                    layer.learningRate /= 2
-            learningRateDecayCount += 1'''
             while(state == None):
                 Networkinput = trainSnakeEvo.generateInput(game.getGrid(),game.snake)
                 result = self.network.forward(np.array([np.array(Networkinput)]))[0]
                 supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,game.snake,result.tolist(),previousData)
-                answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(supervisedResult))
+                if(explorationCount >= WINNED_GAME_REVIEW_SIZE):
+                    explorationCount = 0
+                    answerIndex = [i for i in range(4)]
+                    answerProb = []
+                    for value in supervisedResult:
+                        if(value == -1):
+                            answerProb.append(0)
+                        elif(value == -0.5):
+                            if(min(supervisedResult) == -0.5):
+                                answerProb.append(1)
+                            else:
+                                answerProb.append(0)
+                        else:
+                            answerProb.append((value*5)**3)
+                    
+
+                    if(max(answerProb) == 0):
+                        answerProb = [1 for i in range(4)]
+
+                    answerIndex = random.choices(answerIndex,weights=answerProb)[0]
+                else:
+                    answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(supervisedResult))
 
                 if(answerIndex == 0):
                     game.directionY = -1
@@ -95,24 +110,6 @@ class trainSnakeEvo():
                     "result" : copy.deepcopy(supervisedResult)
                 })
                 if(game.fruit != fruitSave):
-                    '''moveSinceLastFruit += 1
-                    for index in range(moveSinceLastFruit,len(previousData)-2):
-                        tempGame = snakeGame.Game(self.gameSize)
-                        tempGame.snake = previousData[index]["snake"]
-                        tempGame.fruit = previousData[index]["fruit"]
-
-                        Networkinput = trainSnakeEvo.generateInput(tempGame.getGrid(),tempGame.snake)
-                        result = self.network.forward(np.array([np.array(Networkinput)]))[0]
-                        supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,tempGame.snake,result.tolist(),previousData[:index])
-                        answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(supervisedResult))
-
-                        error = self.getError(
-                            previousData[index-1]["snake"],previousData[index-1]["fruit"],tempGame.snake,tempGame.fruit,result,supervisedResult,answerIndex,True
-                        )
-
-                        error[previousData[index+1]["index"]] = (1-result[previousData[index+1]["index"]]) * (1/moveSinceLastFruit)
-                        self.network.backward(np.array([error]))'''
-                    
                     moveSinceLastFruit = 0
                 else:
                     moveSinceLastFruit += 1
@@ -172,34 +169,16 @@ class trainSnakeEvo():
                             self.network.backward(np.array([error]))
                 if(state == True):
                     moveSinceLastFruit = 0
-                    '''verified = True
-                    for index,data in enumerate(previousData):
-                        if(index == 0):continue
-                        if(data["fruit"] != previousData[index-1]["fruit"]):
-                            moveSinceLastFruit = 0
-                        else :
-                            moveSinceLastFruit += 1
-                        if(moveSinceLastFruit > self.gameSize**2+self.gameSize):
-                            verified = False
-                    if(verified):'''
                     if(shortestWinnedGame == -1 or shortestWinnedGame > len(previousData)):
                         shortestWinnedGame = len(previousData)
                     winnedGames.append({"seen":len(winnedGames),"data":copy.deepcopy(previousData)})
-                    '''if(len(winnedGames) > WINNED_GAME_SIZE):
-                        mostViewIndex = -1
-                        mostViewSeen = -1
-                        for index,game2 in enumerate(winnedGames):
-                            if game2["seen"] > mostViewSeen:
-                                mostViewIndex = index
-                                mostViewSeen = game2["seen"]
-                                secondMostViewSeen = mostViewSeen
-                            elif game2["seen"] == mostViewSeen:
-                                secondMostViewSeen = mostViewSeen
-                        winnedGames.pop(mostViewIndex)
-                        winnedGameMostSeen = secondMostViewSeen'''
             count += 1
-            lastPerformance.append(len(game.snake))
-            lastPerformance.pop(0)
+
+            if(explorationCount < WINNED_GAME_REVIEW_SIZE):
+                lastPerformance.append(len(game.snake))
+                lastPerformance.pop(0)
+
+            explorationCount += 1
 
             if(len(correctedSituations) > ERROR_REVIEW_SIZE):
                 lengthToReview = []
@@ -344,7 +323,7 @@ class trainSnakeEvo():
                     state = False
 
             lengthHistory.append(len(copy.deepcopy(game.snake)))
-        print("The agent achieve an average length of ",round(sum(lengthHistory)/len(lengthHistory),2)," on ",500," games")
+        print("The agent achieved an average length of ",round(sum(lengthHistory)/len(lengthHistory),2)," on ",500," games")
         return sum(lengthHistory)/len(lengthHistory)
     
     def exploreEveryPossibility(game : snakeGame.Game,previousData : list[dict],lengthToBeat : int,canRewind : bool) -> int:
