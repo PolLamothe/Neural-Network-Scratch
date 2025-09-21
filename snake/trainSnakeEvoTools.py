@@ -57,7 +57,6 @@ class trainSnakeEvo():
                 result = self.network.forward(np.array([np.array(Networkinput)]))[0]
                 supervisedResult = trainSnakeEvo.superviseAnswer(self.gameSize,game.snake,result.tolist(),previousData)
                 if(explorationCount >= WINNED_GAME_REVIEW_SIZE):
-                    explorationCount = 0
                     answerIndex = [i for i in range(4)]
                     answerProb = []
                     for value in supervisedResult:
@@ -177,6 +176,8 @@ class trainSnakeEvo():
             if(explorationCount < WINNED_GAME_REVIEW_SIZE):
                 lastPerformance.append(len(game.snake))
                 lastPerformance.pop(0)
+            else:
+                explorationCount = 0
 
             explorationCount += 1
 
