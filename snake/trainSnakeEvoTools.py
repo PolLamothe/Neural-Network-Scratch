@@ -514,7 +514,7 @@ class trainSnakeEvo():
                         smallerFound = True
                         break
                 if(not smallerFound):
-                    modifiedResult[previousData[i]["index"]] = -0.5
+                    modifiedResult[previousData[i+1]["index"]] = -0.5
         return modifiedResult
 
     def getAllMaxIndex(answer : list[float]) -> list[int]:
