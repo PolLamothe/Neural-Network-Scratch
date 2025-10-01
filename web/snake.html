@@ -116,6 +116,8 @@
         let gameEnded = false;
         let gameWon = false;
         let collisionPosition = null;
+        let snake = [];
+        let fruit = [];
 
         // DOM Elements
         const elements = {
@@ -187,6 +189,12 @@
             elements.replayControls.style.display = show ? 'flex' : 'none';
         }
 
+        function updateCurrentIndex(newIndex){
+            currentIndex = newIndex
+            snake = data[currentIndex].snake;
+            fruit = data[currentIndex].fruit;
+        }
+
         // Load new game
         async function loadNewGame() {
             try {
@@ -214,7 +222,7 @@
                 
                 // Reset game state
                 data = newData;
-                currentIndex = 0;
+                updateCurrentIndex(0)
                 gameEnded = false;
                 gameWon = false;
                 collisionPosition = null;
@@ -257,12 +265,12 @@
         loadNewGame()
 
         // Victory detection
-        function checkVictory(snake) {
+        function checkVictory() {
             return snake.length === gameSize * gameSize;
         }
 
         // Collision detection
-        function detectCollision(snake) {
+        function detectCollision() {
             if (snake.length < 2) return null;
             
             const head = snake[snake.length - 1];
@@ -272,8 +280,8 @@
             if (headX < 0 || headX >= gameSize || headY < 0 || headY >= gameSize) {
                 return {
                     type: 'wall',
-                    position: [headX, headY],
-                    message: `Wall collision at position (${headX}, ${headY})`
+                    position: [snake[snake.length - 2][0], snake[snake.length - 2][1]],
+                    message: `Wall collision at position (${snake[snake.length - 2][0]}, ${snake[snake.length - 2][1]})`
                 };
             }
             
@@ -378,12 +386,8 @@
 
             if (!data || currentIndex >= data.length) return;
 
-            const currentState = data[currentIndex];
-            const currentSnake = currentState.snake;
-            const currentFruit = currentState.fruit;
-
             // Check victory first
-            const victory = checkVictory(currentSnake);
+            const victory = checkVictory();
             if (victory && !gameWon) {
                 gameWon = true;
                 gameEnded = true;
@@ -396,16 +400,16 @@
                 toggleReplayButton(true);
                 
                 // Draw complete snake with victory style and gradient
-                for(let i = 0; i < currentSnake.length; i++){
-                    const [x, y] = currentSnake[i];
+                for(let i = 0; i < snake.length; i++){
+                    const [x, y] = snake[i];
                     if (y >= 0 && y < gameSize && x >= 0 && x < gameSize) {
                         const cell = document.getElementById(`box_${y}_${x}`);
-                        if (i === currentSnake.length - 1) {
+                        if (i === snake.length - 1) {
                             cell.classList.add("victory-head");
                         } else {
                             cell.classList.add("victory-body");
                             // Apply victory gradient
-                            const color = getVictorySegmentColor(i, currentSnake.length);
+                            const color = getVictorySegmentColor(i, snake.length);
                             cell.style.backgroundColor = color;
                         }
                     }
@@ -418,32 +422,32 @@
             }
 
             // Detect collisions if no victory
-            const collision = !victory ? detectCollision(currentSnake) : null;
+            const collision = !victory ? detectCollision() : null;
             collisionPosition = collision;
             
             // Draw snake body with gradient
-            for(let i = 0; i < currentSnake.length - 1; i++){
-                const [x, y] = currentSnake[i];
+            for(let i = 0; i < snake.length - 1; i++){
+                const [x, y] = snake[i];
                 if (y >= 0 && y < gameSize && x >= 0 && x < gameSize) {
                     const cell = document.getElementById(`box_${y}_${x}`);
                     cell.classList.add("body");
                     // Apply gradient color
-                    const color = getSnakeSegmentColor(i, currentSnake.length);
+                    const color = getSnakeSegmentColor(i, snake.length);
                     cell.style.backgroundColor = color;
                 }
             }
 
             // Draw snake head
-            if (currentSnake.length > 0) {
-                const [headX, headY] = currentSnake[currentSnake.length - 1];
+            if (snake.length > 0) {
+                const [headX, headY] = snake[snake.length - 1];
                 if (headY >= 0 && headY < gameSize && headX >= 0 && headX < gameSize) {
                     document.getElementById(`box_${headY}_${headX}`).classList.add("head");
                 }
             }
 
             // Draw fruit only if no victory
-            if (!victory && currentFruit) {
-                const [fruitX, fruitY] = currentFruit;
+            if (!victory && fruit) {
+                const [fruitX, fruitY] = fruit;
                 if (fruitY >= 0 && fruitY < gameSize && fruitX >= 0 && fruitX < gameSize) {
                     document.getElementById(`box_${fruitY}_${fruitX}`).classList.add("food");
                 }
@@ -487,7 +491,7 @@
             
             elements.currentMove.textContent = currentIndex + 1;
             elements.totalMoves.textContent = data.length;
-            elements.snakeLength.textContent = data[currentIndex].snake.length;
+            elements.snakeLength.textContent = snake.length;
             elements.progressSlider.value = (currentIndex / (data.length - 1)) * 100;
         }
 
@@ -519,7 +523,7 @@
 
         function reset() {
             pause();
-            currentIndex = 0;
+            updateCurrentIndex(0);
             gameEnded = false;
             gameWon = false;
             collisionPosition = null;
@@ -532,15 +536,15 @@
 
         function nextMove() {
             if (currentIndex < data.length - 1) {
-                currentIndex++;
+                updateCurrentIndex(currentIndex+1)
                 updateGrid();
             }
         }
 
         function prevMove() {
             if (currentIndex > 0) {
-                currentIndex--;
-                if (gameWon && data[currentIndex].snake.length < gameSize * gameSize) {
+                updateCurrentIndex(currentIndex-1)
+                if (gameWon && snake.length < gameSize * gameSize) {
                     gameWon = false;
                     gameEnded = false;
                     elements.victoryInfo.style.display = 'none';
@@ -553,15 +557,15 @@
 
         function goToEnd() {
             pause();
-            currentIndex = data.length - 1;
+            updateCurrentIndex(data.length - 1)
             updateGrid();
         }
 
         function goToMove(moveIndex) {
             pause();
-            currentIndex = Math.max(0, Math.min(moveIndex, data.length - 1));
+            updateCurrentIndex(Math.max(0, Math.min(moveIndex, data.length - 1)))
             
-            if (gameWon && data[currentIndex].snake.length < gameSize * gameSize) {
+            if (gameWon && snake.length < gameSize * gameSize) {
                 gameWon = false;
                 gameEnded = false;
                 elements.victoryInfo.style.display = 'none';

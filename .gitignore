@@ -6,3 +6,5 @@ tf_clean
 *CIFAR*
 *.pkl
 *trainedData.json*
+settings.json
+*/model/v*
