@@ -689,16 +689,9 @@ def getWholeGameData() -> list[dict]:
     })
 
     while(game.checkState() == None):
-        Networkinput = []
-        rotatedGames = trainSnakeEvo.rotateGame(game.snake,game.fruit,game.size)
-        for games in rotatedGames:
-            tempGame = snakeGame.Game(gameSize)
-            tempGame.snake = games[0]
-            tempGame.fruit = games[1]
-            Networkinput.append(trainSnakeEvo.generateInput(tempGame.getGrid(),tempGame.snake))
-        result = network.forward(np.array(Networkinput))
-        averageResult = np.mean([trainSnakeEvo.rotate_agent_result(_result,index) for index,_result in enumerate(result)],axis=0)
-        supervisedResult = trainSnakeEvo.superviseAnswer(gameSize,game.snake,averageResult.tolist(),previousData)
+        Networkinput = trainSnakeEvo.generateInput(game.getGrid(),game.snake)
+        result = network.forward(np.array([Networkinput]))[0]
+        supervisedResult = trainSnakeEvo.superviseAnswer(gameSize,game.snake,result,copy.deepcopy(previousData))
         answerIndex = random.choice(trainSnakeEvo.getAllMaxIndex(supervisedResult))
 
         if(answerIndex == 0):
