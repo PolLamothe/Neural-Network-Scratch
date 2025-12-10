@@ -36,7 +36,7 @@ class trainSnakeEvo():
         winnedGames = []
         correctedSituations = {}
 
-        lastPerformance = [0 for i in range(MEAN_SIZE)]
+        lastPerformance = [0,0]
         count = 0
         maxAverage = 0
         winnedGameReviewCount = 0
@@ -44,10 +44,13 @@ class trainSnakeEvo():
         shortestWinnedGame = -1
         explorationCount = 0
 
-        while(self.wheightedAverage(lastPerformance) < self.averageAim):
+        while(self.wheightedAverage(lastPerformance) < self.averageAim or len(winnedGames) < WINNED_GAME_SIZE):
             if(self.wheightedAverage(lastPerformance) > maxAverage):
                 maxAverage = round(self.wheightedAverage(lastPerformance),2)
-            print(count,round(self.wheightedAverage(lastPerformance),2),"max average reached : ",maxAverage," winned games : ",len(winnedGames)," time elapsed : ",int((time.time()-startingTime)/60)," min ","  ",end="\r")
+            print(count,round(self.wheightedAverage(lastPerformance),2),
+            "max average reached : ",maxAverage,
+            " winned games : ",len(winnedGames),
+            " time elapsed : ",int((time.time()-startingTime)/60)," min  ",end="\r")
             state = None
             game = snakeGame.Game(self.gameSize)
             previousData = []
@@ -70,7 +73,6 @@ class trainSnakeEvo():
                         else:
                             answerProb.append((value*5)**3)
                     
-
                     if(max(answerProb) == 0):
                         answerProb = [1 for i in range(4)]
 
@@ -96,9 +98,12 @@ class trainSnakeEvo():
                 game.update()
                 state = game.checkState()
 
-                self.network.backward(np.array([self.getError(
+                error = self.getError(
                     snakeSave,fruitSave,game.snake,game.fruit,result,supervisedResult,answerIndex,True
-                )]))
+                )
+                
+                if(explorationCount < WINNED_GAME_REVIEW_SIZE):
+                    self.network.backward(np.array([error]))
 
                 previousData.append({
                     "snake":copy.deepcopy(game.snake),
@@ -106,7 +111,8 @@ class trainSnakeEvo():
                     "fruit":copy.deepcopy(game.fruit),
                     "original" : True,
                     "forbidden" : None,
-                    "result" : copy.deepcopy(supervisedResult)
+                    "result" : copy.deepcopy(supervisedResult),
+                    "moveSinceLastFruit" : moveSinceLastFruit,
                 })
                 if(game.fruit != fruitSave):
                     moveSinceLastFruit = 0
@@ -175,7 +181,8 @@ class trainSnakeEvo():
 
             if(explorationCount < WINNED_GAME_REVIEW_SIZE):
                 lastPerformance.append(len(game.snake))
-                lastPerformance.pop(0)
+                if len(lastPerformance) >= MEAN_SIZE:
+                    lastPerformance.pop(0)
             else:
                 explorationCount = 0
 
@@ -263,7 +270,7 @@ class trainSnakeEvo():
                         )
 
                         if(error[rotatedGames[x][i][2]] == 0):
-                            error[rotatedGames[x][i][2]] = (1-result[rotatedGames[x][i][2]]) * (shortestWinnedGame/len(selectedGame))
+                            error[rotatedGames[x][i][2]] = (1-result[rotatedGames[x][i][2]])# * (shortestWinnedGame/len(selectedGame))
 
                         self.network.backward(np.array([error]))
             else:
@@ -408,9 +415,9 @@ class trainSnakeEvo():
                 if error[answerIndex] == 0:
                     error[answerIndex] = -result[answerIndex] * ((math.log(1)-math.log(len(currentSnake)/(self.gameSize**2)))/2)
 
-        previousPackedBody = getPackedBody(previousSnake)
+        previousPackedBody = getPackedBody(previousSnake,self.gameSize)
         
-        packedBody = getPackedBody(currentSnake)
+        packedBody = getPackedBody(currentSnake,self.gameSize)
         if(packedBody < previousPackedBody):
             if(error[answerIndex] < 0):
                 error[answerIndex] *= 1 + PACKED_BODY_COEFF
@@ -593,12 +600,17 @@ def getSeparatedZones(snake : list[list[int]],gameSize : int) -> int:
                 flatzones.append(copy.deepcopy(case))
     return len(zones)
 
-def getPackedBody(snake : list[list[int]]) -> int:
+def getPackedBody(snake : list[list[int]],gameSize : int) -> int:
     nb_collisions = 0
     n = len(snake)
 
     for i in range(n):
         x1, y1 = snake[i]
+        if x1 == 0 or x1 == gameSize-1:
+            nb_collisions += 1
+        if y1 == 0 or y1 == gameSize-1:
+            nb_collisions += 1
+
         for j in range(i + 1, n):
             # on ignore les voisins directs (consécutifs dans la liste)
             if abs(i - j) == 1:
@@ -658,10 +670,10 @@ def getFreeCases(snake : list[list[int]],seenCases : list[list[int]],currentCase
 def getWholeGameData() -> list[dict]:
     allModel = []
     for (dirpath, dirnames, filenames) in os.walk("../snake/model"):
-        print(filenames)
         for filename in filenames:
             if(filename.split(".")[1] == "pkl"):
                 allModel.append("".join(filename))
+        break
 
     bestModel = None
 
