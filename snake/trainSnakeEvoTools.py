@@ -152,22 +152,23 @@ class trainSnakeEvo():
                                 if(supervisedResult[i] == -1):
                                     error[i] = -result[i]
 
-                            if(len(tempGame.snake)-4) in correctedSituations:
-                                correctedSituations[len(tempGame.snake)-4].append({
-                                    "rotation" : index,
-                                    "rotatedGame" : copy.deepcopy(rotatedGame),
-                                    "previousRotatedGame" : copy.deepcopy(previousRotatedGames[index]),
-                                    "bannedIndex" : self.get_aligned_answer(index,bannedIndex),
-                                    "recommandedIndex" : self.get_aligned_answer(index,recommandedIndex),
-                                    })
-                            else:
-                                correctedSituations[len(tempGame.snake)-4] = [{
-                                    "rotation" : index,
-                                    "rotatedGame" : copy.deepcopy(rotatedGame),
-                                    "previousRotatedGame" : copy.deepcopy(previousRotatedGames[index]),
-                                    "bannedIndex" : self.get_aligned_answer(index,bannedIndex),
-                                    "recommandedIndex" : self.get_aligned_answer(index,recommandedIndex),
-                                    }]
+                            if answerIndex == self.get_aligned_answer(index,bannedIndex):
+                                if(len(tempGame.snake)-4) in correctedSituations:
+                                    correctedSituations[len(tempGame.snake)-4].append({
+                                        "rotation" : index,
+                                        "rotatedGame" : copy.deepcopy(rotatedGame),
+                                        "previousRotatedGame" : copy.deepcopy(previousRotatedGames[index]),
+                                        "bannedIndex" : self.get_aligned_answer(index,bannedIndex),
+                                        "recommandedIndex" : self.get_aligned_answer(index,recommandedIndex),
+                                        })
+                                else:
+                                    correctedSituations[len(tempGame.snake)-4] = [{
+                                        "rotation" : index,
+                                        "rotatedGame" : copy.deepcopy(rotatedGame),
+                                        "previousRotatedGame" : copy.deepcopy(previousRotatedGames[index]),
+                                        "bannedIndex" : self.get_aligned_answer(index,bannedIndex),
+                                        "recommandedIndex" : self.get_aligned_answer(index,recommandedIndex),
+                                        }]
                             
                             #error[self.get_aligned_answer(index,recommandedIndex)] = (1-result[self.get_aligned_answer(index,recommandedIndex)])
                             error[self.get_aligned_answer(index,bannedIndex)] = -result[self.get_aligned_answer(index,bannedIndex)]
@@ -193,9 +194,17 @@ class trainSnakeEvo():
                 for i in range(min(lastPerformance),max(lastPerformance)):
                     if(i != self.gameSize**2 and i in list(correctedSituations.keys())):
                         lengthToReview.append(i)
-                correctedSituationsSelected = [random.choice(correctedSituations[random.choice(lengthToReview)]) for i in range(ERROR_REVIEW_SIZE)]
 
-                for correctedSituation in correctedSituationsSelected:
+                correctedSituationsSelected = []
+
+                while len(correctedSituationsSelected) < ERROR_REVIEW_SIZE:
+                    length = random.choice(lengthToReview)
+                    if len(correctedSituations[length]) > 0:
+                        temp = (length,random.choice(correctedSituations[length]))
+                        if(temp not in correctedSituationsSelected):
+                            correctedSituationsSelected.append(temp)
+
+                for length,correctedSituation in correctedSituationsSelected:
                     tempGame = snakeGame.Game(self.gameSize)
                     tempGame.snake = copy.deepcopy(correctedSituation["rotatedGame"][0])
                     tempGame.fruit = copy.deepcopy(correctedSituation["rotatedGame"][1])
@@ -213,6 +222,8 @@ class trainSnakeEvo():
                     error[correctedSituation["bannedIndex"]] = -result[correctedSituation["bannedIndex"]]
                     #error[correctedSituation["recommandedIndex"]] = 1-result[correctedSituation["recommandedIndex"]]
                     self.network.backward(np.array([error]))
+                    if answerIndex != correctedSituation["bannedIndex"]:
+                        correctedSituations[length].remove(correctedSituation)
 
             if(winnedGameReviewCount >= WINNED_GAME_REVIEW_SIZE and len(winnedGames) > 0):
                 winnedGameReviewCount = 0
@@ -606,10 +617,6 @@ def getPackedBody(snake : list[list[int]],gameSize : int) -> int:
 
     for i in range(n):
         x1, y1 = snake[i]
-        if x1 == 0 or x1 == gameSize-1:
-            nb_collisions += 1
-        if y1 == 0 or y1 == gameSize-1:
-            nb_collisions += 1
 
         for j in range(i + 1, n):
             # on ignore les voisins directs (consécutifs dans la liste)

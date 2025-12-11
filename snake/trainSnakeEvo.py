@@ -59,12 +59,11 @@ try:
 except TypeError:
     raise Exception("You forgot the parameter -a (press -c to see all comands)")
 
-LEARNING_RATE = 0.01
+LEARNING_RATE = 0.0125
 
 network = classe.CNN([
-    classe.FullyConnectedLayer(GAMESIZE**2*4+9,80,classe.Tanh,LEARNING_RATE,1),
-    classe.FullyConnectedLayer(80,80,classe.Tanh,LEARNING_RATE,1),
-    classe.FullyConnectedLayer(80,4,classe.Sigmoid,LEARNING_RATE,1)
+    classe.FullyConnectedLayer(GAMESIZE**2*4+9,60,classe.Tanh,LEARNING_RATE,1),
+    classe.FullyConnectedLayer(60,4,classe.Sigmoid,LEARNING_RATE,1)
 ])
 
 MEAN_SIZE = trainSnakeEvoTools.MEAN_SIZE
