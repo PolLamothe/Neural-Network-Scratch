@@ -59,11 +59,11 @@ try:
 except TypeError:
     raise Exception("You forgot the parameter -a (press -c to see all comands)")
 
-LEARNING_RATE = 0.0125
+LEARNING_RATE = 0.01
 
 network = classe.CNN([
-    classe.FullyConnectedLayer(GAMESIZE**2*4+9,60,classe.Tanh,LEARNING_RATE,1),
-    classe.FullyConnectedLayer(60,4,classe.Sigmoid,LEARNING_RATE,1)
+    classe.FullyConnectedLayer(GAMESIZE**2*4+9,80,classe.Tanh,LEARNING_RATE,1),
+    classe.FullyConnectedLayer(80,4,classe.Sigmoid,LEARNING_RATE,1)
 ])
 
 MEAN_SIZE = trainSnakeEvoTools.MEAN_SIZE
@@ -84,8 +84,6 @@ except TypeError:
 
 network = snakeTrain.train()
 
-benchmarkResult = trainSnakeEvoTools.trainSnakeEvo.benchmarkModel(network,GAMESIZE)
-
 if(args.save):
     print("saving your model")
     ID = int(time.time())
@@ -104,8 +102,7 @@ if(args.save):
         "WINNED_GAME_REVIEW_SIZE" : WINNED_GAME_REVIEW_SIZE,
         "PACKED_BODY_COEFF" : PACKED_BODY_COEFF,
         "WINNED_GAME_SIZE" : WINNED_GAME_SIZE,
-        "HIDDEN_LAYER" : len(network.layers)-1,
-        "BENCHMARK" : benchmarkResult
+        "HIDDEN_LAYER" : len(network.layers)-1
     })
     with open("./model/trainedData.json","w") as file:
         json.dump(data,file,indent=2)
